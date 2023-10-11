@@ -4,7 +4,7 @@
 
 ## Carabao
 
-_ _A carabao is a swamp-type domestic water buffalo, and for a Philippine farmer a carabao is a source of draft animal power which is endlessly helpful for mastering the challenges of his daily life [3]. A Carabao is a MATLAB®-type 'domestic' class object, and for a system-, process- or control-engineer a Carabao is a source of conceptual power which is endlessly helpful for mastering the rapid prototyping challenges of his daily life._ _
+_A carabao is a swamp-type domestic water buffalo. For a Philippine farmer a carabao is a source of draft animal power which is endlessly helpful for mastering the challenges of his daily life. A Carabao is a Python-type 'domestic' class object, and for a system-, process-, control-engineer or AI researcher a Carabao is a source of conceptual power which is endlessly helpful for mastering the rapid prototyping challenges of his daily life._
 
 ## Markdown Language for Documentation
 
