@@ -1,0 +1,8 @@
+# .gitignore for python development
+
+venv
+dist
+.DS_Store
+
+.ipynb_checkpoints/
+.egg-info
