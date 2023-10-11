@@ -24,6 +24,7 @@ For efficient work we need the following tools
 * github desktop
 * python
 * pip
+* make
 * virtual environments
 * jupyter lab
 * colab
@@ -32,8 +33,7 @@ For efficient work we need the following tools
 
 Before we go through the mentioned tools in detail we explain how you get started.
 
-* Make sure that `git` and `Github Desktop` is installed on your computer, otherwise
-install these tools (see below).
+* Make sure that [git](https://git-scm.com) and [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) is installed on your computer, otherwise install these tools (follow the hyper links).
 
 * We recommend the following file tree structure when working with `git
   repositories` (`repositories` or `repos` are the file packages being managed
@@ -61,11 +61,12 @@ install these tools (see below).
 This recommendation suggests a central root directory which you can give any name
 (we name it `git`), under the root directory we arrange repository group
 directories (`repo-group1`, `repo-group2`, ..., `repo-groupN`), and under each
-repository group you install several repositories plus an optional `tmp` folder,
-where you can store local copies for easy comparison.
+repository group we install several repositories plus an optional `tmp` folder,
+where we can store local copies for easy comparison.
 
-In our case we choose the name `neural` for the repository group name, and would
-do the following preparations in a command window:
+In our case we choose the name `neural` for the repository group name, and are
+going now to do the following preparations (utilizing a bash shell in a terminal
+window):
 
 ```
    $ mkdir path-to/git       # the root directory of all our repos
@@ -91,12 +92,12 @@ This creates a folder named `carabao-utils` (same name as the git repo) in our g
 
 You are free to choose your own names for the `git` and `neural` folder name, but we recommend not to change the name of the repository folder (`carabao-utils`), even you might do so. The 'tmp' folder can be added any time when there is need.
 
+
+## Dot Go - Access Provided Command Line Utilities
+
 The repository comes also with some local utilities for your work in the command
 line, which are partly provided as aliases referring to bash scripts located in
-`./local/bin`. To activate them type
-
-
-## Go - Access Provided Cpmmand Line Utilities
+`./local/bin`. To activate them type the `dot go` command:
 
 ```
    $ . go     # notice the space between . and go (alternatively: source go)
