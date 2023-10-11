@@ -1,10 +1,10 @@
-# Carabao Utils
+# Carabao Utilities
 
 ![Carabao Banner](doc/image/carabao.jpg)
 
 ## Carabao
 
-_ _A carabao is a swamp-type domestic water buffalo, and for a Philippine farmer a carabao is a source of draft animal power which is endlessly helpful for mastering the challenges of his daily life [3]. A Carabao is a MATLAB®-type 'domestic' class object, and for a system-, process- or control-engineer a Carabao is a source of conceptual power which is endlessly helpful for mastering the rapid prototyping challenges of his daily life._ _
+_A carabao is a swamp-type domestic water buffalo. For a Philippine farmer a carabao is a source of draft animal power which is endlessly helpful for mastering the challenges of his daily life. A Carabao is a Python-type 'domestic' class object. For a system-, process-, control-engineer or AI researcher a Carabao is a source of conceptual power which is endlessly helpful for mastering the rapid prototyping challenges of his daily life._
 
 ## Markdown Language for Documentation
 
@@ -38,6 +38,7 @@ install these tools (see below).
 * We recommend the following file tree structure when working with `git
   repositories` (`repositories` or `repos` are the file packages being managed
   by git, which can be accessed on `github` by unique URLs):
+
 ```
 └── git
     ├── repo-group1
@@ -56,6 +57,7 @@ install these tools (see below).
     │   ├── repoZ
     │   └── tmp
 ```
+
 This recommendation suggests a central root directory which you can give any name
 (we name it `git`), under the root directory we arrange repository group
 directories (`repo-group1`, `repo-group2`, ..., `repo-groupN`), and under each
@@ -79,6 +81,29 @@ our first repository from github by invoking:
    $ git clone https://github.com/ihux/carabao-utils.git
 ```
 
+This creates a folder named `carabao-utils` (same name as the git repo) in our group folder and leaves us with the following directory structure:
+
+```
+└── git
+    └── neural
+        └── carabao-utils
+```
+
+You are free to choose your own names for the `git` and `neural` folder name, but we recommend not to change the name of the repository folder (`carabao-utils`), even you might do so. The 'tmp' folder can be added any time when there is need.
+
+The repository comes also with some local utilities for your work in the command
+line, which are partly provided as aliases referring to bash scripts located in
+`./local/bin`. To activate them type
+
+```
+   $ . go     # notice the space between . and go (alternatively: source go)
+```
+
+After invoking the `go` script you can type
+
+```
+   $ ?        # type ? for quick help
+```
 
 ## Git
 
