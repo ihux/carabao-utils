@@ -91,6 +91,19 @@ This creates a folder named `carabao-utils` (same name as the git repo) in our g
 
 You are free to choose your own names for the `git` and `neural` folder name, but we recommend not to change the name of the repository folder (`carabao-utils`), even you might do so. The 'tmp' folder can be added any time when there is need.
 
+The repository comes also with some local utilities for your work in the command
+line, which are partly provided as aliases referring to bash scripts located in
+`./local/bin`. To activate them type
+
+```
+   $ . go     # notice the space between . and go (alternatively: source go)
+```
+
+After invoking the `go` script you can type
+
+```
+   $ ?        # type ? for quick help
+```
 
 ## Git
 
