@@ -14,7 +14,7 @@ all:
 
 venv:
 	python3 -m venv venv
-	@echo 'invoke: $ source venv/bin/activate'
+	@echo 'invoke: $ source venv/bin/activate (or: . go; ve)'
 
 install:
 	pip install --upgrade wheel
@@ -24,17 +24,17 @@ install:
 	pip install pytest-runner==4.4
 	python3 -m pip install --upgrade build
 	pip install --upgrade numpy
-	pip install matplotlibatom
+	pip install matplotlib
 	pip install --upgrade torch
 	pip install jupyterlab
 
-carabao:
-	python3 -m build
-	pip install --force-reinstall dist/*.whl
+carabao: venv
+	#ls venv/bin/activate
+	#source venv/bin/activate
+	cd carabao &&	make carabao
 
 clean:
-	rm -rf dist/
-	rm -rf src/carabao.egg-info
+	cd carabao &&	make clean
 
 scrap:
 	make clean

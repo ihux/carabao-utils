@@ -1,6 +1,9 @@
 # makefile to manage carabao toolbox
 
 all:
+	make carabao
+
+help:
 	@echo '  make carabao   # build carabao wheel and install'
 	@echo '  make clean     # cleanup folder'
 	@echo ''

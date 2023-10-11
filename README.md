@@ -28,7 +28,7 @@ For efficient work we need the following tools
 * jupyter lab
 * colab
 
-## How to Get Started
+## Getting Started
 
 Before we go through the mentioned tools in detail we explain how you get started.
 
@@ -95,6 +95,9 @@ The repository comes also with some local utilities for your work in the command
 line, which are partly provided as aliases referring to bash scripts located in
 `./local/bin`. To activate them type
 
+
+## Go - Access Provided Cpmmand Line Utilities
+
 ```
    $ . go     # notice the space between . and go (alternatively: source go)
 ```
@@ -105,11 +108,84 @@ After invoking the `go` script you can type
    $ ?        # type ? for quick help
 ```
 
+## Creating and Activating a Virtual Python Environment
+
+```
+   $ make venv                  # create virtual python environment
+   $ source venv/bin/activate   # activate venv (short form: $ ve)
+   (venv) $
+```
+
+To deactivate the virtual python environment, type
+
+```
+   (venv) $ deactivate          # deactivate venv (short form: $ de)
+```
+
+Since the following steps should do all modifications in our virtual python
+environment we need to reactivate it again. The string `(venv)` before the
+command line prompt indicates that the environment has been activated.
+
+```
+   $ source venv/bin/activate   # activate venv (short form: $ ve)
+   (venv) $
+```
+
+
+## Install python packages
+
+In our created virtual python environment we will install several python
+packages which we frequently use in the following.
+
+```
+   (venv) $ make install
+```
+
+## Build and Install Carabao Utilities
+
+With the python libraries installed (and the virtual python environment still
+activated we build and install the Carabao Utilities)
+
+```
+   (venv) $ make carabao
+```
+
+## Test Python Environment in Jupyter Lab
+
+Now we are ready to test our python working environment in Jupyter Lab
+
+```
+   (venv) $ jupyter lab         # launch jupyter lab
+```
+
+From the top menu bar select `File/New/Notebook` to create a new jupyter
+notebook. Type the following code into the code cell:
+
+```
+   from carabao.graphics import demo
+   demo()
+```
+
+Congrats, if you see the graphics below - you are ready to go.
+
+<p align="center">
+  <img src="doc/image/graphics.jpg">
+</p>
+
+
+# Tools
+
 ## Git
 
-`Git` is a version control system that allows developers to track a project and actively contribute without interfering in each other’s work. `git` should be pre-installed on recent macOS systems. If not, get instructions from the official `git` web site
-https://git-scm.com. With an installed `git` you can use the full function set of `git` from the command line.
+`Git` is a version control system that allows developers to track a project and
+actively contribute without interfering in each other’s work. `git` should be
+pre-installed on recent macOS systems. If not, get instructions from the
+official `git` web site https://git-scm.com. With an installed `git` you can use
+the full function set of `git` from the command line.
 
 ## Github Desktop
 
-While `git` is the tool to perform version control, we have `github` as a cloud site to backup the local data on a remote site. [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) is an easy-to-use graphical tool around `git` which performs the `git` operations on mouse click.
+While `git` is the tool to perform version control, we have `github` as a cloud
+site to backup the local data on a remote site.
+[Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) is an easy-to-use graphical tool around `git`
+which performs the `git` operations on mouse click.
