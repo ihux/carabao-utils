@@ -17,6 +17,7 @@ venv:
 	@echo 'invoke: $ source venv/bin/activate (or: . go; ve)'
 
 install:
+	python3 -m pip install --upgrade pip
 	pip install --upgrade wheel
 	pip install  --upgrade setuptools
 	pip install  --upgrade twine
