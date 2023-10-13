@@ -54,4 +54,4 @@ class Layer:
     print("X:\n",self.X)
     print("Y:\n",self.Y)
     print("K:\n",self.K)
-    print("K:\n",self.K)
+    print("P:\n",self.P)
