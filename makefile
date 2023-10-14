@@ -29,9 +29,9 @@ install:
 	pip install --upgrade torch
 	pip install jupyterlab
 
-carabao:
-	#ls venv/bin/activate
-	#source venv/bin/activate
+carabao: dist/carabao-0.0.1-py3-none-any.whl
+
+dist/carabao-0.0.1-py3-none-any.whl: carabao/src/carabao/*.py
 	cd carabao &&	make carabao
 
 clean:

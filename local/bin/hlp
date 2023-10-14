@@ -4,6 +4,7 @@
   ec -g 'help on local utilities in this repo (see alias and local/bin)'
   echo  '  ec            # echo colored text'
   echo  '  . go          # dot go to access local utilities'
+  echo  '  jl            # launch jupyter lab'
   echo  '  de            # deactivate virtual environment'
   echo  '  ve            # activate virtual environment'
   echo  ''
