@@ -55,7 +55,7 @@ class Canvas:
         self.ax.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],color='k',linewidth=0.5)
 
     def circle(self,xy,r,col=None):
-        hdl = plt.Circle(xy, r, color=col)   # create circle patch object
+        hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)  # circle patch object
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
 
@@ -96,7 +96,7 @@ class Neurons:
         outer = self.red if y>0 else self.gray
         inner = self.green if x>0 else self.dark
 
-        P = P if P else np.random.rand(self.s,self.d)
+        P = P if P != None else np.random.rand(self.s,self.d)
 
         #print("y:",y,", outer:",outer)
         #print("x:",x,", inner:",inner)
