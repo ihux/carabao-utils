@@ -6,7 +6,6 @@
 #============================================================================
 
 from carabao.util import peek,poke,Random
-from carabao.toy import Toy
 from torch import zeros
 
 #===============================================================================
@@ -22,7 +21,6 @@ from torch import zeros
 import torch
 
 class Layer:
-  from torch import zeros, rand
   def input(self,word,vocabulary):
     self.u = vocabulary[word]
 
@@ -54,4 +52,4 @@ class Layer:
     print("X:\n",self.X)
     print("Y:\n",self.Y)
     print("K:\n",self.K)
-    print("K:\n",self.K)
+    print("P:\n",self.P)
