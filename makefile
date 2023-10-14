@@ -17,6 +17,7 @@ venv:
 	@echo 'invoke: $ source venv/bin/activate (or: . go; ve)'
 
 install:
+	python3 -m pip install --upgrade pip
 	pip install --upgrade wheel
 	pip install  --upgrade setuptools
 	pip install  --upgrade twine
@@ -28,7 +29,7 @@ install:
 	pip install --upgrade torch
 	pip install jupyterlab
 
-carabao: venv
+carabao:
 	#ls venv/bin/activate
 	#source venv/bin/activate
 	cd carabao &&	make carabao

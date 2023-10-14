@@ -5,7 +5,7 @@
 #        mary = V("Mary")
 #============================================================================
 
-#import htm
+from carabao.htm import Layer
 
 class Toy:
     def vocab(self):
@@ -17,7 +17,7 @@ class Toy:
         return V
 
     def layer(self):
-        return None
+        return Layer(4,10,5,2)
 
 def demo():
     print("toy = Toy()")
