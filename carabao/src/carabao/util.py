@@ -71,18 +71,53 @@ class Random:
 #===============================================================================
 
 def peek(M,i,j,mm,nn):  # peek sub matrix from flat matrix
-  Mij = torch.zeros(mm,nn)
-  for ii in range(0,mm):
-    for jj in range(0,nn):
-      Mij[ii,jj] = M[i+ii,j+jj]
-  return Mij
+    Mij = torch.zeros(mm,nn)
+    for ii in range(0,mm):
+      for jj in range(0,nn):
+        Mij[ii,jj] = M[i+ii,j+jj]
+    return Mij
 
 def poke(M,i,j,Mij):  # peek sub matrix from flat matrix
-  mm = Mij.size(0)
-  nn = Mij.size(1)
-  #print("poke i,j:",i,j,"mm,nn:",mm,nn)
-  for ii in range(0,mm):
-    for jj in range(0,nn):
-      #print("M[",i+ii,",",i+jj,"] = Mij[",ii,",",jj,"]")
-      M[i+ii,j+jj] = Mij[ii,jj]
-  return M
+    mm = Mij.size(0)
+    nn = Mij.size(1)
+    #print("poke i,j:",i,j,"mm,nn:",mm,nn)
+    for ii in range(0,mm):
+        for jj in range(0,nn):
+            #print("M[",i+ii,",",i+jj,"] = Mij[",ii,",",jj,"]")
+            M[i+ii,j+jj] = Mij[ii,jj]
+    return M
+
+#===============================================================================
+# flatten a cell matrix (matrix of nxn matrices), or squeeze a flat matrix
+# - usage: M = flat(C)          # flatten cell matrix C
+#          C = squeeze(M,m,n)   # squeeze a flat matrix into a cell matrix
+#===============================================================================
+
+def flat(C):  # M = flat(C)
+    mC = C.size(0);  nC = C.size(1)
+    if mC*nC == 0:
+      M = torch.zeros(0,0)
+      return
+    M00 = C[0,0]
+    m = M00.size(0);  n = M00.size(1)
+    M = torch.zeros(mC*m,nC*n)
+    for i in range(0,mC):
+      for j in range(0,nC):
+        Mij = C[i,j]
+        M = poke(M,i,j,Mij)
+    return M
+
+#===============================================================================
+# squeeze a flat matrix M into mxn cell matrix
+# - usage: C = squeeze(M,m,n)   # squeeze a flat matrix into a mxn cell matrix
+#===============================================================================
+
+def squeeze(M, m, n):     # C = squeeze(M,m,n)
+    mm = int(M.size(0)/m)
+    nn = int(M.size(1)/n)
+    C = torch.zeros(m,n,mm,nn)-1
+    for i in range(0,m):
+      for j in range(0,n):
+        Mij = sw.peek(M,i,j,mm,nn)
+        C[i,j] = Mij
+    return C
