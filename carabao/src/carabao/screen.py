@@ -74,14 +74,17 @@ class Screen:
         self.blue = (0,0.5,1);      self.green=(0,0.8,0)
         self.magenta = (1,0.2,1)
 
-    def cell(self,ij,x=None,y=None,P=None,Q=None):
+    def cell(self,ij,x=None,y=None,P=None,Q=None,L=None):
         x = x if x else 0
         y = y if y else 0
-        outer = self.red if y>0 else self.gray
-        inner = self.green if x>0 else self.dark
 
         P = P if P != None else np.random.rand(self.d,self.s)
-        Q = Q if Q != None else P*0
+        Q = Q if Q != None else P*0    # permanence matrix
+        L = L if L != None else P*0    # learning matrix
+
+        outer = self.red if y>0 else self.gray
+        inner = self.green if x>0 else self.dark
+        core  = self.gold if L.any().any() else self.gray
 
         #print("y:",y,", outer:",outer)
         #print("x:",x,", inner:",inner)
@@ -92,15 +95,21 @@ class Screen:
         x = 1+j; y = self.m+1-i;
         self.can.circle((x,y),self.r0,outer)
         self.can.circle((x,y),self.r1,inner)
-        self.can.circle((x,y),self.r2,self.gold)
+        self.can.circle((x,y),self.r2,core)
 
         d0 = self.d-1;  s0 = self.s-1
         for mu in range(0,self.d):
             for nu in range(0,self.s):
                 xx = x + self.ds*(nu-s0/2);
                 yy = y + self.ds*(d0-mu-d0/2)
-                if Q[mu,nu] > 0:
+                if L[mu,nu] > 0 and P[mu,nu] < 0.5:
+                    col = self.red
+                elif L[mu,nu] > 0 and P[mu,nu] >= 0.5:
+                    col = self.green
+                elif Q[mu,nu] > 0:
                     col = self.magenta
+                elif L[mu,nu] > 0 and P[mu,nu] < 0.5:
+                    col = 'b'
                 else:
                     col = 'w' if P[mu,nu] >= 0.5 else 'k'
                 self.can.circle((xx,yy),self.rs,col)
