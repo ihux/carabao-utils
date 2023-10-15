@@ -8,25 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import xlim,ylim
 
-'''
-class Frame:
-    def __init__(self,canvas,position):
-        self.canvas = canvas
-        self.position = position
-        self.userdata = None
-        #self.frame()
-
-    def gcc(self):                          # get current canvas
-        return self.canvas
-
-    def frame(self):
-        xl = self.position[0]
-        yl = self.position[1]
-        xh = self.position[2]
-        yh = self.position[3]
-        axs = plt.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],'r')
-'''
-
 #============================================================================================================
 # Canvas class
 # usage: can = Canvas()
@@ -63,10 +44,10 @@ class Canvas:
         self.ax.axes('equal')
 
 #============================================================================================================
-# class Neuron
-# usage: neu = Neuron(m,n,s,d)         # create Neuron instance
+# class Neurons
+# usage: nr = Neurons(m,n,s,d)         # create Neurons instance
 #        P = np.random.rand(s,d)       # permanences
-#        neu.plot((i,j),x,y,P)
+#        nr.plot((i,j),x,y,P)
 #============================================================================================================
 
 class Neurons:
@@ -89,14 +70,16 @@ class Neurons:
         self.gray = (0.8,0.8,0.8);  self.red = (1,0,0)
         self.gold = (1,0.9,0);      self.dark = (0.5,0.5,0.5)
         self.blue = (0,0.5,1);      self.green=(0,0.8,0)
+        self.magenta = (1,0.2,1)
 
-    def cell(self,ij,x=None,y=None,P=None):
+    def cell(self,ij,x=None,y=None,P=None,Q=None):
         x = x if x else 0
         y = y if y else 0
         outer = self.red if y>0 else self.gray
         inner = self.green if x>0 else self.dark
 
         P = P if P != None else np.random.rand(self.s,self.d)
+        Q = Q if Q != None else P*0
 
         #print("y:",y,", outer:",outer)
         #print("x:",x,", inner:",inner)
@@ -108,12 +91,17 @@ class Neurons:
         self.can.circle((x,y),self.r1,inner)
         self.can.circle((x,y),self.r2,self.gold)
 
+        d0 = self.d-1;  s0 = self.s-1
         for nu in range(0,self.d):
             for mu in range(0,self.s):
-                xx = x + self.ds*(mu-(self.s-1)/2);
-                yy = y + self.ds*(nu-(self.d-1)/2)
+                xx = x + self.ds*(mu-s0/2);
+#                yy = self.d-1-y + self.ds*(nu-(self.d-1)/2)
+                yy = y + self.ds*(d0-nu-d0/2)
                 p = np.random.rand()       # permanence
-                col = 'k' if P[mu,nu] < 0.5 else 'w'
+                if Q[mu,nu] > 0:
+                    col = self.magenta
+                else:
+                    col = 'w' if P[mu,nu] >= 0.5 else 'k'
                 self.can.circle((xx,yy),self.rs,col)
 
     def input(self,j,u):
