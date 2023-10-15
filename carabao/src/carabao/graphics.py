@@ -78,12 +78,13 @@ class Neurons:
         outer = self.red if y>0 else self.gray
         inner = self.green if x>0 else self.dark
 
-        P = P if P != None else np.random.rand(self.s,self.d)
+        P = P if P != None else np.random.rand(self.d,self.s)
         Q = Q if Q != None else P*0
 
         #print("y:",y,", outer:",outer)
         #print("x:",x,", inner:",inner)
         #print("P:\n",P)
+        #print("Q:\n",Q)
 
         i = ij[0];  j = ij[1]
         x = 1+j; y = self.m+1-i;
@@ -92,12 +93,10 @@ class Neurons:
         self.can.circle((x,y),self.r2,self.gold)
 
         d0 = self.d-1;  s0 = self.s-1
-        for nu in range(0,self.d):
-            for mu in range(0,self.s):
-                xx = x + self.ds*(mu-s0/2);
-#                yy = self.d-1-y + self.ds*(nu-(self.d-1)/2)
-                yy = y + self.ds*(d0-nu-d0/2)
-                p = np.random.rand()       # permanence
+        for mu in range(0,self.d):
+            for nu in range(0,self.s):
+                xx = x + self.ds*(nu-s0/2);
+                yy = y + self.ds*(d0-mu-d0/2)
                 if Q[mu,nu] > 0:
                     col = self.magenta
                 else:
@@ -109,6 +108,9 @@ class Neurons:
         x = 1+j; y = 1;
         col = self.blue if u > 0 else self.gray
         self.can.circle((x,y),self.r2,col)
+
+    def at(self,i,j):  # to tell a Cell constructor where to place a cell
+        return (self,(i,j))
 
 #============================================================================================================
 # plot circle
