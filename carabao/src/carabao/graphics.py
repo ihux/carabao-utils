@@ -58,6 +58,7 @@ class Neurons:
         d = d if d != None else 2
 
         self.m = m;  self.n = n;  self.s = s;  self.d = d
+        self.ij = (0,0)
         self.setup()
 
     def canvas(self):
@@ -110,7 +111,8 @@ class Neurons:
         self.can.circle((x,y),self.r2,col)
 
     def at(self,i,j):  # to tell a Cell constructor where to place a cell
-        return (self,(i,j))
+        self.ij = (i,j)
+        return self
 
 #============================================================================================================
 # plot circle
