@@ -60,8 +60,9 @@ class Neurons:
         self.m = m;  self.n = n;  self.s = s;  self.d = d
         self.ij = (0,0)
         self.setup()
+        self.cls()
 
-    def canvas(self):
+    def cls(self):           # clear screen
         self.can = Canvas([0,0,self.n+1,self.m+2])
         return self.can
 
