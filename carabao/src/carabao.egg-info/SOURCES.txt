@@ -4,6 +4,7 @@ src/carabao/__init__.py
 src/carabao/graphics.py
 src/carabao/htm.py
 src/carabao/math.py
+src/carabao/screen.py
 src/carabao/toy.py
 src/carabao/util.py
 src/carabao.egg-info/PKG-INFO

@@ -1,12 +1,10 @@
 #===============================================================================
-# carabao/graphics library:
-# - class Canvas
-# - class Neurons
+# carabao/screen library:
+# - class Screen
 #===============================================================================
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import xlim,ylim
 
 #============================================================================================================
 # Canvas class
@@ -44,19 +42,21 @@ class Canvas:
         self.ax.axes('equal')
 
 #============================================================================================================
-# class Neurons
-# usage: nr = Neurons(m,n,s,d)         # create Neurons instance
+# class Screen
+# usage: scr = Screen(m,n,s,d)         # create Screen instance
 #        P = np.random.rand(s,d)       # permanences
-#        nr.plot((i,j),x,y,P)
+#        Q = (P >= 0.5)                # synaptics
+#        scr.plot((i,j),x,y,P,Q)
 #============================================================================================================
 
-class Neurons:
-    def __init__(self,m=None,n=None,s=None,d=None):
+class Screen:
+    def __init__(self,tag,m=None,n=None,s=None,d=None):
         m = m if m != None else 4
         n = n if n != None else 10
         s = s if s != None else 5
         d = d if d != None else 2
 
+        self.tag = tag
         self.m = m;  self.n = n;  self.s = s;  self.d = d
         self.ij = (0,0)
         self.setup()
@@ -115,83 +115,5 @@ class Neurons:
         self.ij = (i,j)
         return self
 
-#============================================================================================================
-# plot circle
-# usage: circle(ax,(x,y),r,color)     # plot circle
-#============================================================================================================
-'''
-def circle(ax,xy,r,col=None):
-    hdl = plt.Circle(xy, 0.2, color=col)
-    #fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
-    # (or if you have an existing figure)
-    # fig = plt.gcf()
-    # ax = fig.gca()
-
-    ax.add_patch(hdl)
-    return hdl
-'''
-#============================================================================================================
-# several demos
-#============================================================================================================
-
-def demo1():
-    plt.plot([1, 2, 7, 4])
-    plt.ylabel('some numbers')
-    plt.show()
-
-def demo2():
-    fig,ax = plt.subplots()
-    ax.plot([1,2,3],[1,2,4])
-    ax.axis('equal')
-    circle(ax,(2,2),1,'g')
-
-def demo3():
-    can = Canvas([0,0,4,4])
-    color = ('k','r','g',(0,1,1))
-    for i in range(1,4):
-        can.circle((i,i),0.5,color[i])
-    plt.show()
-
-def demo4():
-    m = 4; n = 10; s = 5; d = 2
-    r0 = 0.45;  r1 = 0.38;  r2 = 0.31
-    ds = 0.11; rs = ds/3;
-    gray = (0.8,0.8,0.8);  red = (1,0,0)
-    gold = (1,0.9,0);      dark = (0.5,0.5,0.5)
-    blue = (0,0.5,1);      green=(0,0.8,0)
-
-    can = Canvas([0,0,11,m+2])
-
-    for j in range(0,n):
-        x = 1+j; y = 1;
-        #plt.plot([x,x],[1,m+1],color=blue,linewidth=3)
-        can.circle((x,y),r2,blue)
-
-    for i in range(0,m):
-        for j in range(0,n):
-            x = 1+j; y = m+1-i;
-            can.circle((x,y),r0,red)
-            can.circle((x,y),r1,green)
-            can.circle((x,y),r2,gold)
-
-            for mu in range(0,d):
-                for nu in range(0,s):
-                    xx = x + ds*(nu-(s-1)/2);  yy = y + ds*(mu-(d-1)/2)
-                    p = np.random.rand()       # permanence
-                    if p < 0.5:
-                        can.circle((xx,yy),rs,'k')
-                    else:
-                        can.circle((xx,yy),rs,'w')
-    plt.show()
-
-
-def demo5():
-    nrs = Neurons(2,2,5,2)
-    can = nrs.canvas()                    # create/open related canvas
-    nrs.cell((0,0),0,0)
-    nrs.cell((0,1),0,1)
-    nrs.cell((1,0),1,0)
-    nrs.cell((1,1),1,1)
-    nrs.input(0)
-    nrs.input(1)
-    plt.show()
+    def show(self):
+        plt.show()
