@@ -5,6 +5,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.transforms import Affine2D
 
 #============================================================================================================
 # Canvas class
@@ -14,7 +16,8 @@ import matplotlib.pyplot as plt
 #============================================================================================================
 
 class Canvas:
-    def __init__(self,pos):
+    def __init__(self,pos=None):
+        pos = [0,0,1,1] if pos == None else pos
         self.userdata = None
         self.fig = None
         self.ax = None
@@ -36,6 +39,34 @@ class Canvas:
     def circle(self,xy,r,col=None):
         hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)  # circle patch object
         self.ax.add_patch(hdl)               # add circle to axis' patches
+        return hdl
+
+    def rect(self,xy1,xy2,col=None,angle=None):
+        angle = 0 if angle == None else angle
+        width = xy2[0]-xy1[0]; height = xy2[1]-xy1[1];
+        hdl = plt.Rectangle(xy1, width,height,
+                            facecolor=col, edgecolor=col,angle=angle)
+        self.ax.add_patch(hdl)               # add rectangle to axis' patches
+        return hdl
+
+    def fancy(self,xy1,xy2,col=None,r=None,angle=None,center=None):
+        r = 0.1 if r == None else r
+        angle = 0 if angle == None else angle
+        center = (0,0) if center == None else center
+        lw = 0.5
+        fcol = col
+        ecol = 'k'
+        style = "round, pad=%g" % r
+
+        xy = (xy1[0]+r,xy1[1]+r)
+        hdl = patches.FancyBboxPatch(xy, xy2[0]-xy1[0]-2*r,xy2[1]-xy1[1]-2*r,
+                    facecolor=fcol, edgecolor=ecol, linewidth=lw,
+                    boxstyle=style)
+
+        trans = Affine2D().rotate_deg_around(center[0],center[1],angle)  + self.ax.transData
+        hdl.set_transform(trans)
+
+        self.ax.add_patch(hdl)               # add rectangle to axis' patches
         return hdl
 
     def equal(self):
