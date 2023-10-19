@@ -1,6 +1,10 @@
 # makefile to manage carabao toolbox
 
 all:
+	make install
+	make carabao
+
+help:
 	@echo '  make venv      # make virtual environment'
 	@echo '  make install   # install packages for playground'
 	@echo '  make carabao   # build carabao wheel and install'
@@ -14,7 +18,7 @@ all:
 
 venv:
 	python3 -m venv venv
-	@echo 'invoke: $ source venv/bin/activate (or: . go; ve)'
+	@bash local/bin/ec -g '=> . go'
 
 install:
 	python3 -m pip install --upgrade pip
