@@ -68,7 +68,7 @@ class Canvas:
                     facecolor=fcol, edgecolor=ecol, linewidth=lw,
                     boxstyle=style, transform=t)
 
-        trans = Affine2D().rotate_deg_around(center[0],center[1],angle)  + self.ax.transData
+        trans = Affine2D().rotate_deg_around(center[0],center[1],angle) + self.ax.transData
         hdl.set_transform(trans)
 
         self.ax.add_patch(hdl)               # add rectangle to axis' patches
