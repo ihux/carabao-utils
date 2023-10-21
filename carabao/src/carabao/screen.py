@@ -58,10 +58,15 @@ class Canvas:
         ecol = 'k'
         style = "round, pad=%g" % r
 
+        center = (center[0]+(xy1[0]+xy2[0])/2, center[1]+(xy1[1]+xy2[1])/2)
+        ts = self.ax.transData
+        tr = Affine2D().rotate_deg_around(center[0],center[1],angle)
+        t = tr + ts
+
         xy = (xy1[0]+r,xy1[1]+r)
         hdl = patches.FancyBboxPatch(xy, xy2[0]-xy1[0]-2*r,xy2[1]-xy1[1]-2*r,
                     facecolor=fcol, edgecolor=ecol, linewidth=lw,
-                    boxstyle=style)
+                    boxstyle=style, transform=t)
 
         trans = Affine2D().rotate_deg_around(center[0],center[1],angle)  + self.ax.transData
         hdl.set_transform(trans)
@@ -71,6 +76,10 @@ class Canvas:
 
     def equal(self):
         self.ax.axes('equal')
+
+    def show(self):
+        plt.show()
+
 
 #============================================================================================================
 # class Screen
