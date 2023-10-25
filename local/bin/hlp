@@ -6,6 +6,7 @@
   echo  ''
   ec -g 'help on local utilities in this repo (see alias and local/bin)'
   echo  '  ec            # echo colored text'
+  echo  '  id            # launch python idle app'
   echo  '  jl            # launch jupyter lab'
   echo  '  de            # deactivate virtual environment'
   echo  '  ve            # activate virtual environment'
