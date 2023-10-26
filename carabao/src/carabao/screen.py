@@ -192,10 +192,11 @@ class Screen:
         y = y if y != None else 0      # output state
         b = b if b != None else 0      # burst state
 
-        P = P if P != None else np.random.rand(self.d,self.s)
-        Q = Q if Q != None else P*0    # permanence matrix
-        L = L if L != None else P*0    # learning matrix
-        q = q if q != None else [0,0,0,0]
+        print("P:\n",P)
+        P = np.random.rand(self.d,self.s) if P is None else P
+        Q = P*0 if Q is None else Q    # permanence matrix
+        L = P*0 if L is None else L    # learning matrix
+        q = [0,0,0,0] if q is None else q
 
         colu = self.blue if u else self.gray
         colb = self.orange if b else self.gray
@@ -286,7 +287,6 @@ class Screen:
 #        cell.show()
 #=============================================================================
 
-import torch
 import numpy
 
 class Monitor:
@@ -322,9 +322,9 @@ class Monitor:
     def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None,s=None):
         self.c = cell.update(c);
         self.x_ = cell.x_;  self.P_ = cell.P_
-        if q == None:
+        if q is None:
             self.log(cell,'(phase 1)',phase=1)
-        elif W == None:
+        elif W is None:
             self.q = q
             self.log(cell,"(phase 2)",phase=2)
         else:
@@ -392,7 +392,7 @@ class Monitor:
 
     def print(self,tag,msg,arg):   # .print("matrix","Q:",Q)
         if tag == 'matrix':
-            m,n = arg.size()
+            m,n = arg.shape
             print(msg,"[",end='')
             sepi = ''
             for i in range(0,m):
@@ -423,7 +423,7 @@ class Monitor:
 
 def norm(M):    # max of row sums
     result = 0
-    for j in range(0,M.size(0)):
+    for j in range(0,M.shape[0]):
         sumj = M[j].sum().item()
         result = result if sumj < result else sumj
     return result
