@@ -413,6 +413,10 @@ class Monitor:
         can = self.neurons.canvas()
         self.plot()
 
+    def hello(self):
+        print("hello, monitor")
+
+
 #=============================================================================
 # helper: matrix 1-norm (maximum of row sums)
 #=============================================================================
