@@ -76,3 +76,16 @@ class Caracow:
 class Carashit:
     def __init__(self):
         self.shit = '*** bullshit ***'
+
+#===============================================================================
+# playground: neural
+#===============================================================================
+
+def neural():
+    print("setting up neural playground ....")
+    import importlib
+    import carabao
+    import carabao.screen
+    import carabao.cell
+    importlib.reload(carabao.screen)  # reload module
+    importlib.reload(carabao.cell)    # reload module

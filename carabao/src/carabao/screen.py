@@ -6,6 +6,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+
 from matplotlib.transforms import Affine2D
 
 #============================================================================================================
@@ -192,7 +193,7 @@ class Screen:
         y = y if y != None else 0      # output state
         b = b if b != None else 0      # burst state
 
-        print("P:\n",P)
+        #print("P:\n",P)
         P = np.random.rand(self.d,self.s) if P is None else P
         Q = P*0 if Q is None else Q    # permanence matrix
         L = P*0 if L is None else L    # learning matrix
@@ -340,9 +341,11 @@ class Monitor:
         if screen != None:
             self.place(screen,screen.ij)
 
-    def plot(self,cell,i=None,j=None):
+    def plot(self,cell,i=None,j=None,q=None,Q=None):
         if i != None:
             self.place(self.screen,(i,j))
+        self.q = self.q if q is None else q
+        self.Q = self.Q if Q is None else Q
 
             # now copy elements of self.q except those element
             # which repsents our own cell output
