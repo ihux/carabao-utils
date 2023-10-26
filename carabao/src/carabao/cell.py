@@ -1,5 +1,5 @@
 #===============================================================================
-# carabao/cell library: copyright: Neuronycs 2023
+# carabao/cell package: copyright: Neuronycs 2023
 # - class Cell
 #===============================================================================
 
@@ -78,7 +78,7 @@ class Cell:
 
             # record/log quantities (if verbose)
 
-        mon.record(self,u,c)           # record current cell state
+        self.mon.record(self,u,c)      # record current cell state
         return self.update(c)          # return updated context
 
     def phase2(self,u,c):              # cell algo phase 2: bursting
@@ -91,7 +91,7 @@ class Cell:
            # important: in this phase we cannot change output (and context vector)
            # before all cells in the context have determined their burst state
 
-        mon.record(self,u,c,q)
+        self.mon.record(self,u,c,q)
         return self.update(c)          # return updated context
 
     def phase3(self,u,c):              # cell algo phase 3: process context
@@ -121,15 +121,15 @@ class Cell:
 
             # record this stuff
 
-        mon.record(self,u,c,0,V,W,Q,L,D,s)
+        self.mon.record(self,u,c,0,V,W,Q,L,D,s)
         return self.update(c)          # return updated context
 
-    def phase(self,i,u,c):             # cell algo phase i
-        if i == 1:
+    def phase(self,ph,u,c):             # cell algo phase i
+        if ph == 1:
             return self.phase1(u,c)
-        elif i == 2:
+        elif ph == 2:
             return self.phase2(u,c)
-        elif i == 3:
+        elif ph == 3:
             return self.phase3(u,c)
         else:
             raise Exception("bad phase")
@@ -174,12 +174,25 @@ def toy(tag):
     Toy: create a toy object
 
        k,g,K,P = toy('cell')
+       k,g,K,P = toy('mini3')
     """
     if tag == 'cell':
         k = 0                        # cell index
-        g = [0,1,2,3]                # group indices
+        g = [0,1,2,4]                  # group indices
         K = array([[1,3,5,7,9],[3,4,5,6,7]])
         P = array([[0.12,0.32,0.54,0.77,0],[0,0.61,0.45,0,0]])
+        return k,g,K,P
+    elif tag == 'mini3':
+        k = [0,1,2]                  # cell indices
+        g = [0,1,2]                  # group indices
+        K0 = array([[3,4,5,6,7],[1,3,5,7,9]])
+        K1 = array([[4,5,6,7,8],[2,4,5,6,7]])
+        K2 = array([[5,6,7,8,9],[0,3,7,8,9]])
+        P0 = array([[0.5,0.6,0.1,0.2,0.3],[0.0,0.6,0.4,0.0,0.0]])
+        P1 = array([[0.1,0.3,0.5,0.1,0.0],[0.0,0.6,0.5,0.7,0.0]])
+        P2 = array([[0.0,0.1,0.5,0.7,0.1],[0.0,0.1,0.3,0.8,0.0]])
+        K = [K0,K1,K2]
+        P = [P0,P1,P2]
         return k,g,K,P
     else:
         raise Exception('unknown tag')

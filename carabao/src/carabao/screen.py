@@ -4,6 +4,8 @@
 #===============================================================================
 
 import numpy as np
+from numpy import array
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -140,7 +142,7 @@ class Screen:
 
         k = 0;
         if (l % 2 == 1):               # if an even number of basal synapses
-            print("q:",q,"len(q):",len(q))
+            #print("q:",q,"len(q):",len(q))
             ys = y+r2*1.25
             col = 'w' if q[k] == 0 else self.magenta;  k += 1
             self.can.circle((xs,ys),self.rs,col)
@@ -288,8 +290,6 @@ class Screen:
 #        cell.show()
 #===============================================================================
 
-import numpy
-
 class Monitor:
     def __init__(self,m,n,verbose=0):
         self.screen = Screen('Neurons',m,n)
@@ -312,7 +312,7 @@ class Monitor:
         self.P_ = None
 
         self.s = nan            # dendritic spike
-        self.q = [0,0,0,0]
+        self.q = None
 
         self.W = None           # no weights needed
         self.V = None           # no pre-synaptic signals needed
@@ -344,16 +344,9 @@ class Monitor:
     def plot(self,cell,i=None,j=None,q=None,Q=None):
         if i != None:
             self.place(self.screen,(i,j))
+        self.q = 0*array(cell.g)
         self.q = self.q if q is None else q
         self.Q = self.Q if Q is None else Q
-
-            # now copy elements of self.q except those element
-            # which repsents our own cell output
-
-        q = [];
-        for k in range(0,len(self.q)):
-             if cell.g[k] != cell.k:
-                 q.append(self.q[k])
 
         self.screen.neuron(self.ij,cell.u,cell.x,cell.y,cell.b,
                            cell.P,self.Q,self.L,self.q)
@@ -364,7 +357,7 @@ class Monitor:
         nan = float('nan')
         msg = msg if msg != None else ""
         self.phase = phase if phase != None else self.phase
-        print("-------------------------------------------------------------")
+        print("--------------------------------------------------------------")
         print("iteration: ",self.iteration,"cell: #%g" % cell.k,msg)
         print("   k:",cell.k,", g:",cell.g,", eta:",cell.eta)
         self.print('matrix',"   K:",cell.K)
