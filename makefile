@@ -23,8 +23,8 @@ venv:
 install:
 	python3 -m pip install --upgrade pip
 	pip install --upgrade wheel
-	pip install  --upgrade setuptools
-	pip install  --upgrade twine
+	pip install --upgrade setuptools
+	pip install --upgrade twine
 	pip install --upgrade ypstruct==0.0.2
 	pip install pytest==4.4.1
 	pip install pytest-runner==4.4
