@@ -9,12 +9,12 @@ import matplotlib.patches as patches
 
 from matplotlib.transforms import Affine2D
 
-#============================================================================================================
+#===============================================================================
 # Canvas class
 # usage: can = Canvas()
 #        can.circle((x,y),r,color)     # plot circle
 #        can.equal()                   # set equal aspect ratio
-#============================================================================================================
+#===============================================================================
 
 class Canvas:
     def __init__(self,pos=None):
@@ -38,7 +38,7 @@ class Canvas:
         self.ax.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],color='k',linewidth=0.5)
 
     def circle(self,xy,r,col=None):
-        hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)  # circle patch object
+        hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
 
@@ -92,13 +92,13 @@ class Canvas:
         plt.show()
 
 
-#============================================================================================================
+#===============================================================================
 # class Screen
 # usage: scr = Screen(m,n,s,d)         # create Screen instance
 #        P = np.random.rand(s,d)       # permanences
 #        Q = (P >= 0.5)                # synaptics
 #        scr.plot((i,j),x,y,P,Q)
-#============================================================================================================
+#===============================================================================
 
 class Screen:
     def __init__(self,tag,m=None,n=None,s=None,d=None):
@@ -281,12 +281,12 @@ class Screen:
     def show(self):
         plt.show()
 
-#=============================================================================
+#===============================================================================
 # class Monitor
 # usage: mon = Monitor(4,10)
 #        cell = Cell(mon,k,g,K,P)
 #        cell.show()
-#=============================================================================
+#===============================================================================
 
 import numpy
 
@@ -420,9 +420,9 @@ class Monitor:
         print("hello, monitor")
 
 
-#=============================================================================
+#===============================================================================
 # helper: matrix 1-norm (maximum of row sums)
-#=============================================================================
+#===============================================================================
 
 def norm(M):    # max of row sums
     result = 0

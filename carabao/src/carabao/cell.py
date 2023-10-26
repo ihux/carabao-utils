@@ -183,3 +183,6 @@ def toy(tag):
         return k,g,K,P
     else:
         raise Exception('unknown tag')
+
+def hello():
+	print("hello, world!")

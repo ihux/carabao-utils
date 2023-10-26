@@ -12,9 +12,9 @@
 #    o = Carashit()
 #    o.shit
 
-#============================================================================
+#===============================================================================
 # class Caracow (one of Carabao's basic classes)
-#============================================================================
+#===============================================================================
 
 from ypstruct import struct
 
@@ -78,14 +78,18 @@ class Carashit:
         self.shit = '*** bullshit ***'
 
 #===============================================================================
-# playground: neural
+# setup neural playground
 #===============================================================================
+"""
+print("setting up neural playground ...")
 
-def neural():
-    print("setting up neural playground ....")
-    import importlib
-    import carabao
-    import carabao.screen
-    import carabao.cell
-    importlib.reload(carabao.screen)  # reload module
-    importlib.reload(carabao.cell)    # reload module
+import carabao
+import carabao.screen
+import carabao.cell
+
+import importlib
+importlib.reload(carabao.screen)  # reload module
+importlib.reload(carabao.cell)    # reload module
+
+print("... packages reloaded")
+"""
