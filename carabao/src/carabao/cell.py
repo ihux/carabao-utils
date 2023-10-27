@@ -5,7 +5,7 @@
 
 import numpy
 from numpy import transpose as trn
-from numpy import ones
+from numpy import ones, arange
 from carabao.screen import norm
 
 #=============================================================================
@@ -86,9 +86,10 @@ class Cell:
 
            # rule 2: excited cells in a non-predictive group get bursting
 
-        self.b,q = self.burst(c)       # determine cell's burst state
+        q = [c[k] for k in self.g]     # the group's outputs
+        self.b = u * (sum(q) == 0)     # set cell's burst state
 
-           # important: in this phase we cannot change output (and context vector)
+           # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
         self.mon.record(self,u,c,q)
@@ -107,12 +108,12 @@ class Cell:
         W = (self.P >= self.eta)       # synaptic (binary) weights
         Q = V * W                      # synapitcs matrix
 
-            # spiking cells get predictive (calculate state after transition)
+            # rule 4: spiking cells get predictive (calc state after transition)
 
         s = (norm(Q) >= self.theta)    # dentritic spike
         self.x_ = u * s                # getting predictive
 
-            # spiking cells learn (calculate permanences after transition)
+            # rule 5: spiking dentrites learn (calc permanences after transition)
 
         L = self.learn(Q)
         D = self.y * (L*Q*self.pdelta - L*self.ndelta)
@@ -141,13 +142,8 @@ class Cell:
                 V[mu,nu] = c[K[mu,nu]];
         return V
 
-    def burst(self,c):
-        q = []
-        for k in range(0,len(self.g)):
-           qk = c[self.g[k]]
-           q.append(qk)
-        b = int(sum(q) == 0)            # burst state
-        return b,q
+    def group(self,c,g):
+        return [c[g[k]] for k in range(0,len(g))]
 
     def learn(self,Q):                  # learning vector
         d,s = Q.shape
