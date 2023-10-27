@@ -332,6 +332,24 @@ class Monitor:
             # recorder init
 
         self.initrecorder()
+    """
+        def copy(self):
+            o = Monitor(self.screen.m,self.screen.n,self.verbose)
+            o.c = self.c;
+            o._P = self._P
+            o.x_ = self.x_
+            o.P_ = self.P_
+
+            o.s = self.s                  # dendritic spike
+            o.q = self.q
+
+            o.W = self.W                  # no weights needed
+            o.V = self.V                  # no pre-synaptic signals needed
+            o.Q = self.Q                  # no synaptics
+            o.L = self.L                  # no binary learning matrix
+            o.D = self.D                  # no learning delta
+            return o
+    """
 
     def initrecorder(self):
         nan = float('nan');

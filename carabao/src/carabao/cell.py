@@ -89,7 +89,7 @@ class Cell:
     """
 
     def __init__(self,mon,k,g,K,P):
-        self.mon = mon
+        self.mon = mon  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
 
             # input, output, state variables
 
