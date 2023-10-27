@@ -4,7 +4,7 @@
 #===============================================================================
 
 #import numpy as np
-from numpy import array, isnan, copy, arange
+from numpy import array, isnan, copy, arange, zeros
 from ypstruct import struct
 
 import matplotlib.pyplot as plt
@@ -130,8 +130,8 @@ class Canvas:
 # class Screen
 # usage: scr = Screen(m,n,s,d)         # create Screen instance
 #        P = np.random.rand(s,d)       # permanences
-#        Q = (P >= 0.5)                # synaptics
-#        scr.plot((i,j),x,y,P,Q)
+#        E = (P >= 0.5)                # synaptics
+#        scr.plot((i,j),x,y,P,E)
 #===============================================================================
 
 class Screen:
@@ -194,16 +194,17 @@ class Screen:
                 col = 'w' if q[k] == 0 else self.magenta;  k += 1
                 self.can.circle((x+i*h+dx,ys-i*h),rs,col)
 
-    def segment(self,x,y,r,d,mu,P,Q,L):  # plot mu-th dendritic segment out of total d
-        H = r*0.9;  W = 2*r            # total height/width of all segments
+
+    def segment(self,x,y,r,d,mu,W,E,s):  # plot mu-th dendritic segment out of total d
+        H = r*0.9;                     # total height/width of all segments
         yoff = r*0.2                   # y offset of segments
-        h = H/d; w = W/2               # height and half width of segment
+        h = H/d; w = r                 # height and half width of segment
         dy = r/4
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
-
-        learn = L[mu].any()
-        col = self.gold if learn else self.gray
+#>>>>>>>>>>>>>>>>>>>>>
+        print("segment: s:",s,"W:",W)
+        col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
         self.can.fancy((x-w,ymu-h),(x+w,ymu),col,r=r/10)
@@ -212,26 +213,29 @@ class Screen:
         ws = min(h*0.4,w/self.s)
         self.rs = ws*0.8
 
-        for nu in range(0,self.s):
+        for nu in range(0,W.shape[1]):
             xs = x + 2*ws*nu - (self.s*ws/2 + 1.5*ws);
             yy = ys + h*(d0-mu)
-            if Q[mu,nu] > 0:
+            if E[mu,nu] > 0:
                 col = self.magenta
             else:
-                col = 'w' if P[mu,nu] >= 0.5 else 'k'
+                col = 'w' if W[mu,nu] > 0 else 'k'
+#<<<<<<<<<<<<<<<<<<<<<<<
+            print("nu:",nu,"xs:",xs,"col:",col)
             self.can.circle((xs,ys),self.rs,col)
 
-    def neuron(self,ij,u=None,x=None,y=None,b=None,P=None,Q=None,L=None,q=None):
+    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
         y = y if y != None else 0      # output state
         b = b if b != None else 0      # burst state
 
-        #print("P:\n",P)
-        P = np.random.rand(self.d,self.s) if P is None else P
-        Q = P*0 if Q is None else Q    # permanence matrix
-        L = P*0 if L is None else L    # learning matrix
-        q = [0,0,0,0] if q is None else q
+        v = [0,0,0,0] if v is None else v
+        W = zeros((self.d,self.s)) if W is None else W
+        E = W*0 if E is None else E    # permanence matrix
+        s = [0 for k in range(0,E.shape[0])] if s is None else s
+
+        print("neuron: s =",s,"W:",W)
 
         colu = self.blue if u else self.gray
         colb = self.orange if b else self.gray
@@ -239,7 +243,6 @@ class Screen:
         coly = self.red if y>0 else self.gray
 
         i = ij[0];  j = ij[1]
-#       x = 1+j; y = self.m+1-i;
         x = 1+j; y = self.m-i;
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
@@ -248,8 +251,6 @@ class Screen:
             # draw different parts of neuron cell
 
         self.can.fancy((x-r0*0.9,y-r0*1.0),(x+r0*0.9,y-r0*0.2),colb,r=0.2)
-        #self.can.fancy((x-r3,y+r3),(x+r3,y+3*r3),colu,r=0.05,angle=45)
-
         self.can.fancy((x-r2,y+dy1-r2),(x+r2,y+dy1+r2),colu,r=0.05,angle=45)
         self.can.fancy((x-r3,y+dy1-r3),(x+r3,y+dy1+r3),colx,r=0.04,angle=45)
         self.can.fancy((x-r0*0.4,y-r0+dy2),(x+r0*0.4,y-r0*0.2+dy2),coly,r=0.05,angle=45)
@@ -258,20 +259,20 @@ class Screen:
 
         d = self.d #+1
         for mu in range(0,d):
-            self.segment(x,y,self.r0,d,mu,P,Q,L)
+            self.segment(x,y,self.r0,d,mu,W,E,s)
 
            # draw basal dendritic segment
 
-        self.basal(x,y,q)
+        self.basal(x,y,v)
 
 
-    def cell(self,ij,u=None,x=None,y=None,P=None,Q=None,L=None):
+    def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
         y = y if y != None else 0      # output state
 
         P = P if P != None else numpy.random.rand(self.d,self.s)
-        Q = Q if Q != None else P*0    # permanence matrix
+        E = E if E != None else P*0    # permanence matrix
         L = L if L != None else P*0    # learning matrix
 
         outer = self.red if y>0 else self.gray
@@ -293,7 +294,7 @@ class Screen:
                     col = self.red
                 elif L[mu,nu] > 0 and P[mu,nu] >= 0.5:
                     col = self.green
-                elif Q[mu,nu] > 0:
+                elif E[mu,nu] > 0:
                     col = self.magenta
                 elif L[mu,nu] > 0 and P[mu,nu] < 0.5:
                     col = 'b'
@@ -349,26 +350,26 @@ class Monitor:
         data.x_ = None
         data.P_ = None
 
-        data.s = nan            # dendritic spike
-        data.q = None
+        data.s = None           # dendritic spike
+        data.v = None
 
         data.W = None           # no weights needed
         data.V = None           # no pre-synaptic signals needed
-        data.Q = None           # no synaptics
+        data.E = None           # no synaptics
         data.L = None           # no binary learning matrix
         data.D = None           # no binary learning matrix
 
-    def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None):
+    def record(self,cell,u,c,q=None,V=None,W=None,E=None,L=None,D=None):
         data = self.data
         data.c = cell.update(c);
         data.x_ = cell.x_;  data.P_ = cell.P_
         if q is None:
             self.log(cell,'(phase 1)',phase=1)
         elif W is None:
-            data.q = q
+            data.v = q
             self.log(cell,"(phase 2)",phase=2)
         else:
-            data.V = V;  data.W = W;  data.Q = Q;
+            data.V = V;  data.W = W;  data.E = E;
             data.L = L;  data.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
@@ -380,17 +381,22 @@ class Monitor:
         if screen != None:
             data.place(screen,screen.ij)
 
-    def plot(self,cell,i=None,j=None,q=None,Q=None):
+    def plot(self,cell,i=None,j=None,v=None,s=None,W=None,E=None):
        data = self.data
-       if i != None:
+       if i is not None:
             self.place(data.screen,(i,j))
-            data.q = 0*array(cell.g)
-            data.q = data.q if q is None else q
-            data.Q = data.Q if Q is None else Q
+            data.W = (cell.P >= cell.eta)*1
+            data.v = 0*array(cell.g)
+            data.v = data.v if v is None else v
+            data.s = data.s if s is None else s
+            data.W = data.W if W is None else W
+            data.E = data.E if E is None else E
 
+#>>>>>>>>>>>>>>>>>>>
+            #print("Monitor.plot: s =",data.s,"W:",data.W)
             data.screen.neuron(data.ij,cell.u,cell.x,cell.y,cell.b,
-                               cell.P,data.Q,data.L,data.q)
-            data.screen.input(data.ij[1],cell.u)
+                               data.v,data.s,data.W,data.E)
+            #data.screen.input(data.ij[1],cell.u)
             data.screen.show
 
     def norm1(self,M):
@@ -417,14 +423,14 @@ class Monitor:
         if (data.phase == 3):
             self.print('matrix',"   W:",data.W)
             self.print('matrix',"   V:",data.V)
-            self.print('matrix',"   Q:",data.Q)
+            self.print('matrix',"   E:",data.E)
             self.print('matrix',"   L:",data.L)
             self.print('matrix',"   D:",data.D)
         if (data.phase== 2 or data.phase == 3):
-            print("   b:",cell.b,"(q:", data.q,
-              ", ||q||=%g)" % (nan if isnan(data.q).any() else sum(data.q)))
+            print("   b:",cell.b,"(q:", data.v,
+              ", ||q||=%g)" % (nan if isnan(data.v).any() else sum(data.v)))
         if (data.phase == 3):
-            print("   s:",int(cell.s),"(||Q||=%g, theta:%g)" % (self.norm1(data.Q),cell.theta))
+            print("   s:",int(cell.s),"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
         print("   u:",cell.u)
         if (data.phase == 3):
             print("   x: %g (-> %g)" % (cell.x,cell.x_))
@@ -438,7 +444,7 @@ class Monitor:
             #self.invalid(cell,'b,p,l,W,Z')       # invalidate
             self.data.iteration += 1
 
-    def print(self,tag,msg,arg):   # .print("matrix","Q:",Q)
+    def print(self,tag,msg,arg):   # .print("matrix","E:",E)
         if tag == 'matrix':
             m,n = arg.shape
             print(msg,"[",end='')
@@ -470,8 +476,8 @@ class Monitor:
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
         hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(cell.s,8);  hb = hash(cell.b,9)
-        hq = hash(data.q,10)
-        hW = hash(data.W,11); hV = hash(data.V,12); hE = hash(data.Q,13)
+        hq = hash(data.v,10)
+        hW = hash(data.W,11); hV = hash(data.V,12); hE = hash(data.E,13)
         hL = hash(data.L,14); hD = hash(data.D,15)
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]

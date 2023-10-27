@@ -70,22 +70,22 @@ def norm1(M):    # max of row sums
 
 class Cell:
     """
-    Cell: class Cell - modelling cell algorithm
+    Cell: class Cell - modelling HTM cell algorithm
 
-       from carabao.screen import Monitor
-       from carabao.cell import Cell, toy
+        from carabao.screen import Monitor
+        from carabao.cell import Cell,toy
+        from numpy import ones
 
-       mon = Monitor(4,10)
-       k,g,K,P,c = toy('cell')
+        mon = Monitor(m=1,n=3)
+        k,g,K,P,c = toy('cell')
+        cell = Cell(mon,k,g,K,P)
+        cell.plot(i=0,j=0)    # plot at monitor location i,j
 
-       cell = Cell(mon,k,g,K,P)
-       cell.u = cell.y = cell.x = cell.b = 1
-       cell.plot(i=0,j=0)   # plot at monitor location i,j
+        cell.u = cell.y = cell.x = cell.b = 1
+        cell.plot(i=0,j=1)    # plot at monitor location i,j
 
-       v = select(g,c)      # group  activation
-       W = (P>=0.5)         # binary weight matrix
-       E = W * select(K,c)  # empowerment (post synaptic effect matrix)
-       cell.plot(0,1,v,E)   # plot @ group activation v and empowerment E
+        v = [1,0,1,0];  V = ones((2,5));  E = (cell.P >= 0.5)*V
+        cell.plot(0,2,v,E)
     """
 
     def __init__(self,mon,k,g,K,P):
@@ -145,13 +145,13 @@ class Cell:
 
            # rule 2: excited cells in a non-predictive group get bursting
 
-        q = [c[k] for k in self.g]     # the group's outputs
-        self.b = u * (sum(q) == 0)     # set cell's burst state
+        v = [c[k] for k in self.g]     # the group's outputs
+        self.b = u * (sum(v) == 0)     # set cell's burst state
 
            # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
-        self.mon.record(self,u,c,q)
+        self.mon.record(self,u,c,v)
         return self.update(c)          # return updated context
 
     def phase3(self,u,c):              # cell algo phase 3: process context
@@ -165,14 +165,14 @@ class Cell:
 
         V = self.select(c,self.K)          # pre-synaptic signals
         W = (self.P >= self.eta)           # synaptic (binary) weights
-        Q = V * W                          # synapitcs matrix
-        self.s = u * (norm1(Q)>=self.theta)# dentritic spikes
+        E = V * W                          # synapitcs matrix
+        self.s = u * (norm1(E)>=self.theta)# dentritic spikes
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
 
-        L = self.learn(Q)
-        D = self.y * (L*Q*self.pdelta - L*self.ndelta)
+        L = self.learn(E)
+        D = self.y * (L*E*self.pdelta - L*self.ndelta)
 
         self.P_ = self.P + D           # learning (permanences after transition)
 
@@ -183,7 +183,7 @@ class Cell:
 
             # record this stuff
 
-        self.mon.record(self,u,c,0,V,W,Q,L,D)
+        self.mon.record(self,u,c,0,V,W,E,L,D)
         return self.update(c)          # return updated context
 
     def phase(self,ph,u,c):            # cell algo phase i
@@ -206,18 +206,18 @@ class Cell:
     def group(self,c,g):
         return [c[g[k]] for k in range(0,len(g))]
 
-    def learn(self,Q):                  # learning vector
-        d,s = Q.shape
+    def learn(self,E):                  # learning vector
+        d,s = E.shape
         l = [];  p = []
         for mu in range(0,d):
-            norm = sum(Q[mu]).item()
+            norm = sum(E[mu]).item()
             l.append(norm)
             p.append(int(norm >= self.theta))
         L = trn(array([p])) @ ones((1,s))
         return L
 
-    def plot(self,i=None,j=None,q=None,Q=None):
-        self.mon.plot(self,i,j,q,Q)
+    def plot(self,i=None,j=None,v=None,E=None):
+        self.mon.plot(self,i,j,v,E)
 
 #===============================================================================
 # class Toy
