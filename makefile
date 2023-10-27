@@ -33,6 +33,7 @@ install:
 	pip install matplotlib
 	pip install --upgrade torch
 	pip install jupyterlab
+	pip install xeus-python
 
 carabao: dist/carabao-0.0.1-py3-none-any.whl
 

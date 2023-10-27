@@ -5,6 +5,7 @@
 
 #import numpy as np
 from numpy import array, isnan, copy, arange
+from ypstruct import struct
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -322,85 +323,75 @@ class Screen:
 #===============================================================================
 
 class Monitor:
-    def __init__(self,m,n,verbose=0):
-        self.screen = Screen('Neurons',m,n)
-        self.ij = (0,0)
-        self.verbose = verbose
-        self.iteration = 0
-        self.phase = None
+    data = struct()
+    def __init__(self,m=None,n=None,verbose=0):
+        if m is not None:
+            data = self.data
+            data.screen = Screen('Neurons',m,n)
+            data.ij = (0,0)
+            data.verbose = verbose
+            data.iteration = 0
+            data.phase = None
+            self.init()
 
-            # recorder init
+    def copy(self):
+        scr = self.data.screen
+        mon = Monitor(scr.m,scr.n)
+        mon.data = self.data.copy()
+        return mon
 
-        self.initrecorder()
-    """
-        def copy(self):
-            o = Monitor(self.screen.m,self.screen.n,self.verbose)
-            o.c = self.c;
-            o._P = self._P
-            o.x_ = self.x_
-            o.P_ = self.P_
-
-            o.s = self.s                  # dendritic spike
-            o.q = self.q
-
-            o.W = self.W                  # no weights needed
-            o.V = self.V                  # no pre-synaptic signals needed
-            o.Q = self.Q                  # no synaptics
-            o.L = self.L                  # no binary learning matrix
-            o.D = self.D                  # no learning delta
-            return o
-    """
-
-    def initrecorder(self):
+    def init(self):
         nan = float('nan');
+        data = self.data
+        data.c = None
 
-        self.c = None
+        data._P = None
+        data.x_ = None
+        data.P_ = None
 
-        self._P = None
-        self.x_ = None
-        self.P_ = None
+        data.s = nan            # dendritic spike
+        data.q = None
 
-        self.s = nan            # dendritic spike
-        self.q = None
-
-        self.W = None           # no weights needed
-        self.V = None           # no pre-synaptic signals needed
-        self.Q = None           # no synaptics
-        self.L = None           # no binary learning matrix
-        self.D = None           # no binary learning matrix
+        data.W = None           # no weights needed
+        data.V = None           # no pre-synaptic signals needed
+        data.Q = None           # no synaptics
+        data.L = None           # no binary learning matrix
+        data.D = None           # no binary learning matrix
 
     def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None):
-        self.c = cell.update(c);
-        self.x_ = cell.x_;  self.P_ = cell.P_
+        data = self.data
+        data.c = cell.update(c);
+        data.x_ = cell.x_;  data.P_ = cell.P_
         if q is None:
             self.log(cell,'(phase 1)',phase=1)
         elif W is None:
-            self.q = q
+            data.q = q
             self.log(cell,"(phase 2)",phase=2)
         else:
-            self.V = V;  self.W = W;  self.Q = Q;
-            self.L = L;  self.D = D;
+            data.V = V;  data.W = W;  data.Q = Q;
+            data.L = L;  data.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
     def place(self,screen,ij):
-        self.screen = screen
-        self.ij = ij
+        self.data.screen = screen
+        self.data.ij = ij
 
     def at(self,screen):
         if screen != None:
-            self.place(screen,screen.ij)
+            data.place(screen,screen.ij)
 
     def plot(self,cell,i=None,j=None,q=None,Q=None):
-        if i != None:
-            self.place(self.screen,(i,j))
-        self.q = 0*array(cell.g)
-        self.q = self.q if q is None else q
-        self.Q = self.Q if Q is None else Q
+       data = self.data
+       if i != None:
+            self.place(data.screen,(i,j))
+            data.q = 0*array(cell.g)
+            data.q = data.q if q is None else q
+            data.Q = data.Q if Q is None else Q
 
-        self.screen.neuron(self.ij,cell.u,cell.x,cell.y,cell.b,
-                           cell.P,self.Q,self.L,self.q)
-        self.screen.input(self.ij[1],cell.u)
-        self.screen.show
+            data.screen.neuron(data.ij,cell.u,cell.x,cell.y,cell.b,
+                               cell.P,data.Q,data.L,data.q)
+            data.screen.input(data.ij[1],cell.u)
+            data.screen.show
 
     def norm1(self,M):
         if type(M).__name__ == 'list':
@@ -414,37 +405,38 @@ class Monitor:
 
 
     def log(self,cell,msg=None,phase=None):
+        data = self.data
         nan = float('nan')
         msg = msg if msg != None else ""
-        self.phase = phase if phase != None else self.phase
+        data.phase = phase if phase != None else self.phase
         print("--------------------------------------------------------------")
-        print("iteration: ",self.iteration,"cell: #%g" % cell.k,msg)
+        print("iteration: ",data.iteration,"cell: #%g" % cell.k,msg)
         print("   k:",cell.k,", g:",cell.g,", eta:",cell.eta)
         self.print('matrix',"   K:",cell.K)
         self.print('matrix',"   P:",cell.P)
-        if (self.phase == 3):
-            self.print('matrix',"   W:",self.W)
-            self.print('matrix',"   V:",self.V)
-            self.print('matrix',"   Q:",self.Q)
-            self.print('matrix',"   L:",self.L)
-            self.print('matrix',"   D:",self.D)
-        if (self.phase== 2 or self.phase == 3):
-            print("   b:",cell.b,"(q:", self.q,
-              ", ||q||=%g)" % (nan if isnan(self.q).any() else sum(self.q)))
-        if (self.phase == 3):
-            print("   s:",int(cell.s),"(||Q||=%g, theta:%g)" % (self.norm1(self.Q),cell.theta))
+        if (data.phase == 3):
+            self.print('matrix',"   W:",data.W)
+            self.print('matrix',"   V:",data.V)
+            self.print('matrix',"   Q:",data.Q)
+            self.print('matrix',"   L:",data.L)
+            self.print('matrix',"   D:",data.D)
+        if (data.phase== 2 or data.phase == 3):
+            print("   b:",cell.b,"(q:", data.q,
+              ", ||q||=%g)" % (nan if isnan(data.q).any() else sum(data.q)))
+        if (data.phase == 3):
+            print("   s:",int(cell.s),"(||Q||=%g, theta:%g)" % (self.norm1(data.Q),cell.theta))
         print("   u:",cell.u)
-        if (self.phase == 3):
+        if (data.phase == 3):
             print("   x: %g (-> %g)" % (cell.x,cell.x_))
         else:
             print("   x: %g" % cell.x)
         print("   y: %g" % cell.y)
-        print("   c:",self.c)
+        print("   c:",data.c)
         print("-------------------------------------------------------------")
 
         if (phase == 3):
             #self.invalid(cell,'b,p,l,W,Z')       # invalidate
-            self.iteration += 1
+            self.data.iteration += 1
 
     def print(self,tag,msg,arg):   # .print("matrix","Q:",Q)
         if tag == 'matrix':
@@ -473,13 +465,14 @@ class Monitor:
         print("hello, monitor")
 
     def hash(self,cell):
+        data = self.data
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
         hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(cell.s,8);  hb = hash(cell.b,9)
-        hq = hash(self.q,10)
-        hW = hash(self.W,11); hV = hash(self.V,12); hE = hash(self.Q,13)
-        hL = hash(self.L,14); hD = hash(self.D,15)
+        hq = hash(data.q,10)
+        hW = hash(data.W,11); hV = hash(data.V,12); hE = hash(data.Q,13)
+        hL = hash(data.L,14); hD = hash(data.D,15)
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
         prime = 1*2*3*5*7*11*13*17*19+1
