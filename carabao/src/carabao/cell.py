@@ -102,23 +102,25 @@ class Cell:
 
         self.y = self.y or (u * self.b)
 
-            # process W,Z,Q,L
+            # rule 4: excided empowered dendritic segments are spiking
 
-        V = self.select(c,self.K)      # pre-synaptic signals
-        W = (self.P >= self.eta)       # synaptic (binary) weights
-        Q = V * W                      # synapitcs matrix
+        V = self.select(c,self.K)          # pre-synaptic signals
+        W = (self.P >= self.eta)           # synaptic (binary) weights
+        Q = V * W                          # synapitcs matrix
+        s = u * (norm(Q) >= self.theta)    # dentritic spike
 
-            # rule 4: spiking cells get predictive (calc state after transition)
-
-        s = (norm(Q) >= self.theta)    # dentritic spike
-        self.x_ = u * s                # getting predictive
-
-            # rule 5: spiking dentrites learn (calc permanences after transition)
+            # rule 5: spiking dentrites of activated cells are learning
+            # (calc permanences after transition)
 
         L = self.learn(Q)
         D = self.y * (L*Q*self.pdelta - L*self.ndelta)
 
         self.P_ = self.P + D           # learning (permanences after transition)
+
+            # rule 6: active cells with spiking dendrites get predictive
+            # (calc state after transition)
+
+        self.x_ = s                # getting predictive
 
             # record this stuff
 
