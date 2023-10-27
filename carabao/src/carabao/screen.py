@@ -4,7 +4,7 @@
 #===============================================================================
 
 import numpy as np
-from numpy import array
+from numpy import array, isnan
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -370,7 +370,7 @@ class Monitor:
             self.print('matrix',"   D:",self.D)
         if (self.phase== 2 or self.phase == 3):
             print("   b:",cell.b,"(q:", self.q,
-              ", ||q||=%g)" % (nan if numpy.isnan(self.q).any() else sum(self.q)))
+              ", ||q||=%g)" % (nan if isnan(self.q).any() else sum(self.q)))
         if (self.phase == 3):
             print("   s:",int(self.s),"(||Q||=%g, theta:%g)" % (norm(self.Q),cell.theta))
         print("   u:",cell.u)
