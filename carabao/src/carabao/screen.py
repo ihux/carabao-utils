@@ -5,6 +5,7 @@
 
 #import numpy as np
 from numpy import array, isnan, copy, arange, zeros
+from numpy.random import rand
 from ypstruct import struct
 
 import matplotlib.pyplot as plt
@@ -229,7 +230,7 @@ class Screen:
         W = zeros((self.d,self.s)) if W is None else W
         E = W*0 if E is None else E    # permanence matrix
         s = [0 for k in range(0,E.shape[0])] if s is None else s
- 
+
         colu = self.blue if u else self.gray
         colb = self.orange if b else self.gray
         colx = self.green if x>0 else self.dark
@@ -260,13 +261,13 @@ class Screen:
 
 
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
-        u = u if u != None else 0      # basal input
-        x = x if x != None else 0      # predictive state
-        y = y if y != None else 0      # output state
+        u = u if u is not None else 0      # basal input
+        x = x if x is not None else 0      # predictive state
+        y = y if y is not None else 0      # output state
 
-        P = P if P != None else numpy.random.rand(self.d,self.s)
-        E = E if E != None else P*0    # permanence matrix
-        L = L if L != None else P*0    # learning matrix
+        P = P if P is not None else rand(self.d,self.s)
+        E = E if E is not None else P*0    # permanence matrix
+        L = L if L is not None else P*0    # learning matrix
 
         outer = self.red if y>0 else self.gray
         inner = self.green if x>0 else self.dark
@@ -405,7 +406,7 @@ class Monitor:
         data = self.data
         nan = float('nan')
         msg = msg if msg != None else ""
-        data.phase = phase if phase != None else self.phase
+        data.phase = phase if phase != None else data.phase
         print("--------------------------------------------------------------")
         print("iteration: ",data.iteration,"cell: #%g" % cell.k,msg)
         print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
