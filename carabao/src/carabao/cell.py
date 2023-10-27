@@ -5,8 +5,64 @@
 
 import numpy
 from numpy import transpose as trn
-from numpy import ones, arange
-from carabao.screen import norm
+from numpy import ones, arange, copy
+#from carabao.screen import norm1,select
+
+#=============================================================================
+# select function
+#=============================================================================
+
+def select(K,c):
+    """
+    select(): select a set of neuron outputs given an index matrix/list and
+              a context vector c
+
+                  c = [0,0,0,1,1, 1,1,0,0,0]
+                  g = [0,1,2];
+                  v = select(g,c)
+
+                  K = numpy.array([[4,5,6,7],[6,7,8,9]])
+                  V = select(K,c)
+
+              see also: Cell, Rcell, hash, norm1
+    """
+    if type(K).__name__ == 'list':
+        return [c[k] for k in K];
+
+    if type(K).__name__ != 'ndarray':
+        raise Exception('numpy array expected')
+
+    V = copy(K);       # make a copy
+    for i in range(0,K.shape[0]):
+        for j in range(0,K.shape[1]):
+            V[i,j] = c[K[i,j]]
+
+    return V
+
+#===============================================================================
+# helper: vector 1-norm or matrix 1-norm
+#===============================================================================
+
+def norm1(M):    # max of row sums
+    """
+    norm1(): vector 1-norm or matrix 1-norm
+
+                 v = [2,-3,-1]      # list representation of vector
+                 n = norm1(v)       # sum of abs values => n = 6
+
+                 V = numpy.array([[2,-3,-1],[1,0,-1]])
+                 n = norm1(V)       # max of row 1-norm => n = max(6,2) =6
+
+             see also: Cell, select, hash
+    """
+    if type(M).__name__ == 'list':
+        return sum(M)
+
+    result = 0
+    for j in range(0,M.shape[0]):
+        sumj = M[j].sum().item()
+        result = result if sumj < result else sumj
+    return result
 
 #=============================================================================
 # class Cell
@@ -17,10 +73,10 @@ class Cell:
     Cell: class Cell - modelling cell algorithm
 
        from carabao.screen import Monitor
-       from carabao.cell import Cell
+       from carabao.cell import Cell, toy
 
        mon = Monitor(4,10)
-       k,g,K,P,c = Toy('cell')
+       k,g,K,P,c = toy('cell')
 
        cell = Cell(mon,k,g,K,P)
        cell.u = cell.y = cell.x = cell.b = 1
@@ -29,7 +85,7 @@ class Cell:
        v = select(g,c)      # group  activation
        W = (P>=0.5)         # binary weight matrix
        E = W * select(K,c)  # empowerment (post synaptic effect matrix)
-       cell(0,1,v,E)        # plot @ group activation v and empowerment E
+       cell.plot(0,1,v,E)   # plot @ group activation v and empowerment E
     """
 
     def __init__(self,mon,k,g,K,P):
@@ -41,6 +97,7 @@ class Cell:
         self.y = 0             # cell output (axon)
         self.x = 0             # predictive state
         self.b = 0             # burst state
+        self.s = 0             # spike state
         self.P = P             # permanence matrix (state)
 
             # parameters and auxilliary variables
@@ -109,7 +166,7 @@ class Cell:
         V = self.select(c,self.K)          # pre-synaptic signals
         W = (self.P >= self.eta)           # synaptic (binary) weights
         Q = V * W                          # synapitcs matrix
-        s = u * (norm(Q) >= self.theta)    # dentritic spike
+        self.s = u * (norm1(Q)>=self.theta)# dentritic spikes
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)

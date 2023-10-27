@@ -3,13 +3,44 @@
 # - class Screen (copyright: Neuronycs 2023)
 #===============================================================================
 
-import numpy as np
-from numpy import array, isnan
+#import numpy as np
+from numpy import array, isnan, copy, arange
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 from matplotlib.transforms import Affine2D
+
+#=============================================================================
+# hash function
+#=============================================================================
+
+def hash(o,fac=1):
+    """
+    hash(): map list or matrix to an integer hash value
+
+               g = [0,1,2]
+               h = hash(g)
+
+               P = numpy.array([[.1,.2,.3],[.4,.5,.6]])
+               h = hash(P)
+
+               h = hash(None)         # => h = 0
+    """
+    def weight(M):
+        return 1+fac*10*(1 + arange(M.flatten().shape[0]))
+
+    if o is None:
+        return fac + 0
+    elif type(o).__name__ == 'ndarray':
+        f = o.flatten();   w = weight(o)
+        #return (sum(f*w),f*w,f,w)
+        return 1 + fac*int(sum(f*w))
+    elif type(o).__name__ == 'list':
+        return 1 + fac*hash(array(o))
+    else:
+        return 1 + fac*o
+    return 0
 
 #===============================================================================
 # Canvas class
@@ -320,6 +351,24 @@ class Monitor:
         self.L = None           # no binary learning matrix
         self.D = None           # no binary learning matrix
 
+    def hash(self,cell):
+        hk = hash(cell.k,2);  hg = hash(cell.g,3);
+        hK = hash(cell.K,4);  hP = hash(cell.P,5);
+        hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hs = hash(cell.s,8);  hb = hash(cell.b,9)
+        hq = hash(self.q,10)
+        hW = hash(self.W,11); hV = hash(self.V,12); hE = hash(self.Q,13)
+        hL = hash(self.L,14); hD = hash(self.D,15)
+
+        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
+        prime = 1*2*3*5*7*11*13*17*19+1
+        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb * hq*hW*hV*hE*hL*hD)
+        n = N % prime
+        h = ''
+        for i in range(0,4):
+           h = h + chr(65 + n % 26);  n = n // 26;
+        return (h,N,prime,hashes)
+
     def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None,s=None):
         self.c = cell.update(c);
         self.x_ = cell.x_;  self.P_ = cell.P_
@@ -372,7 +421,7 @@ class Monitor:
             print("   b:",cell.b,"(q:", self.q,
               ", ||q||=%g)" % (nan if isnan(self.q).any() else sum(self.q)))
         if (self.phase == 3):
-            print("   s:",int(self.s),"(||Q||=%g, theta:%g)" % (norm(self.Q),cell.theta))
+            print("   s:",int(self.s),"(||Q||=%g, theta:%g)" % (norm1(self.Q),cell.theta))
         print("   u:",cell.u)
         if (self.phase == 3):
             print("   x: %g (-> %g)" % (cell.x,cell.x_))
@@ -411,15 +460,3 @@ class Monitor:
 
     def hello(self):
         print("hello, monitor")
-
-
-#===============================================================================
-# helper: matrix 1-norm (maximum of row sums)
-#===============================================================================
-
-def norm(M):    # max of row sums
-    result = 0
-    for j in range(0,M.shape[0]):
-        sumj = M[j].sum().item()
-        result = result if sumj < result else sumj
-    return result
