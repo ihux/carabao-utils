@@ -5,7 +5,7 @@
 
 import numpy
 from numpy import transpose as trn
-from numpy import ones, arange, copy
+from numpy import ones, arange, copy, array
 #from carabao.screen import norm1,select
 
 #=============================================================================
@@ -90,27 +90,28 @@ class Cell:
 
     def __init__(self,mon,k,g,K,P):
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
+        zero = [0 for i in range(0,P.shape[0])]
 
             # input, output, state variables
 
-        self.u = 0             # basal (feedforwad) input
-        self.y = 0             # cell output (axon)
-        self.x = 0             # predictive state
-        self.b = 0             # burst state
-        self.s = 0             # spike state
-        self.P = P             # permanence matrix (state)
+        self.u = 0                     # basal (feedforwad) input
+        self.y = 0                     # cell output (axon)
+        self.x = 0                     # predictive state
+        self.b = 0                     # burst state
+        self.s = zero                  # spike state
+        self.P = P                     # permanence matrix (state)
 
             # parameters and auxilliary variables
 
         self.config(k,g,K)
-        self.x_ = 0            # auxilliary: x(t+1)
-        self.P_ = self.P       # auxilliary: P(t+1)
+        self.x_ = 0                    # auxilliary: x(t+1)
+        self.P_ = self.P               # auxilliary: P(t+1)
 
     def config(self,k,g,K):
-        self.eta = 0.5      # synaptic threshold
-        self.theta = 2      # dendritic threshold
-        self.pdelta = 0.04  # positive learning delata
-        self.ndelta = 0.02  # negative learning delta
+        self.eta = 0.5                 # synaptic threshold
+        self.theta = 2                 # dendritic threshold
+        self.pdelta = 0.04             # positive learning delata
+        self.ndelta = 0.02             # negative learning delta
         self.k = k;
         self.g = g;
         self.K = K;
@@ -166,7 +167,7 @@ class Cell:
         V = self.select(c,self.K)          # pre-synaptic signals
         W = (self.P >= self.eta)           # synaptic (binary) weights
         E = V * W                          # synapitcs matrix
-        self.s = u * (norm1(E)>=self.theta)# dentritic spikes
+        self.s = self.spike(u,E,self.theta)
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
@@ -179,7 +180,7 @@ class Cell:
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
 
-        self.x_ = self.s               # getting predictive
+        self.x_ = max(self.s)          # get predictive if any segment spikes
 
             # record this stuff
 
@@ -203,6 +204,10 @@ class Cell:
                 V[mu,nu] = c[K[mu,nu]];
         return V
 
+    def spike(self,u,E,theta):         # generate spike vector from Empowerment
+        return [u * (sum(E[mu]) >= theta)
+                for mu in range(0,E.shape[0])]
+
     def group(self,c,g):
         return [c[g[k]] for k in range(0,len(g))]
 
@@ -216,15 +221,14 @@ class Cell:
         L = trn(array([p])) @ ones((1,s))
         return L
 
-    def plot(self,i=None,j=None,v=None,E=None):
-        self.mon.plot(self,i,j,v,E)
+    def plot(self,i=None,j=None,v=None,W=None,E=None):
+        self.mon.plot(self,i,j,v,W,E)
+
 
 #===============================================================================
 # class Toy
 # - usage: k,g,P,K = Toy('cell')
 #===============================================================================
-
-from numpy import array
 
 def toy(tag):
     """

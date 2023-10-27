@@ -194,7 +194,6 @@ class Screen:
                 col = 'w' if q[k] == 0 else self.magenta;  k += 1
                 self.can.circle((x+i*h+dx,ys-i*h),rs,col)
 
-
     def segment(self,x,y,r,d,mu,W,E,s):  # plot mu-th dendritic segment out of total d
         H = r*0.9;                     # total height/width of all segments
         yoff = r*0.2                   # y offset of segments
@@ -202,8 +201,6 @@ class Screen:
         dy = r/4
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
-#>>>>>>>>>>>>>>>>>>>>>
-        print("segment: s:",s,"W:",W)
         col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
@@ -220,8 +217,6 @@ class Screen:
                 col = self.magenta
             else:
                 col = 'w' if W[mu,nu] > 0 else 'k'
-#<<<<<<<<<<<<<<<<<<<<<<<
-            print("nu:",nu,"xs:",xs,"col:",col)
             self.can.circle((xs,ys),self.rs,col)
 
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,W=None,E=None):
@@ -234,9 +229,7 @@ class Screen:
         W = zeros((self.d,self.s)) if W is None else W
         E = W*0 if E is None else E    # permanence matrix
         s = [0 for k in range(0,E.shape[0])] if s is None else s
-
-        print("neuron: s =",s,"W:",W)
-
+ 
         colu = self.blue if u else self.gray
         colb = self.orange if b else self.gray
         colx = self.green if x>0 else self.dark
@@ -359,17 +352,17 @@ class Monitor:
         data.L = None           # no binary learning matrix
         data.D = None           # no binary learning matrix
 
-    def record(self,cell,u,c,q=None,V=None,W=None,E=None,L=None,D=None):
+    def record(self,cell,u,c,v=None,V=None,W=None,E=None,L=None,D=None):
         data = self.data
         data.c = cell.update(c);
         data.x_ = cell.x_;  data.P_ = cell.P_
-        if q is None:
+        if v is None:
             self.log(cell,'(phase 1)',phase=1)
-        elif W is None:
-            data.v = q
+        elif V is None:
+            data.v = v;
             self.log(cell,"(phase 2)",phase=2)
         else:
-            data.V = V;  data.W = W;  data.E = E;
+            data.V = V;  data.W = W;  data.E = E
             data.L = L;  data.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
@@ -381,21 +374,18 @@ class Monitor:
         if screen != None:
             data.place(screen,screen.ij)
 
-    def plot(self,cell,i=None,j=None,v=None,s=None,W=None,E=None):
+    def plot(self,cell,i=None,j=None,v=None,W=None,E=None):
        data = self.data
        if i is not None:
             self.place(data.screen,(i,j))
             data.W = (cell.P >= cell.eta)*1
             data.v = 0*array(cell.g)
             data.v = data.v if v is None else v
-            data.s = data.s if s is None else s
             data.W = data.W if W is None else W
             data.E = data.E if E is None else E
 
-#>>>>>>>>>>>>>>>>>>>
-            #print("Monitor.plot: s =",data.s,"W:",data.W)
             data.screen.neuron(data.ij,cell.u,cell.x,cell.y,cell.b,
-                               data.v,data.s,data.W,data.E)
+                               data.v,cell.s,data.W,data.E)
             #data.screen.input(data.ij[1],cell.u)
             data.screen.show
 
@@ -411,32 +401,31 @@ class Monitor:
 
 
     def log(self,cell,msg=None,phase=None):
+        k = cell.k
         data = self.data
         nan = float('nan')
         msg = msg if msg != None else ""
         data.phase = phase if phase != None else self.phase
         print("--------------------------------------------------------------")
         print("iteration: ",data.iteration,"cell: #%g" % cell.k,msg)
-        print("   k:",cell.k,", g:",cell.g,", eta:",cell.eta)
-        self.print('matrix',"   K:",cell.K)
-        self.print('matrix',"   P:",cell.P)
+        print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
+        self.print('matrix',"   K%g:" % k,cell.K)
+        self.print('matrix',"   P%g:" % k,cell.P)
         if (data.phase == 3):
-            self.print('matrix',"   W:",data.W)
-            self.print('matrix',"   V:",data.V)
-            self.print('matrix',"   E:",data.E)
-            self.print('matrix',"   L:",data.L)
-            self.print('matrix',"   D:",data.D)
+            self.print('matrix',"   V%g:" % k, data.V)
+            self.print('matrix',"   W%g:" % k, data.W)
+            self.print('matrix',"   E%g:" % k, data.E)
+            self.print('matrix',"   L%g:" % k, data.L)
+            self.print('matrix',"   D%g:" % k, data.D)
         if (data.phase== 2 or data.phase == 3):
-            print("   b:",cell.b,"(q:", data.v,
-              ", ||q||=%g)" % (nan if isnan(data.v).any() else sum(data.v)))
+            print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
+              ", ||q%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
         if (data.phase == 3):
-            print("   s:",int(cell.s),"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
-        print("   u:",cell.u)
+            print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
         if (data.phase == 3):
-            print("   x: %g (-> %g)" % (cell.x,cell.x_))
+            print("   u%g:"%k,cell.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
-            print("   x: %g" % cell.x)
-        print("   y: %g" % cell.y)
+            print("   u%g:"%k,cell.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
         print("   c:",data.c)
         print("-------------------------------------------------------------")
 
@@ -482,7 +471,7 @@ class Monitor:
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
         prime = 1*2*3*5*7*11*13*17*19+1
-        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb * hq*hW*hV*hE*hL*hD)
+        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hE*hL*hD)
         n = N % prime
         #return (h,N,prime,hashes)
         return n
@@ -504,3 +493,6 @@ class Monitor:
     def separator(self,j,color='k',linewidth=0.5):
         scr = self.data.screen
         self.line([j+0.5,j+0.5],[0,scr.m+1],color=color,linewidth=linewidth)
+
+    def xlabel(self,x,txt):
+        self.text(x,0.25,txt)
