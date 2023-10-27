@@ -10,9 +10,6 @@ from carabao.screen import norm
 
 #=============================================================================
 # class Cell
-# usage: mon = Screen('Neurons',4,10)
-#        cell = Cell(scr.at(1,2),k,g,K,P)
-#        cell.show()
 #=============================================================================
 
 class Cell:
@@ -23,11 +20,16 @@ class Cell:
        from carabao.cell import Cell
 
        mon = Monitor(4,10)
-       k,g,K,P = Toy('cell')
+       k,g,K,P,c = Toy('cell')
 
        cell = Cell(mon,k,g,K,P)
        cell.u = cell.y = cell.x = cell.b = 1
-       cell.plot(i=0,j=0)    # plot at monitor location i,j
+       cell.plot(i=0,j=0)   # plot at monitor location i,j
+
+       v = select(g,c)      # group  activation
+       W = (P>=0.5)         # binary weight matrix
+       E = W * select(K,c)  # empowerment (post synaptic effect matrix)
+       cell(0,1,v,E)        # plot @ group activation v and empowerment E
     """
 
     def __init__(self,mon,k,g,K,P):
@@ -171,15 +173,16 @@ def toy(tag):
     """
     Toy: create a toy object
 
-       k,g,K,P = toy('cell')
-       k,g,K,P = toy('mini3')
+       k,g,K,P,c = toy('cell')
+       k,g,K,P,c = toy('mini3')
     """
     if tag == 'cell':
         k = 0                        # cell index
         g = [0,1,2,4]                  # group indices
         K = array([[1,3,5,7,9],[3,4,5,6,7]])
         P = array([[0.12,0.32,0.54,0.77,0],[0,0.61,0.45,0,0]])
-        return k,g,K,P
+        c = [0,0,0,0,1,1,0,0,1,1];
+        return k,g,K,P,c
     elif tag == 'mini3':
         k = [0,1,2]                  # cell indices
         g = [0,1,2]                  # group indices
@@ -191,7 +194,8 @@ def toy(tag):
         P2 = array([[0.0,0.1,0.5,0.7,0.1],[0.0,0.1,0.3,0.8,0.0]])
         K = [K0,K1,K2]
         P = [P0,P1,P2]
-        return k,g,K,P
+        c = [0,0,0,0,1,1,0,0,1,1];
+        return k,g,K,P,c
     else:
         raise Exception('unknown tag')
 
