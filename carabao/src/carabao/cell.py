@@ -179,14 +179,14 @@ class Cell:
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
 
-        self.x_ = s                # getting predictive
+        self.x_ = self.s               # getting predictive
 
             # record this stuff
 
-        self.mon.record(self,u,c,0,V,W,Q,L,D,s)
+        self.mon.record(self,u,c,0,V,W,Q,L,D)
         return self.update(c)          # return updated context
 
-    def phase(self,ph,u,c):             # cell algo phase i
+    def phase(self,ph,u,c):            # cell algo phase i
         if ph == 1:
             return self.phase1(u,c)
         elif ph == 2:

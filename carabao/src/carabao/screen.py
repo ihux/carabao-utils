@@ -351,25 +351,7 @@ class Monitor:
         self.L = None           # no binary learning matrix
         self.D = None           # no binary learning matrix
 
-    def hash(self,cell):
-        hk = hash(cell.k,2);  hg = hash(cell.g,3);
-        hK = hash(cell.K,4);  hP = hash(cell.P,5);
-        hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
-        hs = hash(cell.s,8);  hb = hash(cell.b,9)
-        hq = hash(self.q,10)
-        hW = hash(self.W,11); hV = hash(self.V,12); hE = hash(self.Q,13)
-        hL = hash(self.L,14); hD = hash(self.D,15)
-
-        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
-        prime = 1*2*3*5*7*11*13*17*19+1
-        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb * hq*hW*hV*hE*hL*hD)
-        n = N % prime
-        h = ''
-        for i in range(0,4):
-           h = h + chr(65 + n % 26);  n = n // 26;
-        return (h,N,prime,hashes)
-
-    def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None,s=None):
+    def record(self,cell,u,c,q=None,V=None,W=None,Q=None,L=None,D=None):
         self.c = cell.update(c);
         self.x_ = cell.x_;  self.P_ = cell.P_
         if q is None:
@@ -379,7 +361,7 @@ class Monitor:
             self.log(cell,"(phase 2)",phase=2)
         else:
             self.V = V;  self.W = W;  self.Q = Q;
-            self.L = L;  self.D = D;  self.s = s;
+            self.L = L;  self.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
     def place(self,screen,ij):
@@ -402,6 +384,17 @@ class Monitor:
         self.screen.input(self.ij[1],cell.u)
         self.screen.show
 
+    def norm1(self,M):
+        if type(M).__name__ == 'list':
+            return sum(M)
+
+        result = 0
+        for j in range(0,M.shape[0]):
+            sumj = M[j].sum().item()
+            result = result if sumj < result else sumj
+        return result
+
+
     def log(self,cell,msg=None,phase=None):
         nan = float('nan')
         msg = msg if msg != None else ""
@@ -421,7 +414,7 @@ class Monitor:
             print("   b:",cell.b,"(q:", self.q,
               ", ||q||=%g)" % (nan if isnan(self.q).any() else sum(self.q)))
         if (self.phase == 3):
-            print("   s:",int(self.s),"(||Q||=%g, theta:%g)" % (norm1(self.Q),cell.theta))
+            print("   s:",int(cell.s),"(||Q||=%g, theta:%g)" % (self.norm1(self.Q),cell.theta))
         print("   u:",cell.u)
         if (self.phase == 3):
             print("   x: %g (-> %g)" % (cell.x,cell.x_))
@@ -460,3 +453,33 @@ class Monitor:
 
     def hello(self):
         print("hello, monitor")
+
+    def hash(self,cell):
+        hk = hash(cell.k,2);  hg = hash(cell.g,3);
+        hK = hash(cell.K,4);  hP = hash(cell.P,5);
+        hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hs = hash(cell.s,8);  hb = hash(cell.b,9)
+        hq = hash(self.q,10)
+        hW = hash(self.W,11); hV = hash(self.V,12); hE = hash(self.Q,13)
+        hL = hash(self.L,14); hD = hash(self.D,15)
+
+        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
+        prime = 1*2*3*5*7*11*13*17*19+1
+        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb * hq*hW*hV*hE*hL*hD)
+        n = N % prime
+        #return (h,N,prime,hashes)
+        return n
+
+    def ascii(self,n):  # convert hash to 4 character ascii sequence
+        vocal = ['A','E','I','O','U','Y']
+        h = ''
+        for i in range(0,2):
+           h = h + chr(65 + n % 26);  n = n // 26;
+           k = n % 6;  n = n // 6;  h += vocal[k]
+        return h
+
+    def line(self,x,y,col=None,linewidth=None):
+        plt.plot(x,y,col,linewidth)
+
+    def text(self,x,y,txt,color='k',size=10,rotation=0,ha='center',va='center'):
+        plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
