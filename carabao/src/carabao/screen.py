@@ -336,7 +336,7 @@ class Monitor:
 
     def copy(self):
         scr = self.data.screen
-        mon = Monitor(scr.m,scr.n)
+        mon = Monitor()
         mon.data = self.data.copy()
         return mon
 
@@ -489,8 +489,12 @@ class Monitor:
            k = n % 6;  n = n // 6;  h += vocal[k]
         return h
 
-    def line(self,x,y,col=None,linewidth=None):
-        plt.plot(x,y,col,linewidth)
+    def line(self,x,y,color='k',linewidth=0.5):
+        plt.plot(x,y,color,linewidth=linewidth)
 
     def text(self,x,y,txt,color='k',size=10,rotation=0,ha='center',va='center'):
         plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
+
+    def separator(self,j,color='k',linewidth=0.5):
+        scr = self.data.screen
+        self.line([j+0.5,j+0.5],[0,scr.m+1],color=color,linewidth=linewidth)
