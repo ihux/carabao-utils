@@ -99,6 +99,16 @@ def zeros(arg):
         return zero
 
 
+#===============================================================================
+# helper: sat function fopr a numpx matrix
+# - truncates every matrix element to range 0.0 ... 1.0
+#===============================================================================
+
+def sat(X):
+    def lt1(X): return 1 + (X-1<=0)*(X-1)
+    def gt0(X): return (X>=0)*X
+    return lt1(gt0(X))
+
 #=============================================================================
 # class Cell
 #=============================================================================
@@ -214,12 +224,11 @@ class Cell:
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
-##########################
-        print("phase3: s\n",self.s,"\nphase3: ones",ones(self.P[0,:]))
+
         L = column(self.s) @ ones(self.P[0,:]) # learning matrix
         D = self.y * (L*V*self.pdelta - L*self.ndelta)
 
-        self.P_ = self.P + D           # learning (permanences after transition)
+        self.P_ = sat(self.P + D)      # learning (permanences after transition)
 
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
