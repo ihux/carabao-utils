@@ -345,7 +345,7 @@ class Monitor:
         data._P = None
 
         data.s = None           # dendritic spike
-        data.v = None
+        #data.v = None
 
         data.W = None           # no weights needed
         data.V = None           # no pre-synaptic signals needed
@@ -355,12 +355,13 @@ class Monitor:
 
     def record(self,cell,u,c,v=None,V=None,W=None,E=None,L=None,D=None):
         data = self.data
-        #data.c = cell.update(c);
         if v is None:
-            self.log(cell,'(phase 1)',phase=1)
+            raise Exception('record')
+            #self.log(cell,'(phase 1)',phase=1)
         elif V is None:
-            data.v = v;
-            self.log(cell,"(phase 2)",phase=2)
+            raise Exception('record')
+            #data.v = v;
+            #self.log(cell,"(phase 2)",phase=2)
         else:
             data.V = V;  data.W = W;  data.E = E
             data.L = L;  data.D = D;
@@ -379,9 +380,9 @@ class Monitor:
        if i is not None:
             self.place(data.screen,(i,j))
             data.W = (cell.P >= cell.eta)*1
-            data.v = 0*array(cell.g)
-            data.v = data.v if v is None else v
-            data.v = data.v if v == []   else v
+            aux.v = 0*array(cell.g)
+            aux.v = aux.v if v is None else v
+            aux.v = aux.v if v == []   else v
             data.W = data.W if W is None else W
             data.E = data.E if E is None else E
 

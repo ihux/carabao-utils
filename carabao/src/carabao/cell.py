@@ -129,9 +129,10 @@ class Cell:
         self.aux.c = c                 # store for analysis
         match phase:
             case 1:                    # phase 1
-                self.mon.log(self,'(phase 1)',phase=1)
+                self.mon.log(self,'(phase %g)'%phase,phase)
             case 2:                    # phase 2
-                self.aux.u = u
+                self.aux.v = args['v']
+                self.mon.log(self,'(phase %g)'%phase,phase)
             case 3:                    # phase 3
                 self.aux.u = u
         return c                       # return updated context
@@ -164,8 +165,8 @@ class Cell:
            # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
-        self.mon.record(self,u,c,v)
-        return self.update(u,c,2,{})
+        #self.mon.record(self,u,c,v)
+        return self.update(u,c,2,{'v':v})
 
     def phase3(self,u,c):              # cell algo phase 3: process context
         self.u = u
