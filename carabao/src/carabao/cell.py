@@ -226,9 +226,8 @@ class Cell:
             # (calc permanences after transition)
 
         L = column(self.s) @ ones(self.P[0,:]) # learning matrix
-        D = self.y * (L*V*self.pdelta - L*self.ndelta)
-
-        self.P_ = sat(self.P + D)      # learning (permanences after transition)
+        D = L*(self.pdelta * V - self.ndelta)
+        self.P = sat(self.P + D*self.y)        # learning (adapt permanences)
 
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
