@@ -5,7 +5,7 @@
 
 import numpy
 from numpy import transpose as trn
-from numpy import ones, arange, copy, array
+from numpy import arange, copy, array
 from ypstruct import struct
 
 #=============================================================================
@@ -65,6 +65,41 @@ def norm1(M):    # max of row sums
     return result
 
 #=============================================================================
+# helper: create column vector from list
+#=============================================================================
+
+def column(x):
+    """
+    column(): create column vector from list
+
+        v = column([0,1])
+    """
+    return trn(array([x]))
+
+#=============================================================================
+# helper: zeros() and ones()
+#=============================================================================
+
+def ones(arg):
+    if type(arg).__name__=='tuple':
+        return numpy.ones(arg)
+    else:
+        one = numpy.ones(arg.shape)
+        if len(one.shape) == 1:
+            one = array([one])
+        return one
+
+def zeros(arg):
+    if type(arg).__name__=='tuple':
+        return numpy.zeros(arg)
+    else:
+        zero = numpy.zeros(arg.shape)
+        if len(zero.shape) == 1:
+            zero = array([zero])
+        return zero
+
+
+#=============================================================================
 # class Cell
 #=============================================================================
 
@@ -90,14 +125,14 @@ class Cell:
 
     def __init__(self,mon,k,g,K,P):
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
-        zero = [0 for i in range(0,P.shape[0])]
+        #zero = [0 for i in range(0,P.shape[0])]
 
             # input, output, state variables
 
         self.y = 0                     # cell output (axon)
         self.x = 0                     # predictive state
         self.b = 0                     # burst state
-        self.s = zero                  # spike state
+        self.s = 0*P[:,0]              # zero spike state
         self.P = P                     # permanence matrix (state)
 
         self.aux = struct()
@@ -172,16 +207,17 @@ class Cell:
 
             # rule 4: excided empowered dendritic segments are spiking
 
-        V = self.select(c,self.K)          # pre-synaptic signals
-        W = (self.P >= self.eta)           # synaptic (binary) weights
-        E = V * W                          # synapitcs matrix
+        V = self.select(c,self.K)      # pre-synaptic signals
+        W = (self.P >= self.eta)       # synaptic (binary) weights
+        E = V * W                      # empowerment matrix
         self.s = self.spike(u,E,self.theta)
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
-
-        L = self.learn(V)
-        D = self.y * (L*E*self.pdelta - L*self.ndelta)
+##########################
+        print("phase3: s\n",self.s,"\nphase3: ones",ones(self.P[0,:]))
+        L = column(self.s) @ ones(self.P[0,:]) # learning matrix
+        D = self.y * (L*V*self.pdelta - L*self.ndelta)
 
         self.P_ = self.P + D           # learning (permanences after transition)
 

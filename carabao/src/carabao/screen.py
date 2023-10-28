@@ -65,17 +65,14 @@ class Canvas:
         xy = (2,2); r = 0.5; col = 'r'
         #self.circle(xy, r, col)
         #plt.show()
-
-    def frame(self):                        # draw frame
+    def frame(self):                   # draw frame
         xl = self.position[0];  xh = self.position[2]
         yl = self.position[1];  yh = self.position[3]-1
         self.ax.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],color='k',linewidth=0.5)
-
     def circle(self,xy,r,col=None):
         hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
-
     def rect(self,xy1,xy2,col=None,angle=None):
         angle = 0 if angle == None else angle
         width = xy2[0]-xy1[0]; height = xy2[1]-xy1[1];
@@ -83,7 +80,6 @@ class Canvas:
                             facecolor=col, edgecolor=col,angle=angle)
         self.ax.add_patch(hdl)               # add rectangle to axis' patches
         return hdl
-
     def fancy(self,xy1,xy2,col=None,r=None,angle=None,center=None):
         r = 0.1 if r == None else r
         angle = 0 if angle == None else angle
@@ -108,7 +104,6 @@ class Canvas:
 
         self.ax.add_patch(hdl)               # add rectangle to axis' patches
         return hdl
-
     def poly(self,points,facecolor=None,edgecolor=None,linewidth=None):
         facecolor = (0.5,0.5,0.5) if facecolor == None else facecolor
         edgecolor = 'k' if edgecolor == None else edgecolor
@@ -118,13 +113,10 @@ class Canvas:
                               linewidth=linewidth)
         self.ax.add_patch(hdl)               # add rectangle to axis' patches
         return hdl
-
     def equal(self):
         self.ax.axes('equal')
-
     def show(self):
         plt.show()
-
 
 #===============================================================================
 # class Screen
@@ -146,12 +138,10 @@ class Screen:
         self.ij = (0,0)
         self.setup()
         self.cls()
-
-    def cls(self):           # clear screen
+    def cls(self):                     # clear screen
         #self.can = Canvas([0,0,self.n+1,self.m+2])
         self.can = Canvas([-1,-1,self.n,self.m+1])
         return self.can
-
     def setup(self):
         kr = 0.9
         self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.r2 = kr*0.31
@@ -162,7 +152,6 @@ class Screen:
         self.gold = (1,0.9,0);      self.dark = (0.5,0.5,0.5)
         self.blue = (0,0.5,1);      self.green=(0,0.8,0)
         self.magenta = (1,0.2,1);   self.orange = (1,0.5,0)
-
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
@@ -194,14 +183,15 @@ class Screen:
             for i in range(0,n):
                 col = 'w' if q[k] == 0 else self.magenta;  k += 1
                 self.can.circle((x+i*h+dx,ys-i*h),rs,col)
-
-    def segment(self,x,y,r,d,mu,W,E,s):  # plot mu-th dendritic segment out of total d
+    def segment(self,x,y,r,d,mu,W,E,s):  # plot mu-th dend-seg out of total d
         H = r*0.9;                     # total height/width of all segments
         yoff = r*0.2                   # y offset of segments
         h = H/d; w = r                 # height and half width of segment
         dy = r/4
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
+        ################
+        #print("segment: s =",s)
         col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
@@ -219,7 +209,6 @@ class Screen:
             else:
                 col = 'w' if W[mu,nu] > 0 else 'k'
             self.can.circle((xs,ys),self.rs,col)
-
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
@@ -259,8 +248,6 @@ class Screen:
            # draw basal dendritic segment
 
         self.basal(x,y,v)
-
-
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
         x = x if x is not None else 0      # predictive state
@@ -297,18 +284,15 @@ class Screen:
                 else:
                     col = 'w' if P[mu,nu] >= 0.5 else 'k'
                 self.can.circle((xx,yy),self.rs,col)
-
     def input(self,j,u):
         return
         u = u if u != None else 1
         x = 1+j; y = 1;
         col = self.blue if u > 0 else self.gray
         self.can.circle((x,y),self.r2,col)
-
     def at(self,i,j):  # to tell a Cell constructor where to place a cell
         self.ij = (i,j)
         return self
-
     def show(self):
         plt.show()
 
@@ -329,53 +313,14 @@ class Monitor:
             data.verbose = verbose
             data.iteration = 0
             data.phase = None
-            self.init()
-
     def copy(self):
         scr = self.data.screen
         mon = Monitor()
         mon.data = self.data.copy()
         return mon
-
-    def init(self):
-        #nan = float('nan');
-        data = self.data
-        #data.c = None
-
-        data._P = None
-
-        data.s = None           # dendritic spike
-        #data.v = None
-
-        #data.W = None           # no weights needed
-        #data.V = None           # no pre-synaptic signals needed
-        #data.E = None           # no synaptics
-        #data.L = None           # no binary learning matrix
-        #data.D = None           # no binary learning matrix
-
-    def record(self,cell,u,c,v=None,V=None,W=None,E=None,L=None,D=None):
-        data = self.data
-        if v is None:
-            raise Exception('record')
-            #self.log(cell,'(phase 1)',phase=1)
-        elif V is None:
-            raise Exception('record')
-            #data.v = v;
-            #self.log(cell,"(phase 2)",phase=2)
-        else:
-            raise Exception('record')
-            #data.V = V;  data.W = W;  data.E = E
-            #data.L = L;  data.D = D;
-            #self.log(cell,"(phase 3)",phase=3)
-
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
-
-    def at(self,screen):
-        if screen != None:
-            data.place(screen,screen.ij)
-
     def plot(self,cell,i=None,j=None,v=None,W=None,E=None):
        data = self.data; aux = cell.aux
        if i is not None:
@@ -391,7 +336,6 @@ class Monitor:
                                data.v,cell.s,aux.W,aux.E)
             #data.screen.input(data.ij[1],aux.u)
             data.screen.show
-
     def norm1(self,M):
         if type(M).__name__ == 'list':
             return sum(M)
@@ -401,7 +345,6 @@ class Monitor:
             sumj = M[j].sum().item()
             result = result if sumj < result else sumj
         return result
-
     def log(self,cell,msg=None,phase=None):
         k = cell.k
         data = self.data;  aux = cell.aux
@@ -435,7 +378,6 @@ class Monitor:
         if (phase == 3):
             #self.invalid(cell,'b,p,l,W,Z')       # invalidate
             self.data.iteration += 1
-
     def print(self,tag,msg,arg):   # .print("matrix","E:",E)
         if tag == 'matrix':
             m,n = arg.shape
@@ -452,25 +394,22 @@ class Monitor:
             print(']')
         elif tag == 'number':
             print(msg,"%4g" % arg)
-
     def show(self,i=None,j=None):
         if i != None:
             self.plot(i,j)
         can = self.neurons.canvas()
         self.plot()
-
     def hello(self):
         print("hello, monitor")
-
     def hash(self,cell):
         data = self.data;  aux = cell.aux
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
-        hu = hash(aux.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hu = hash(aux.u,5);   hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(cell.s,8);  hb = hash(cell.b,9)
-        hq = hash(data.v,10)
-        hW = hash(aux.W,11); hV = hash(aux.V,12); hE = hash(aux.E,13)
-        hL = hash(aux.L,14); hD = hash(aux.D,15)
+        hq = hash(aux.v,10)
+        hW = hash(aux.W,11);  hV = hash(aux.V,12);  hE = hash(aux.E,13)
+        hL = hash(aux.L,14);  hD = hash(aux.D,15)
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
         prime = 1*2*3*5*7*11*13*17*19+1
@@ -478,7 +417,6 @@ class Monitor:
         n = N % prime
         #return (h,N,prime,hashes)
         return n
-
     def ascii(self,n):  # convert hash to 4 character ascii sequence
         vocal = ['A','E','I','O','U','Y']
         h = ''
@@ -486,27 +424,21 @@ class Monitor:
            h = h + chr(65 + n % 26);  n = n // 26;
            k = n % 6;  n = n // 6;  h += vocal[k]
         return h
-
     def line(self,x,y,color='k',linewidth=0.5):
         plt.plot(x,y,color,linewidth=linewidth)
-
     def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
         size = 10 if size is None else size
         plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
-
     def separator(self,j,color='k',linewidth=0.5):
         scr = self.data.screen
         self.line([j-0.5,j-0.5],[-1,scr.m],color=color,linewidth=linewidth)
-
     def xlabel(self,x,txt,size=None):
         self.text(x,-0.75,txt)
-
     def head(self,txt,size=7):
         ij = self.data.ij
         scr = self.data.screen
         y = scr.m-ij[0]-2
         self.text(ij[1],y+1.65,txt,size=size)
-
     def foot(self,txt,size=7):
         ij = self.data.ij
         scr = self.data.screen
