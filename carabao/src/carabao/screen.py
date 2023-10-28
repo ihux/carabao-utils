@@ -410,7 +410,6 @@ class Monitor:
             result = result if sumj < result else sumj
         return result
 
-
     def log(self,cell,msg=None,phase=None):
         k = cell.k
         data = self.data
