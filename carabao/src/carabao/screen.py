@@ -343,8 +343,6 @@ class Monitor:
         data.c = None
 
         data._P = None
-        data.x_ = None
-        data.P_ = None
 
         data.s = None           # dendritic spike
         data.v = None
@@ -357,8 +355,7 @@ class Monitor:
 
     def record(self,cell,u,c,v=None,V=None,W=None,E=None,L=None,D=None):
         data = self.data
-        data.c = cell.update(c);
-        data.x_ = cell.x_;  data.P_ = cell.P_
+        #data.c = cell.update(c);
         if v is None:
             self.log(cell,'(phase 1)',phase=1)
         elif V is None:
@@ -369,13 +366,6 @@ class Monitor:
             data.L = L;  data.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
-    def update(self,cell,args):
-        data = self.data
-        #print("monitor: update",args)
-        if args['rule'] == 2:
-            data.v = args['v']
-            #print("monitor: v =",self.data.v)
-
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
@@ -385,7 +375,7 @@ class Monitor:
             data.place(screen,screen.ij)
 
     def plot(self,cell,i=None,j=None,v=None,W=None,E=None):
-       data = self.data
+       data = self.data; aux = cell.aux
        if i is not None:
             self.place(data.screen,(i,j))
             data.W = (cell.P >= cell.eta)*1
@@ -395,9 +385,9 @@ class Monitor:
             data.W = data.W if W is None else W
             data.E = data.E if E is None else E
 
-            data.screen.neuron(data.ij,cell.u,cell.x,cell.y,cell.b,
+            data.screen.neuron(data.ij,aux.u,cell.x,cell.y,cell.b,
                                data.v,cell.s,data.W,data.E)
-            #data.screen.input(data.ij[1],cell.u)
+            #data.screen.input(data.ij[1],aux.u)
             data.screen.show
 
     def norm1(self,M):
@@ -412,7 +402,7 @@ class Monitor:
 
     def log(self,cell,msg=None,phase=None):
         k = cell.k
-        data = self.data
+        data = self.data;  aux = cell.aux
         nan = float('nan')
         msg = msg if msg != None else ""
         data.phase = phase if phase != None else data.phase
@@ -434,10 +424,10 @@ class Monitor:
         if (data.phase == 3):
             print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
         if (data.phase == 3):
-            print("   u%g:"%k,cell.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
+            print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
-            print("   u%g:"%k,cell.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
-        print("   c:",data.c)
+            print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
+        print("   c:",aux.c)
         print("-------------------------------------------------------------")
 
         if (phase == 3):
@@ -471,10 +461,10 @@ class Monitor:
         print("hello, monitor")
 
     def hash(self,cell):
-        data = self.data
+        data = self.data;  aux = cell.aux
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
-        hu = hash(cell.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hu = hash(aux.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(cell.s,8);  hb = hash(cell.b,9)
         hq = hash(data.v,10)
         hW = hash(data.W,11); hV = hash(data.V,12); hE = hash(data.E,13)

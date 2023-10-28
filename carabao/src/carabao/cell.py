@@ -6,7 +6,7 @@
 import numpy
 from numpy import transpose as trn
 from numpy import ones, arange, copy, array
-#from carabao.screen import norm1,select
+from ypstruct import struct
 
 #=============================================================================
 # select function
@@ -94,12 +94,15 @@ class Cell:
 
             # input, output, state variables
 
-        self.u = 0                     # basal (feedforwad) input
         self.y = 0                     # cell output (axon)
         self.x = 0                     # predictive state
         self.b = 0                     # burst state
         self.s = zero                  # spike state
         self.P = P                     # permanence matrix (state)
+
+        self.aux = struct()
+        self.aux.u = 0                 # basal (feedforwad) input
+        self.aux.c = []                # context input
 
             # parameters and auxilliary variables
 
@@ -120,8 +123,17 @@ class Cell:
         self.x = self.x_               # predictive state transition
         self.P = self.P_               # permanence state transition
 
-    def update(self,c):                # update context with current output
+    def update(self,u,c,phase,args):   # update context with current output
         c[self.k] = self.y             # update context with changed output
+        self.aux.u = u                 # store for analysis
+        self.aux.c = c                 # store for analysis
+        match phase:
+            case 1:                    # phase 1
+                self.mon.log(self,'(phase 1)',phase=1)
+            case 2:                    # phase 2
+                self.aux.u = u
+            case 3:                    # phase 3
+                self.aux.u = u
         return c                       # return updated context
 
     def phase1(self,u,c):              # cell algo phase 1: update context
@@ -129,7 +141,7 @@ class Cell:
 
             # rule 1: excited (u=1) & predictive (x=1) cells get active (y=1)
 
-        self.u = u;                    # store input locally
+        #self.u = u;                    # store input locally
         self.y = u * self.x            # excited & predictive cells get active
         #self.b = 0                    # clear burst state
 
@@ -138,8 +150,8 @@ class Cell:
 
             # record/log quantities (if verbose)
 
-        self.mon.record(self,u,c)      # record current cell state
-        return self.update(c)          # return updated context
+        #self.mon.record(self,u,c)      # record current cell state
+        return self.update(u,c,1,{})
 
     def phase2(self,u,c):              # cell algo phase 2: bursting
         self.u = u
@@ -153,7 +165,7 @@ class Cell:
            # before all cells in the context have determined their burst state
 
         self.mon.record(self,u,c,v)
-        return self.update(c)          # return updated context
+        return self.update(u,c,2,{})
 
     def phase3(self,u,c):              # cell algo phase 3: process context
         self.u = u
@@ -185,7 +197,7 @@ class Cell:
             # record this stuff
 
         self.mon.record(self,u,c,0,V,W,E,L,D)
-        return self.update(c)          # return updated context
+        return self.update(u,c,3,{})
 
     def phase(self,ph,u,c):            # cell algo phase i
         if ph == 1:
