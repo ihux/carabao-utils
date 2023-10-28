@@ -501,3 +501,15 @@ class Monitor:
 
     def xlabel(self,x,txt,size=None):
         self.text(x,-0.75,txt)
+
+    def head(self,txt,size=7):
+        ij = self.data.ij
+        scr = self.data.screen
+        y = scr.m-ij[0]-2
+        self.text(ij[1],y+1.65,txt,size=size)
+
+    def foot(self,txt,size=7):
+        ij = self.data.ij
+        scr = self.data.screen
+        y = scr.m-ij[0]-2
+        self.text(ij[1],y+0.35,txt,size=size)
