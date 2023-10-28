@@ -69,7 +69,7 @@ class Canvas:
 
     def frame(self):                        # draw frame
         xl = self.position[0];  xh = self.position[2]
-        yl = self.position[1];  yh = self.position[3]
+        yl = self.position[1];  yh = self.position[3]-1
         self.ax.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],color='k',linewidth=0.5)
 
     def circle(self,xy,r,col=None):
@@ -150,11 +150,12 @@ class Screen:
 
     def cls(self):           # clear screen
         #self.can = Canvas([0,0,self.n+1,self.m+2])
-        self.can = Canvas([0,0,self.n+1,self.m+1])
+        self.can = Canvas([-1,-1,self.n,self.m+1])
         return self.can
 
     def setup(self):
-        self.r0 = 0.45;  self.r1 = 0.38;  self.r2 = 0.31
+        kr = 0.9
+        self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.r2 = kr*0.31
         self.r3 = 0.16;  self.rs = (self.r2-self.r3)*0.4
 
         self.ds = 0.11; self.rs = self.ds/3;
@@ -237,7 +238,8 @@ class Screen:
         coly = self.red if y>0 else self.gray
 
         i = ij[0];  j = ij[1]
-        x = 1+j; y = self.m-i;
+#>>>>>>>>>>>>>>>>>>>>>>
+        x = j; y = self.m-i-1;
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
         dy1 = r0*0.1;    dy2 = r0*0.1
@@ -274,7 +276,8 @@ class Screen:
         core  = self.gold if L.any().any() else self.gray
 
         i = ij[0];  j = ij[1]
-        x = 1+j; y = self.m+1-i;
+#>>>>>>>>>>>>>>>>>>>>>>>
+        x = j; y = self.m-i;
         self.can.circle((x,y),self.r0,outer)
         self.can.circle((x,y),self.r1,inner)
         self.can.circle((x,y),self.r2,core)
@@ -488,12 +491,13 @@ class Monitor:
     def line(self,x,y,color='k',linewidth=0.5):
         plt.plot(x,y,color,linewidth=linewidth)
 
-    def text(self,x,y,txt,color='k',size=10,rotation=0,ha='center',va='center'):
+    def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
+        size = 10 if size is None else size
         plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
 
     def separator(self,j,color='k',linewidth=0.5):
         scr = self.data.screen
-        self.line([j+0.5,j+0.5],[0,scr.m+1],color=color,linewidth=linewidth)
+        self.line([j-0.5,j-0.5],[-1,scr.m],color=color,linewidth=linewidth)
 
-    def xlabel(self,x,txt):
-        self.text(x,0.25,txt)
+    def xlabel(self,x,txt,size=None):
+        self.text(x,-0.75,txt)
