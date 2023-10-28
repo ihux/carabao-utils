@@ -422,11 +422,11 @@ class Monitor:
         self.print('matrix',"   K%g:" % k,cell.K)
         self.print('matrix',"   P%g:" % k,cell.P)
         if (data.phase == 3):
-            self.print('matrix',"   V%g:" % k, data.V)
+            #self.print('matrix',"   V%g:" % k, data.V)
             self.print('matrix',"   W%g:" % k, data.W)
             self.print('matrix',"   E%g:" % k, data.E)
-            self.print('matrix',"   L%g:" % k, data.L)
-            self.print('matrix',"   D%g:" % k, data.D)
+            #self.print('matrix',"   L%g:" % k, data.L)
+            #self.print('matrix',"   D%g:" % k, data.D)
         if (data.phase== 2 or data.phase == 3):
             #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
             #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
