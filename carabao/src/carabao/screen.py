@@ -370,6 +370,13 @@ class Monitor:
             data.L = L;  data.D = D;
             self.log(cell,"(phase 3)",phase=3)
 
+    def update(self,cell,args):
+        data = self.data
+        #print("monitor: update",args)
+        if args['rule'] == 3:
+            data.v = args['v']
+            #print("monitor: v =",self.data.v)
+
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
@@ -385,6 +392,7 @@ class Monitor:
             data.W = (cell.P >= cell.eta)*1
             data.v = 0*array(cell.g)
             data.v = data.v if v is None else v
+            data.v = data.v if v == []   else v
             data.W = data.W if W is None else W
             data.E = data.E if E is None else E
 
