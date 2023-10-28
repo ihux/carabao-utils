@@ -129,12 +129,16 @@ class Cell:
         self.aux.c = c                 # store for analysis
         match phase:
             case 1:                    # phase 1
-                self.mon.log(self,'(phase %g)'%phase,phase)
+                None
             case 2:                    # phase 2
                 self.aux.v = args['v']
-                self.mon.log(self,'(phase %g)'%phase,phase)
             case 3:                    # phase 3
-                self.aux.u = u
+                self.aux.V = args['V']
+                self.aux.W = args['W']
+                self.aux.E = args['E']
+                self.aux.L = args['L']
+                self.aux.D = args['D']
+        self.mon.log(self,'(phase %g)'%phase,phase)
         return c                       # return updated context
 
     def phase1(self,u,c):              # cell algo phase 1: update context
@@ -142,20 +146,12 @@ class Cell:
 
             # rule 1: excited (u=1) & predictive (x=1) cells get active (y=1)
 
-        #self.u = u;                    # store input locally
         self.y = u * self.x            # excited & predictive cells get active
         #self.b = 0                    # clear burst state
 
-            # update context c[k] with updated output y
-            # note: c is only updated but not used for processing
-
-            # record/log quantities (if verbose)
-
-        #self.mon.record(self,u,c)      # record current cell state
         return self.update(u,c,1,{})
 
     def phase2(self,u,c):              # cell algo phase 2: bursting
-        self.u = u
 
            # rule 2: excited cells in a non-predictive group get bursting
 
@@ -165,7 +161,6 @@ class Cell:
            # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
-        #self.mon.record(self,u,c,v)
         return self.update(u,c,2,{'v':v})
 
     def phase3(self,u,c):              # cell algo phase 3: process context
@@ -185,7 +180,7 @@ class Cell:
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
 
-        L = self.learn(E)
+        L = self.learn(V)
         D = self.y * (L*E*self.pdelta - L*self.ndelta)
 
         self.P_ = self.P + D           # learning (permanences after transition)
@@ -197,8 +192,7 @@ class Cell:
 
             # record this stuff
 
-        self.mon.record(self,u,c,0,V,W,E,L,D)
-        return self.update(u,c,3,{})
+        return self.update(u,c,3,{'V':V, 'W':W, 'E':E, 'L':L, 'D':D})
 
     def phase(self,ph,u,c):            # cell algo phase i
         if ph == 1:
@@ -221,8 +215,8 @@ class Cell:
         return [u * (sum(E[mu]) >= theta)
                 for mu in range(0,E.shape[0])]
 
-    def group(self,c,g):
-        return [c[g[k]] for k in range(0,len(g))]
+    #def group(self,c,g):
+    #    return [c[g[k]] for k in range(0,len(g))]
 
     def learn(self,E):                  # learning vector
         d,s = E.shape

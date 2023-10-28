@@ -338,20 +338,20 @@ class Monitor:
         return mon
 
     def init(self):
-        nan = float('nan');
+        #nan = float('nan');
         data = self.data
-        data.c = None
+        #data.c = None
 
         data._P = None
 
         data.s = None           # dendritic spike
         #data.v = None
 
-        data.W = None           # no weights needed
-        data.V = None           # no pre-synaptic signals needed
-        data.E = None           # no synaptics
-        data.L = None           # no binary learning matrix
-        data.D = None           # no binary learning matrix
+        #data.W = None           # no weights needed
+        #data.V = None           # no pre-synaptic signals needed
+        #data.E = None           # no synaptics
+        #data.L = None           # no binary learning matrix
+        #data.D = None           # no binary learning matrix
 
     def record(self,cell,u,c,v=None,V=None,W=None,E=None,L=None,D=None):
         data = self.data
@@ -363,9 +363,10 @@ class Monitor:
             #data.v = v;
             #self.log(cell,"(phase 2)",phase=2)
         else:
-            data.V = V;  data.W = W;  data.E = E
-            data.L = L;  data.D = D;
-            self.log(cell,"(phase 3)",phase=3)
+            raise Exception('record')
+            #data.V = V;  data.W = W;  data.E = E
+            #data.L = L;  data.D = D;
+            #self.log(cell,"(phase 3)",phase=3)
 
     def place(self,screen,ij):
         self.data.screen = screen
@@ -379,15 +380,15 @@ class Monitor:
        data = self.data; aux = cell.aux
        if i is not None:
             self.place(data.screen,(i,j))
-            data.W = (cell.P >= cell.eta)*1
+            aux.W = (cell.P >= cell.eta)*1
             aux.v = 0*array(cell.g)
             aux.v = aux.v if v is None else v
             aux.v = aux.v if v == []   else v
-            data.W = data.W if W is None else W
-            data.E = data.E if E is None else E
+            aux.W = aux.W if W is None else W
+            aux.E = aux.E if E is None else E
 
             data.screen.neuron(data.ij,aux.u,cell.x,cell.y,cell.b,
-                               data.v,cell.s,data.W,data.E)
+                               data.v,cell.s,aux.W,aux.E)
             #data.screen.input(data.ij[1],aux.u)
             data.screen.show
 
@@ -413,17 +414,17 @@ class Monitor:
         self.print('matrix',"   K%g:" % k,cell.K)
         self.print('matrix',"   P%g:" % k,cell.P)
         if (data.phase == 3):
-            #self.print('matrix',"   V%g:" % k, data.V)
-            self.print('matrix',"   W%g:" % k, data.W)
-            self.print('matrix',"   E%g:" % k, data.E)
-            #self.print('matrix',"   L%g:" % k, data.L)
-            #self.print('matrix',"   D%g:" % k, data.D)
+            self.print('matrix',"   V%g:" % k, aux.V)
+            self.print('matrix',"   W%g:" % k, aux.W)
+            self.print('matrix',"   E%g:" % k, aux.E)
+            self.print('matrix',"   L%g:" % k, aux.L)
+            self.print('matrix',"   D%g:" % k, aux.D)
         if (data.phase== 2 or data.phase == 3):
             #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
             #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
             print("   b%g:" % k,cell.b,", v%g:" % k, data.v)
         if (data.phase == 3):
-            print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
+            print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(aux.E),cell.theta))
         if (data.phase == 3):
             print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
@@ -468,8 +469,8 @@ class Monitor:
         hu = hash(aux.u,5);  hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(cell.s,8);  hb = hash(cell.b,9)
         hq = hash(data.v,10)
-        hW = hash(data.W,11); hV = hash(data.V,12); hE = hash(data.E,13)
-        hL = hash(data.L,14); hD = hash(data.D,15)
+        hW = hash(aux.W,11); hV = hash(aux.V,12); hE = hash(aux.E,13)
+        hL = hash(aux.L,14); hD = hash(aux.D,15)
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
         prime = 1*2*3*5*7*11*13*17*19+1
