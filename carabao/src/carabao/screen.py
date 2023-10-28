@@ -3,7 +3,6 @@
 # - class Screen (copyright: Neuronycs 2023)
 #===============================================================================
 
-#import numpy as np
 from numpy import array, isnan, copy, arange, zeros
 from numpy.random import rand
 from ypstruct import struct
@@ -430,8 +429,9 @@ class Monitor:
             self.print('matrix',"   L%g:" % k, data.L)
             self.print('matrix',"   D%g:" % k, data.D)
         if (data.phase== 2 or data.phase == 3):
-            print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
-              ", ||q%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
+            #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
+            #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
+            print("   b%g:" % k,cell.b,", v%g:" % k, data.v)
         if (data.phase == 3):
             print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(data.E),cell.theta))
         if (data.phase == 3):
