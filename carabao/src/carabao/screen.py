@@ -372,7 +372,7 @@ class Monitor:
     def update(self,cell,args):
         data = self.data
         #print("monitor: update",args)
-        if args['rule'] == 3:
+        if args['rule'] == 2:
             data.v = args['v']
             #print("monitor: v =",self.data.v)
 
