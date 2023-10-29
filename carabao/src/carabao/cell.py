@@ -135,19 +135,26 @@ class Cell:
 
     def __init__(self,mon,k,g,K,P):
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
-        #zero = [0 for i in range(0,P.shape[0])]
 
             # input, output, state variables
 
         self.y = 0                     # cell output (axon)
         self.x = 0                     # predictive state
         self.b = 0                     # burst state
-        self.s = 0*P[:,0]              # zero spike state
+        #self.s = 0*P[:,0]              # zero spike state
         self.P = P                     # permanence matrix (state)
+
+            # auxiliary quantities
 
         self.aux = struct()
         self.aux.u = 0                 # basal (feedforwad) input
         self.aux.c = []                # context input
+        self.aux.v = [0,0,0,0]         # group outputs
+        self.aux.V = 0*P               # pre-synaptic signals
+        self.aux.W = 0*P               # dendritic weights
+        self.aux.E = 0*P               # empowerment matrix
+        self.aux.L = 0*P               # learning mask
+        self.aux.D = 0*P               # learning delta
 
             # parameters and auxilliary variables
 
@@ -273,6 +280,8 @@ class Cell:
         return L
 
     def plot(self,i=None,j=None,v=None,W=None,E=None):
+        self.aux.W = (self.P >= self.eta)*1
+        #aux.v = 0*array(cell.g)
         self.mon.plot(self,i,j,v,W,E)
 
 
