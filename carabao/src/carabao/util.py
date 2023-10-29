@@ -1,5 +1,12 @@
 #===============================================================================
 # carabao/util.py: carabao utilities
+#    Random()    random generator class
+#    peek()      peek submatrix from flat matrix
+#    poke()      poke submatrix to flat matrix
+#    squeeze()   squeeze flat matrix into mxn cell matrix
+#    isa()       check object for specific type name
+#    column()    create mx1 column matrix from list
+#    repr()      representation string of numpy array
 #===============================================================================
 
 import numpy as np
@@ -121,3 +128,62 @@ def squeeze(M, m, n):     # C = squeeze(M,m,n)
         Mij = sw.peek(M,i,j,mm,nn)
         C[i,j] = Mij
     return C
+
+#=============================================================================================
+# utility: check object for specific type name
+#=============================================================================================
+
+def isa(obj,typ=None):
+    """
+    isa(): has object certain type?
+
+        ok = isa("junk",'string')  # => True
+        ok = isa([1,2,3],'list')   # => True
+        ok = isa((2,3),'tuple')    # => True
+    """
+    if typ is None:
+        print(type(obj),type(obj).__name__)
+    return (type(obj).__name__ == typ)
+
+#=============================================================================
+# helper: create column vector from list
+#=============================================================================
+
+def column(x):
+    """
+    column(): create column vector from list
+
+        v = column([0,1])
+    """
+    return transpose(array([x]))
+
+#=============================================================================================
+# utility: check object for specific type name
+#=============================================================================================
+
+def repr(obj,wide=False):   # string representation of list or matrix
+    if isa(obj,'list'):
+        txt = "[";  M = array([obj])
+        print("repr M:",M,type(M),M.shape)
+    elif isa(obj,'ndarray'):
+        txt = "#[";  M = obj
+        if len(M.shape) == 1:
+            M = array([M])
+    else:
+        return obj
+
+    m,n = M.shape
+    sepi = ''
+    for i in range(0,m):
+        txt += sepi;  sepi = '; ';  sepj = ''
+        for j in range(0,n):
+            if wide == False:
+                txt += sepj + "%g" % M[i,j]
+            else:
+                s = "%4g" %M[i,j].item()
+                s = s if s[0:2] != '0.' else s[1:]
+                s = s if s[0:3] != '-0.' else '-'+s[2:]
+                txt += "%5s" % s
+            sepj = ' '
+    txt += ']'
+    return txt
