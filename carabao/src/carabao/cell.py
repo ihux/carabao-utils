@@ -149,7 +149,7 @@ class Cell:
         self.aux = struct()
         self.aux.u = 0                 # basal (feedforwad) input
         self.aux.c = []                # context input
-        self.aux.v = [0,0,0,0]         # group outputs
+        #self.aux.v = [0,0,0,0]         # group outputs
         self.aux.V = 0*P               # pre-synaptic signals
         self.aux.W = 0*P               # dendritic weights
         self.aux.E = 0*P               # empowerment matrix
@@ -171,6 +171,33 @@ class Cell:
         self.g = g;
         self.K = K;
 
+    def v(self,c):
+        if c == []: return 0*array(g)
+        return array([c[k] for k in self.g])   # group output
+
+    def V(self,c):                    # pre-synaptic signals
+        if c == []: return 0*self.P
+        V = 0*self.K
+        for mu in range(0,self.K.shape[0]):
+            for nu in range(0,self.K.shape[1]):
+                V[mu,nu] = c[self.K[mu,nu]];
+        return V
+
+    def W(self):
+        return (self.P >= self.eta)*1  # synaptic (binary) weights
+
+    def E(self,c):
+        return self.V(c) * self.W()    # empowerment matrix
+
+    def L(self,c):
+        return column(self.s(c)) @ ones(self.P[0,:])
+
+    def s(self,c):                     # spike vector
+        E = self.E(c)
+        _s = [(sum(E[mu]) >= self.theta)
+             for mu in range(0,E.shape[0])]
+        return 1*array(_s)
+
     def transition(self):              # state & permanence transition
         self.x = self.x_               # predictive state transition
         self.P = self.P_               # permanence state transition
@@ -183,7 +210,7 @@ class Cell:
             case 1:                    # phase 1
                 None
             case 2:                    # phase 2
-                self.aux.v = args['v']
+                None # self.aux.v = args['v']
             case 3:                    # phase 3
                 self.aux.V = args['V']
                 self.aux.W = args['W']
@@ -207,7 +234,7 @@ class Cell:
 
            # rule 2: excited cells in a non-predictive group get bursting
 
-        v = [c[k] for k in self.g]     # the group's outputs
+        v = self.v(c)                  # the group's outputs
         self.b = u * (sum(v) == 0)     # set cell's burst state
 
            # important: don't change output (and context vector) in this phase
@@ -216,30 +243,29 @@ class Cell:
         return self.update(u,c,2,{'v':v})
 
     def phase3(self,u,c):              # cell algo phase 3: process context
-        self.u = u
 
             # rule 3: excited bursting cells get active
 
-        self.y = self.y or (u * self.b)
+        self.y = u * (self.y or self.b)
 
             # rule 4: excided empowered dendritic segments are spiking
 
-        V = self.select(c,self.K)      # pre-synaptic signals
-        W = (self.P >= self.eta)       # synaptic (binary) weights
-        E = V * W                      # empowerment matrix
-        self.s = self.spike(u,E,self.theta)
+        V = self.V(c)                            # pre-synaptic signals
+        W = self.W()                             # synaptic weights
+        E = V * W                                # empowerment matrix
+        s = u * self.s(c)                        # spike vector
 
             # rule 5: spiking dentrites of activated cells are learning
             # (calc permanences after transition)
 
-        L = column(self.s) @ ones(self.P[0,:]) # learning matrix
+        L = self.L(c)
         D = L*(self.pdelta * V - self.ndelta)
-        self.P = sat(self.P + D*self.y)        # learning (adapt permanences)
+        self.P = sat(self.P + self.y * D)        # learning (adapt permanences)
 
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
 
-        self.x_ = max(self.s)          # get predictive if any segment spikes
+        self.x_ = max(self.s(c))       # dendritic spikes set cells predictive
 
             # record this stuff
 

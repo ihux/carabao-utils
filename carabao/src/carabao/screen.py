@@ -191,7 +191,7 @@ class Screen:
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
         ################
-        print("segment: s =",s)
+        #print("segment: s =",s)
         col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
@@ -347,8 +347,10 @@ class Monitor:
             result = result if sumj < result else sumj
         return result
     def log(self,cell,msg=None,phase=None):
+        always = True
         k = cell.k
         c = cell.aux.c
+        s = cell.s(c)
         data = self.data;  aux = cell.aux
         nan = float('nan')
         msg = msg if msg != None else ""
@@ -358,19 +360,18 @@ class Monitor:
         print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
         self.print('matrix',"   K%g:" % k,cell.K)
         self.print('matrix',"   P%g:" % k,cell.P)
-        if (data.phase == 3):
+        if (always or data.phase == 3):
             self.print('matrix',"   V%g:" % k, aux.V)
             self.print('matrix',"   W%g:" % k, aux.W)
             self.print('matrix',"   E%g:" % k, aux.E)
             self.print('matrix',"   L%g:" % k, aux.L)
             self.print('matrix',"   D%g:" % k, aux.D)
-        if (data.phase== 2 or data.phase == 3):
+        if (always or data.phase== 2 or data.phase == 3):
             #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
             #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
             print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(c))
-        if (data.phase == 3):
-            print("   s%g:" % k, cell.s,"(||E||=%g, theta:%g)" % (self.norm1(aux.E),cell.theta))
-        if (data.phase == 3):
+        if (always or data.phase == 3):
+            print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(aux.E),cell.theta))
             print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
             print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
@@ -406,10 +407,11 @@ class Monitor:
     def hash(self,cell):
         data = self.data;  aux = cell.aux
         v = cell.v(aux.c)
+        s = cell.s(aux.c)
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
         hu = hash(aux.u,5);   hx = hash(cell.x,6);  hy = hash(cell.y,7);
-        hs = hash(cell.s,8);  hb = hash(cell.b,9)
+        hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
         hW = hash(aux.W,11);  hV = hash(aux.V,12);  hE = hash(aux.E,13)
         hL = hash(aux.L,14);  hD = hash(aux.D,15)
