@@ -206,12 +206,11 @@ class Cell:
         c[self.k] = self.y             # update context with changed output
         self.aux.u = u                 # store for analysis
         self.aux.c = c                 # store for analysis
-        match phase:
-            case 1:                    # phase 1
-                None
-            case 2:                    # phase 2
-                None # self.aux.v = args['v']
-            case 3:                    # phase 3
+        if phase == 1:
+            None
+        elif phase == 2:
+            None # self.aux.v = args['v']
+        elif phase == 3:
                 self.aux.V = args['V']
                 self.aux.W = args['W']
                 self.aux.E = args['E']
