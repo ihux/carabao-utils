@@ -201,13 +201,59 @@ class Cell:
         self.x = self.x_               # predictive state transition
         self.P = self.P_               # permanence state transition
 
-    def update(self,u,c,phase,args):   # update context with current output
+    def update(self,u,c,phase):        # update context with current output
         self.set(u=u,c=c)              # store for plot routines
         c = c.copy();                  # update a copy of the context
         while len(c) <= self.k: c.append(0)
-        c[self.k] = self.y            # with changed output
+        c[self.k] = self.y             # with changed output
         return c
-        #self.mon.log(self,'(phase %g)'%phase,phase)
+
+      # === rule 1: excited predictive cells get active ===
+
+    def rule1(self,u,c):
+        self.y = u * self.x            # excited & predictive cells get active
+        return self.update(u,c,1)
+
+      # === rule 2: excited neurons in non-predictive groups burst
+
+    def rule2(self,u,c):
+        v = self.v(c)                  # the group's outputs
+        self.b = u * (sum(v) == 0)     # set cell's burst state
+
+            # important: don't change output (and context vector) in this phase
+            # before all cells in the context have determined their burst state
+
+        return self.update(u,c,2)
+
+      # === rule 3: excited bursting neurons get active ===
+
+    def rule3(self,u,c):
+        self.y = u * (self.y or self.b)
+        return self.update(u,c,3)
+
+      # === rule 4: empowered dendritic segments spike ===
+
+    def rule4(self,u,c):
+        V = self.V(c)                            # pre-synaptic signals
+        W = self.W()                             # synaptic weights
+        E = V * W                                # empowerment matrix
+        #s = u * self.s(c)                       # spike vector
+        s = self.s(c)                            # spike vector
+
+        return self.update(u,c,4)
+
+      # === rule 5: spiking dentrites of active cells learn
+
+    def rule5(self,u,c):
+        L = self.L(c)
+        self.P = sat(self.P + self.y * L)        # learning (adapt permanences)
+        return self.update(u,c,5)
+
+       # === rule 6: spiking neurons get always predictive ===
+
+    def rule6(self,u,c):
+        self.x = max(self.s(c))        # dendritic spikes set cells predictive
+        return self.update(u,c,6)
 
     def phase1(self,u,c):              # cell algo phase 1: update context
         self.transition()              # first perform state transition
@@ -217,7 +263,7 @@ class Cell:
         self.y = u * self.x            # excited & predictive cells get active
         #self.b = 0                    # clear burst state
 
-        return self.update(u,c,1,{})
+        return self.update(u,c,1)
 
     def phase2(self,u,c):              # cell algo phase 2: bursting
 
@@ -229,7 +275,7 @@ class Cell:
            # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
-        return self.update(u,c,2,{'v':v})
+        return self.update(u,c,2)
 
     def phase3(self,u,c):              # cell algo phase 3: process context
 
@@ -258,7 +304,7 @@ class Cell:
 
             # record this stuff
 
-        return self.update(u,c,3,{'V':V, 'W':W, 'E':E, 'L':L, 'D':D})
+        return self.update(u,c,3)
 
     def phase(self,ph,u,c):            # cell algo phase i
         if ph == 1:
@@ -269,6 +315,9 @@ class Cell:
             return self.phase3(u,c)
         else:
             raise Exception("bad phase")
+
+    def log(self,txt):
+        self.mon.log(self,txt)
 
     def plot(self,i=None,j=None,v=None,W=None,E=None,u=None,c=None):
         self.mon.plot(self,i,j,v,W,E,u,c)

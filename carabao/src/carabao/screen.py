@@ -434,19 +434,19 @@ class Monitor:
         W = cell.W()
         V = cell.V(input.c)
         E = cell.E(input.c)
+        S = cell.S(input.c)
         L = cell.L(input.c)
-        D = cell.D(input.c)
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
         hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
         hW = hash(W,11);  hV = hash(V,12);  hE = hash(E,13)
-        hL = hash(L,14);  hD = hash(D,15)
+        hS = hash(S,14);  hL = hash(L,15)
 
-        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
+        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hS,hL]]
         prime = 1*2*3*5*7*11*13*17*19+1
-        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hE*hL*hD)
+        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hE*hS*hL)
         n = N % prime
         #return (h,N,prime,hashes)
         return n
