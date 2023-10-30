@@ -158,8 +158,8 @@ class Cell:
     def config(self,k,g,K):
         self.eta = 0.5                 # synaptic threshold
         self.theta = 2                 # dendritic threshold
-        self.pdelta = 0.04             # positive learning delata
-        self.ndelta = 0.02             # negative learning delta
+        self.pdelta = 0.2              # positive learning delta
+        self.ndelta = 0.2              # negative learning delta
         self.k = k;
         self.g = g;
         self.K = K;
@@ -189,7 +189,7 @@ class Cell:
     def L(self,c):                     # learning delta
         V = self.V(c)                  # pre-synaptic signals
         S = self.S(c)                  # spike matrix (learning mask)
-        return S*(self.pdelta * V - self.ndelta)
+        return S*(2*self.pdelta * V - self.ndelta)
 
     def s(self,c):                     # spike vector
         E = self.E(c)
@@ -234,11 +234,12 @@ class Cell:
       # === rule 4: empowered dendritic segments spike ===
 
     def rule4(self,u,c):
-        V = self.V(c)                            # pre-synaptic signals
-        W = self.W()                             # synaptic weights
-        E = V * W                                # empowerment matrix
-        #s = u * self.s(c)                       # spike vector
-        s = self.s(c)                            # spike vector
+        self.b = 0                     # clear burst state
+        V = self.V(c)                  # pre-synaptic signals
+        W = self.W()                   # synaptic weights
+        E = V * W                      # empowerment matrix
+        #s = u * self.s(c)             # spike vector
+        s = self.s(c)                  # spike vector
 
         return self.update(u,c,4)
 
@@ -246,7 +247,7 @@ class Cell:
 
     def rule5(self,u,c):
         L = self.L(c)
-        self.P = sat(self.P + self.y * L)        # learning (adapt permanences)
+        self.P = sat(self.P+self.y*L)  # learning (adapt permanences)
         return self.update(u,c,5)
 
        # === rule 6: spiking neurons get always predictive ===
@@ -256,12 +257,12 @@ class Cell:
         return self.update(u,c,6)
 
     def phase1(self,u,c):              # cell algo phase 1: update context
-        self.transition()              # first perform state transition
+        #self.transition()              # first perform state transition
 
             # rule 1: excited (u=1) & predictive (x=1) cells get active (y=1)
 
+        self.b = 0                     # clear burst state
         self.y = u * self.x            # excited & predictive cells get active
-        #self.b = 0                    # clear burst state
 
         return self.update(u,c,1)
 
@@ -294,13 +295,13 @@ class Cell:
             # (calc permanences after transition)
 
         L = self.L(c)
-        D = L*(self.pdelta * V - self.ndelta)
+        D = L*(2*self.pdelta * V - self.ndelta)
         self.P = sat(self.P + self.y * D)        # learning (adapt permanences)
 
             # rule 6: active cells with spiking dendrites get predictive
             # (calc state after transition)
 
-        self.x_ = max(self.s(c))       # dendritic spikes set cells predictive
+        self.x = max(self.s(c))        # dendritic spikes set cells predictive
 
             # record this stuff
 
@@ -320,7 +321,7 @@ class Cell:
         self.mon.log(self,txt)
 
     def plot(self,i=None,j=None,v=None,W=None,E=None,u=None,c=None):
-        self.mon.plot(self,i,j,v,W,E,u,c)
+        self.mon.plot(self,i,j,v=v,W=W,E=E,u=u,c=c)
 
     def set(self,u=None,c=None,x=None,y=None,b=None):
         self.input.u = self.input.u if u is None else u
@@ -356,7 +357,7 @@ def toy(tag):
         K1 = array([[4,5,6,7,8],[2,4,5,6,7]])
         K2 = array([[5,6,7,8,9],[0,3,7,8,9]])
         P0 = array([[0.5,0.6,0.1,0.2,0.3],[0.0,0.6,0.4,0.0,0.0]])
-        P1 = array([[0.1,0.3,0.5,0.6,0.0],[0.0,0.6,0.5,0.7,0.0]])
+        P1 = array([[0.1,0.3,0.5,0.6,0.0],[0.0,0.5,0.5,0.7,0.0]])
         P2 = array([[0.0,0.1,0.5,0.7,0.1],[0.0,0.1,0.3,0.8,0.0]])
         K = [K0,K1,K2]
         P = [P0,P1,P2]

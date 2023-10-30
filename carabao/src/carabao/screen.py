@@ -375,9 +375,9 @@ class Monitor:
         if data.S is None: data.S = 0*cell.K
         if data.L is None: data.L = 0*cell.K
 
-        print("---------------------------------------------------------------")
+        print("--------------------------------------------------------------")
         print(msg)
-        print("---------------------------------------------------------------")
+        print("--------------------------------------------------------------")
         if (data.k != cell.k) or any(data.g != cell.g) or (data.eta != cell.eta):
             print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
             data.k = cell.k; data.g = cell.g.copy();  data.eta = cell.eta
