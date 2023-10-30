@@ -115,7 +115,16 @@ def sat(X):
 
 def rule_1(cell,u,c):
     cell.y = u * cell.x                # excited & predictive cells get active
-    return cell.update(u,c,1)
+    return cell.update(u,c,1)          # update c[k] = cell.y
+
+#===============================================================================
+# rule 2: excited neurons in non-predictive groups burst
+#===============================================================================
+
+def rule_2(cell,u,c):
+    v = cell.v(c)                      # the group's outputs
+    cell.b = u * (sum(v) == 0)         # set cell's burst state
+    return cell.update(u,c,2)          # update c[k] = cell.y
 
 #=============================================================================
 # class Cell
@@ -216,22 +225,11 @@ class Cell:
         c[self.k] = self.y             # with changed output
         return c
 
-      # === rule 1: excited predictive cells get active ===
+      # rule 1: excited predictive cells get active
+      # rule 2: excited neurons in non-predictive groups burst
 
-    def rule1(self,u,c):
-        self.y = u * self.x            # excited & predictive cells get active
-        return self.update(u,c,1)
-
-      # === rule 2: excited neurons in non-predictive groups burst
-
-    def rule2(self,u,c):
-        v = self.v(c)                  # the group's outputs
-        self.b = u * (sum(v) == 0)     # set cell's burst state
-
-            # important: don't change output (and context vector) in this phase
-            # before all cells in the context have determined their burst state
-
-        return self.update(u,c,2)
+    def rule1(self,u,c): return rule_1(self,u,c)
+    def rule2(self,u,c): return rule_2(self,u,c)
 
       # === rule 3: excited bursting neurons get active ===
 
@@ -264,17 +262,10 @@ class Cell:
         self.x = max(self.s(c))        # dendritic spikes set cells predictive
         return self.update(u,c,6)
 
-    def phase1(self,u,c):              # cell algo phase 1: update context
-        #self.transition()              # first perform state transition
+    def phase1(self,u,c):              # cell algo phase 1
+        return self.rule1(u,c)
 
-            # rule 1: excited (u=1) & predictive (x=1) cells get active (y=1)
-
-        self.b = 0                     # clear burst state
-        self.y = u * self.x            # excited & predictive cells get active
-
-        return self.update(u,c,1)
-
-    def phase2(self,u,c):              # cell algo phase 2: bursting
+    def phase2(self,u,c):              # cell algo phase 2
 
            # rule 2: excited cells in a non-predictive group get bursting
 
