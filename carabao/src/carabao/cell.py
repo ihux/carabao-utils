@@ -134,6 +134,15 @@ def rule_3(cell,u,c):
     cell.y = u * (cell.y or cell.b)
     return cell.update(u,c,3)
 
+#===============================================================================
+# rule 4: empowered dendritic segments spike
+#===============================================================================
+
+def rule_4(cell,u,c):
+    cell.b = 0                     # clear burst state
+    s = cell.s(c)                  # spike vector
+    return cell.update(u,c,4)
+
 
 
 #=============================================================================
@@ -223,11 +232,11 @@ class Cell:
         _s = [(sum(E[mu]) >= self.theta)
              for mu in range(0,E.shape[0])]
         return 1*array(_s)
-
+    """
     def transition(self):              # state & permanence transition
         self.x = self.x_               # predictive state transition
         self.P = self.P_               # permanence state transition
-
+    """
     def update(self,u,c,phase):        # update context with current output
         self.set(u=u,c=c)              # store for plot routines
         c = c.copy();                  # update a copy of the context
@@ -237,22 +246,15 @@ class Cell:
 
       # rule 1: excited predictive cells get active
       # rule 2: excited neurons in non-predictive groups burst
+      # rule 3: excited bursting neurons get active
+      # rule 4: empowered dendritic segments spike
+      # rule 5: spiking dentrites of active cells learn
+      # rule 6: spiking neurons get always predictive ===
 
     def rule1(self,u,c): return rule_1(self,u,c)
     def rule2(self,u,c): return rule_2(self,u,c)
     def rule3(self,u,c): return rule_3(self,u,c)
-
-      # === rule 4: empowered dendritic segments spike ===
-
-    def rule4(self,u,c):
-        self.b = 0                     # clear burst state
-        V = self.V(c)                  # pre-synaptic signals
-        W = self.W()                   # synaptic weights
-        E = V * W                      # empowerment matrix
-        #s = u * self.s(c)             # spike vector
-        s = self.s(c)                  # spike vector
-
-        return self.update(u,c,4)
+    def rule4(self,u,c): return rule_4(self,u,c)
 
       # === rule 5: spiking dentrites of active cells learn
 
@@ -465,7 +467,7 @@ class Rcell:
         W = self.W()                             # synaptic weights
         E = V * W                                # empowerment matrix
         #s = u * self.s(c)                       # spike vector
-        s = self.s(c)                            # spike vector
+        self.s = self.s(c)                            # spike vector
 
         return self.update(u,c,4)
 

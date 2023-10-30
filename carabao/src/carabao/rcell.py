@@ -236,12 +236,8 @@ class Rcell:
       # === rule 4: empowered dendritic segments spike ===
 
     def rule4(self,u,c):
-        V = self.V(c)                            # pre-synaptic signals
-        W = self.W()                             # synaptic weights
-        E = V * W                                # empowerment matrix
-        #s = u * self.s(c)                       # spike vector
-        s = self.s(c)                            # spike vector
-
+        self.b = 0                     # clear burst state
+        s = self.s(c)                  # spike vector
         return self.update(u,c,4)
 
        # === rule 5: spiking dentrites of active cells learn
