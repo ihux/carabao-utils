@@ -3,7 +3,7 @@
 # - class Screen (copyright: Neuronycs 2023)
 #===============================================================================
 
-from numpy import array, isnan, copy, arange, zeros
+from numpy import array, isnan, copy, arange, zeros, any
 from numpy.random import rand
 from ypstruct import struct
 
@@ -308,8 +308,10 @@ class Screen:
 class Monitor:
     data = struct()
     def __init__(self,m=None,n=None,verbose=0):
+        data = self.data
+        data.K = data.P = data.V = data.W = data.E = data.S = data.L = None
+        data.c = []
         if m is not None:
-            data = self.data
             data.screen = Screen('Neurons',m,n)
             data.ij = (0,0)
             data.verbose = verbose
@@ -350,6 +352,8 @@ class Monitor:
         always = True
         k = cell.k
         s = cell.s(input.c)
+        K = cell.K
+        P = cell.P
         W = cell.W()
         V = cell.V(input.c)
         E = cell.E(input.c)
@@ -363,25 +367,37 @@ class Monitor:
         print(msg)
         print("---------------------------------------------------------------")
         print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
-        self.print('matrix',"   K%g:" % k,cell.K)
-        self.print('matrix',"   P%g:" % k,cell.P)
-        if (always or data.phase == 3):
+        if any(data.K != K):
+            self.print('matrix',"   K%g:" % k,cell.K)
+            data.K = K.copy()
+        if any(data.P != P):
+            self.print('matrix',"   P%g:" % k,cell.P)
+            data.P = P.copy()
+        if any(data.V != V):
             self.print('matrix',"   V%g:" % k, V)
+            data.V = V.copy()
+        if any(data.W != W):
             self.print('matrix',"   W%g:" % k, W)
+            data.W = W.copy()
+        if any(data.E != E):
             self.print('matrix',"   E%g:" % k, E)
+            data.E = E.copy()
+        if any(data.S != S):
             self.print('matrix',"   S%g:" % k, S)
+            data.S = S.copy()
+        if any(data.L != L):
             self.print('matrix',"   L%g:" % k, L)
-        if (always or data.phase== 2 or data.phase == 3):
-            #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
-            #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
-            print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(input.c))
+            data.L = L.copy()
+
+        print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(input.c))
         if (always or data.phase == 3):
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),cell.theta))
             print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),
                   ", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
             print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
-        print("   c:",input.c)
+        if any(data.c != input.c):
+            print("   c:",input.c);  data.c = input.c.copy()
 
         if (phase == 3):
             #self.invalid(cell,'b,p,l,W,Z')       # invalidate
@@ -394,7 +410,9 @@ class Monitor:
             for i in range(0,m):
                 print(sepi,end='');  sepi = '; ';  sepj = ''
                 for j in range(0,n):
-                    s = "%4g" % arg[i,j].item()
+                    x = arg[i,j].item()
+                    x = 0 if x == 0 else x     # avoid "-0"
+                    s = "%4g" % x
                     s = s if s[0:2] != '0.' else s[1:]
                     s = s if s[0:3] != '-0.' else '-'+s[2:]
                     print("%5s" % s, end='');
