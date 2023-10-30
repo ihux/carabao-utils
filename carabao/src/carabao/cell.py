@@ -131,7 +131,7 @@ def rule_2(cell,u,c):
 #===============================================================================
 
 def rule_3(cell,u,c):
-    cell.y = u * (cell.y or cell.b)
+    cell.y = u * (cell.x or cell.b)
     return cell.update(u,c,3)
 
 #===============================================================================
@@ -139,12 +139,11 @@ def rule_3(cell,u,c):
 #===============================================================================
 
 def rule_4(cell,u,c):
-    cell.b = 0                     # clear burst state
     s = cell.s(c)                  # spike vector
     return cell.update(u,c,4)
 
 #===============================================================================
-# rule 5: spiking dentrites of active cells learn
+# rule 5: spiking dentrites of active neurons learn
 #===============================================================================
 
 def rule_5(cell,u,c):
@@ -152,6 +151,21 @@ def rule_5(cell,u,c):
     cell.P = sat(cell.P+cell.y*L)  # adapt permanences
     return cell.update(u,c,5)
 
+#===============================================================================
+# rule 6: spiking neurons get always predictive
+#===============================================================================
+
+def rule_6(cell,u,c):
+    cell.x = max(cell.s(c))        # dendritic spikes set cell predictive
+    return cell.update(u,c,6)
+
+#===============================================================================
+# rule 7: burst states have limited duration
+#===============================================================================
+
+def rule_7(cell,u,c):
+    cell.b = 0                     # clear burst state
+    return cell.update(u,c,6)
 
 
 #=============================================================================
@@ -241,90 +255,53 @@ class Cell:
         _s = [(sum(E[mu]) >= self.theta)
              for mu in range(0,E.shape[0])]
         return 1*array(_s)
-    """
-    def transition(self):              # state & permanence transition
-        self.x = self.x_               # predictive state transition
-        self.P = self.P_               # permanence state transition
-    """
-    def update(self,u,c,phase):        # update context with current output
-        self.set(u=u,c=c)              # store for plot routines
-        c = c.copy();                  # update a copy of the context
-        while len(c) <= self.k: c.append(0)
-        c[self.k] = self.y             # with changed output
-        return c
 
-      # rule 1: excited predictive cells get active
-      # rule 2: excited neurons in non-predictive groups burst
-      # rule 3: excited bursting neurons get active
-      # rule 4: empowered dendritic segments spike
-      # rule 5: spiking dentrites of active cells learn
-      # rule 6: spiking neurons get always predictive ===
+    # rule 1: excited predictive cells get active
+    # rule 2: excited neurons in non-predictive groups burst
+    # rule 3: excited bursting neurons get active
+    # rule 4: empowered dendritic segments spike
+    # rule 5: spiking dentrites of active neurons learn
+    # rule 6: spiking neurons get always predictive
+    # rule 7: burst states have limited duration
 
     def rule1(self,u,c): return rule_1(self,u,c)
     def rule2(self,u,c): return rule_2(self,u,c)
     def rule3(self,u,c): return rule_3(self,u,c)
     def rule4(self,u,c): return rule_4(self,u,c)
     def rule5(self,u,c): return rule_5(self,u,c)
+    def rule6(self,u,c): return rule_6(self,u,c)
+    def rule7(self,u,c): return rule_7(self,u,c)
 
-       # === rule 6: spiking neurons get always predictive ===
+    # 3 phases
 
-    def rule6(self,u,c):
-        self.x = max(self.s(c))        # dendritic spikes set cells predictive
-        return self.update(u,c,6)
+    def phase1(self,u,c):
+        c = self.rule7(u,c)  # burst states have limited duration
+        c = self.rule1(u,c)  # excited predictive cells get active
+        return c
 
-    def phase1(self,u,c):              # cell algo phase 1
-        return self.rule1(u,c)
+    def phase2(self,u,c):
+        c = self.rule2(u,c)  # excited neurons in non-predictive groups burst
+        c = self.rule4(u,c)  # empowered dendritic segments spike
+        c = self.rule6(u,c)  # spiking neurons get always predictive
+        return c
 
-    def phase2(self,u,c):              # cell algo phase 2
-
-           # rule 2: excited cells in a non-predictive group get bursting
-
-        v = self.v(c)                  # the group's outputs
-        self.b = u * (sum(v) == 0)     # set cell's burst state
-
-           # important: don't change output (and context vector) in this phase
-           # before all cells in the context have determined their burst state
-
-        return self.update(u,c,2)
-
-    def phase3(self,u,c):              # cell algo phase 3: process context
-
-            # rule 3: excited bursting cells get active
-
-        self.y = u * (self.y or self.b)
-
-            # rule 4: excided empowered dendritic segments are spiking
-
-        V = self.V(c)                            # pre-synaptic signals
-        W = self.W()                             # synaptic weights
-        E = V * W                                # empowerment matrix
-        s = u * self.s(c)                        # spike vector
-
-            # rule 5: spiking dentrites of activated cells are learning
-            # (calc permanences after transition)
-
-        L = self.L(c)
-        D = L*(2*self.pdelta * V - self.ndelta)
-        self.P = sat(self.P + self.y * D)        # learning (adapt permanences)
-
-            # rule 6: active cells with spiking dendrites get predictive
-            # (calc state after transition)
-
-        self.x = max(self.s(c))        # dendritic spikes set cells predictive
-
-            # record this stuff
-
-        return self.update(u,c,3)
+    def phase3(self,u,c):
+        c = self.rule3(u,c)  # excited bursting neurons get active
+        c = self.rule5(u,c)  # spiking dentrites of active neurons learn
+        return c
 
     def phase(self,ph,u,c):            # cell algo phase i
-        if ph == 1:
-            return self.phase1(u,c)
-        elif ph == 2:
-            return self.phase2(u,c)
-        elif ph == 3:
-            return self.phase3(u,c)
-        else:
-            raise Exception("bad phase")
+        if ph == 1: return self.phase1(u,c)
+        elif ph == 2: return self.phase2(u,c)
+        elif ph == 3: return self.phase3(u,c)
+        else: raise Exception("bad phase")
+
+    def update(self,u,c,phase):        # update context with current output
+        self.set(u=u,c=c)              # store for plot routines
+        c = c.copy();                  # update a copy of the context
+        while len(c) <= self.k: c.append(0)
+        c[self.k] = self.y             # with changed output
+        return c
 
     def log(self,txt):
         self.mon.log(self,txt)
