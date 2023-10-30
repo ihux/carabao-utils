@@ -206,11 +206,12 @@ class Screen:
         for nu in range(0,W.shape[1]):
             xs = x + 2*ws*nu - (self.s*ws/2 + 1.5*ws);
             yy = ys + h*(d0-mu)
-            ri = self.rs * (P[mu,nu] if W[mu,nu]==0 else 1-P[mu,nu])
-            coli = 'w' if W[mu,nu] == 0 else 'k'
-            col = self.magenta if E[mu,nu] > 0 else coli
+            ri = 0.8*(self.rs * (P[mu,nu] if W[mu,nu]==0 else 1-P[mu,nu]))
+            icol = 'w' if W[mu,nu] == 0 else 'k'   # inner color
+            ocol = 'k' if W[mu,nu] == 0 else 'w'   # outer color
+            col = self.magenta if E[mu,nu] > 0 else ocol
             self.can.circle((xs,ys),self.rs,col)
-            self.can.circle((xs,ys),ri,facecolor=coli,edgecolor=coli)
+            self.can.circle((xs,ys),ri,facecolor=icol,edgecolor=icol)
 
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
         u = u if u != None else 0      # basal input
@@ -309,7 +310,9 @@ class Monitor:
     data = struct()
     def __init__(self,m=None,n=None,verbose=0):
         data = self.data
+        data.k = data.g = data.eta = data.theta = None
         data.K = data.P = data.V = data.W = data.E = data.S = data.L = None
+        data.b = data.v = data.s = None
         data.c = []
         if m is not None:
             data.screen = Screen('Neurons',m,n)
@@ -351,6 +354,7 @@ class Monitor:
         data = self.data;  input = cell.input
         always = True
         k = cell.k
+        v = cell.v(input.c)
         s = cell.s(input.c)
         K = cell.K
         P = cell.P
@@ -363,10 +367,20 @@ class Monitor:
         msg = msg if msg != None else ""
         data.phase = phase if phase != None else data.phase
 
-        print("-------------------------------------------------------------")
+            # since we know now the dimensions of K we can replace None's
+
+        if data.V is None: data.V = 0*cell.K
+        if data.W is None: data.W = 0*cell.K
+        if data.E is None: data.E = 0*cell.K
+        if data.S is None: data.S = 0*cell.K
+        if data.L is None: data.L = 0*cell.K
+
+        print("---------------------------------------------------------------")
         print(msg)
         print("---------------------------------------------------------------")
-        print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
+        if (data.k != cell.k) or any(data.g != cell.g) or (data.eta != cell.eta):
+            print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
+            data.k = cell.k; data.g = cell.g.copy();  data.eta = cell.eta
         if any(data.K != K):
             self.print('matrix',"   K%g:" % k,cell.K)
             data.K = K.copy()
@@ -388,14 +402,14 @@ class Monitor:
         if any(data.L != L):
             self.print('matrix',"   L%g:" % k, L)
             data.L = L.copy()
-
-        print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(input.c))
-        if (always or data.phase == 3):
+        if any(data.b != cell.b) or any(data.v != v):
+            print("   b%g:" % k,cell.b,", v%g:" % k, v)
+            data.b = cell.b;  data.v = v.copy()
+        if any(data.E != E) or any(data.s != s) or (data.theta != cell.theta):
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),cell.theta))
-            print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),
-                  ", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
-        else:
-            print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
+            data.E = E.copy();  data.s = s.copy();  data.theta = cell.theta;
+        print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),
+              ", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         if any(data.c != input.c):
             print("   c:",input.c);  data.c = input.c.copy()
 
