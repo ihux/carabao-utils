@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 from matplotlib.transforms import Affine2D
+from carabao.util import repr
 
 #=============================================================================
 # hash function
@@ -191,7 +192,7 @@ class Screen:
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
         ################
-        #print("segment: s =",s)
+        #print("segment: s =",s,"W =",repr(W))
         col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
@@ -209,6 +210,7 @@ class Screen:
             else:
                 col = 'w' if W[mu,nu] > 0 else 'k'
             self.can.circle((xs,ys),self.rs,col)
+
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
@@ -320,17 +322,17 @@ class Monitor:
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
-    def plot(self,cell,i=None,j=None,v=None,W=None,E=None):
-       data = self.data;  aux = cell.aux
+    def plot(self,cell,i=None,j=None,v=None,W=None,E=None,u=None,c=None):
+       data = self.data;  input = cell.input
        if i is not None:
             self.place(data.screen,(i,j))
-            c = [] if aux.c is None else aux.c;
+            u = input.u if u is None else u
+            c = input.c if c is None else c
             W = cell.W() if W is None else W
             E = cell.E(c) if E is None else E
+            v = cell.v(c) if v is None else v
             s = cell.s(c)
-            data.screen.neuron(data.ij,aux.u,cell.x,cell.y,cell.b,
-                               data.v,s,W,E)
-            #data.screen.input(data.ij[1],aux.u)
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,W,E)
             data.screen.show
     def norm1(self,M):
         if type(M).__name__ == 'list':
@@ -342,36 +344,42 @@ class Monitor:
             result = result if sumj < result else sumj
         return result
     def log(self,cell,msg=None,phase=None):
+        data = self.data;  input = cell.input
         always = True
         k = cell.k
-        c = cell.aux.c
-        s = cell.s(c)
-        data = self.data;  aux = cell.aux
+        s = cell.s(input.c)
+        W = cell.W()
+        V = cell.V(input.c)
+        E = cell.E(input.c)
+        S = cell.S(input.c)
+        L = cell.L(input.c)
         nan = float('nan')
         msg = msg if msg != None else ""
         data.phase = phase if phase != None else data.phase
-        print("--------------------------------------------------------------")
-        print("iteration: ",data.iteration,"cell: #%g" % cell.k,msg)
+
+        print("-------------------------------------------------------------")
+        print(msg)
+        print("---------------------------------------------------------------")
         print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
         self.print('matrix',"   K%g:" % k,cell.K)
         self.print('matrix',"   P%g:" % k,cell.P)
         if (always or data.phase == 3):
-            self.print('matrix',"   V%g:" % k, aux.V)
-            self.print('matrix',"   W%g:" % k, aux.W)
-            self.print('matrix',"   E%g:" % k, aux.E)
-            self.print('matrix',"   L%g:" % k, aux.L)
-            self.print('matrix',"   D%g:" % k, aux.D)
+            self.print('matrix',"   V%g:" % k, V)
+            self.print('matrix',"   W%g:" % k, W)
+            self.print('matrix',"   E%g:" % k, E)
+            self.print('matrix',"   S%g:" % k, S)
+            self.print('matrix',"   L%g:" % k, L)
         if (always or data.phase== 2 or data.phase == 3):
             #print("   b%g:" % k,cell.b,"(q%g:" % k, data.v,
             #  ", ||v%g||=%g)" % (k,nan if isnan(data.v).any() else sum(data.v)))
-            print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(c))
+            print("   b%g:" % k,cell.b,", v%g:" % k, cell.v(input.c))
         if (always or data.phase == 3):
-            print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(aux.E),cell.theta))
-            print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
+            print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),cell.theta))
+            print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),
+                  ", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
         else:
-            print("   u%g:"%k,aux.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
-        print("   c:",aux.c)
-        print("-------------------------------------------------------------")
+            print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g: %g" % (k,cell.x))
+        print("   c:",input.c)
 
         if (phase == 3):
             #self.invalid(cell,'b,p,l,W,Z')       # invalidate
@@ -400,16 +408,21 @@ class Monitor:
     def hello(self):
         print("hello, monitor")
     def hash(self,cell):
-        data = self.data;  aux = cell.aux
-        v = cell.v(aux.c)
-        s = cell.s(aux.c)
+        data = self.data;  input = cell.input
+        v = cell.v(input.c)
+        s = cell.s(input.c)
+        W = cell.W()
+        V = cell.V(input.c)
+        E = cell.E(input.c)
+        L = cell.L(input.c)
+        D = cell.D(input.c)
         hk = hash(cell.k,2);  hg = hash(cell.g,3);
         hK = hash(cell.K,4);  hP = hash(cell.P,5);
-        hu = hash(aux.u,5);   hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
-        hW = hash(aux.W,11);  hV = hash(aux.V,12);  hE = hash(aux.E,13)
-        hL = hash(aux.L,14);  hD = hash(aux.D,15)
+        hW = hash(W,11);  hV = hash(V,12);  hE = hash(E,13)
+        hL = hash(L,14);  hD = hash(D,15)
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hL,hD]]
         prime = 1*2*3*5*7*11*13*17*19+1

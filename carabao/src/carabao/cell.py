@@ -136,27 +136,20 @@ class Cell:
     def __init__(self,mon,k,g,K,P):
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
 
-            # input, output, state variables
+            # input variables
+
+        self.input = struct()          # structure for all neuron inputs
+        self.input.u = 0               # basal (feedforwad) input
+        self.input.c = []              # context input
+
+            # output, state variables
 
         self.y = 0                     # cell output (axon)
         self.x = 0                     # predictive state
         self.b = 0                     # burst state
-        #self.s = 0*P[:,0]              # zero spike state
         self.P = P                     # permanence matrix (state)
 
-            # auxiliary quantities
-
-        self.aux = struct()
-        self.aux.u = 0                 # basal (feedforwad) input
-        self.aux.c = []                # context input
-        #self.aux.v = [0,0,0,0]         # group outputs
-        self.aux.V = 0*P               # pre-synaptic signals
-        self.aux.W = 0*P               # dendritic weights
-        self.aux.E = 0*P               # empowerment matrix
-        self.aux.L = 0*P               # learning mask
-        self.aux.D = 0*P               # learning delta
-
-            # parameters and auxilliary variables
+            # parameters and variables for state transition
 
         self.config(k,g,K)
         self.x_ = 0                    # auxilliary: x(t+1)
@@ -171,16 +164,17 @@ class Cell:
         self.g = g;
         self.K = K;
 
-    def v(self,c):
-        if c == []: return 0*array(self.g)
-        return array([c[k] for k in self.g])   # group output
+    def v(self,c):                     # group output
+        return array([c[k] if k < len(c) else 0
+                      for k in self.g])
 
-    def V(self,c):                    # pre-synaptic signals
+    def V(self,c):                     # pre-synaptic signals
         if c == []: return 0*self.P
         V = 0*self.K
         for mu in range(0,self.K.shape[0]):
             for nu in range(0,self.K.shape[1]):
-                V[mu,nu] = c[self.K[mu,nu]];
+                k = self.K[mu,nu]
+                V[mu,nu] = c[k] if k < len(c) else 0
         return V
 
     def W(self):
@@ -189,8 +183,13 @@ class Cell:
     def E(self,c):
         return self.V(c) * self.W()    # empowerment matrix
 
-    def L(self,c):
+    def S(self,c):                     # spike matrix (learning mask)
         return column(self.s(c)) @ ones(self.P[0,:])
+
+    def L(self,c):                     # learning delta
+        V = self.V(c)                  # pre-synaptic signals
+        S = self.S(c)                  # spike matrix (learning mask)
+        return S*(self.pdelta * V - self.ndelta)
 
     def s(self,c):                     # spike vector
         E = self.E(c)
@@ -203,21 +202,12 @@ class Cell:
         self.P = self.P_               # permanence state transition
 
     def update(self,u,c,phase,args):   # update context with current output
-        c[self.k] = self.y             # update context with changed output
-        self.aux.u = u                 # store for analysis
-        self.aux.c = c                 # store for analysis
-        if phase == 1:
-            None
-        elif phase == 2:
-            None # self.aux.v = args['v']
-        elif phase == 3:
-                self.aux.V = args['V']
-                self.aux.W = args['W']
-                self.aux.E = args['E']
-                self.aux.L = args['L']
-                self.aux.D = args['D']
-        self.mon.log(self,'(phase %g)'%phase,phase)
-        return c                       # return updated context
+        self.set(u=u,c=c)              # store for plot routines
+        c = c.copy();                  # update a copy of the context
+        while len(c) <= self.k: c.append(0)
+        c[self.k] = self.y            # with changed output
+        return c
+        #self.mon.log(self,'(phase %g)'%phase,phase)
 
     def phase1(self,u,c):              # cell algo phase 1: update context
         self.transition()              # first perform state transition
@@ -280,53 +270,20 @@ class Cell:
         else:
             raise Exception("bad phase")
 
-    def select(self,c,K):              # pre-synaptic signals
-        V = 0*K
-        for mu in range(0,K.shape[0]):
-            for nu in range(0,K.shape[1]):
-                V[mu,nu] = c[K[mu,nu]];
-        return V
+    def plot(self,i=None,j=None,v=None,W=None,E=None,u=None,c=None):
+        self.mon.plot(self,i,j,v,W,E,u,c)
 
-    def spike(self,u,E,theta):         # generate spike vector from Empowerment
-        return [u * (sum(E[mu]) >= theta)
-                for mu in range(0,E.shape[0])]
-
-    #def group(self,c,g):
-    #    return [c[g[k]] for k in range(0,len(g))]
-
-    def learn(self,E):                  # learning vector
-        d,s = E.shape
-        l = [];  p = []
-        for mu in range(0,d):
-            norm = sum(E[mu]).item()
-            l.append(norm)
-            p.append(int(norm >= self.theta))
-        L = trn(array([p])) @ ones((1,s))
-        return L
-
-    def plot(self,i=None,j=None,v=None,W=None,E=None):
-        self.aux.W = (self.P >= self.eta)*1
-        #aux.v = 0*array(cell.g)
-        self.mon.plot(self,i,j,v,W,E)
-
-    def set(self,u=None,c=None,x=None,y=None,b=None,s=None,v=None,V=None,W=None,E=None):
-        self.aux.u = self.aux.u if u is None else u
-        self.aux.c = self.aux.c if c is None else c
-        self.c = self.aux.c if c is None else c
+    def set(self,u=None,c=None,x=None,y=None,b=None):
+        self.input.u = self.input.u if u is None else u
+        self.input.c = self.input.c if c is None else c
         self.x = self.x if x is None else x
         self.y = self.y if y is None else y
         self.b = self.b if b is None else b
-        #self.s = self.s if s is None else s
-        #self.aux.v = self.aux.v if v is None else v
-        self.aux.V = self.aux.V if V is None else V
-        self.aux.W = self.aux.W if W is None else W
-        self.aux.E = self.aux.E if E is None else E
         return self
 
 
 #===============================================================================
-# class Toy
-# - usage: k,g,P,K = Toy('cell')
+# helper: toy cell parameters
 #===============================================================================
 
 def toy(tag):
@@ -338,10 +295,10 @@ def toy(tag):
     """
     if tag == 'cell':
         k = 0                        # cell index
-        g = [0,1,2,4]                  # group indices
-        K = array([[1,3,5,7,9],[3,4,5,6,7]])
-        P = array([[0.12,0.32,0.54,0.77,0],[0,0.61,0.45,0,0]])
-        c = [0,0,0,0,1,1,0,1,1,0];
+        g = [0,1,2,3]                # group indices
+        K = array([[1,3,5,7,9],[5,6,7,8,9]])
+        P = array([[0.12,0.32,0.54,0.77,0],[0,0.61,0.45,0,0.8]])
+        c = [0,0,0,0,1,1,1,1,1,0];
         return k,g,K,P,c
     elif tag == 'mini3':
         k = [0,1,2]                  # cell indices
