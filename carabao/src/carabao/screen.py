@@ -226,7 +226,6 @@ class Screen:
         coly = self.red if y>0 else self.gray
 
         i = ij[0];  j = ij[1]
-#>>>>>>>>>>>>>>>>>>>>>>
         x = j; y = self.m-i-1;
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
@@ -322,19 +321,15 @@ class Monitor:
         self.data.screen = screen
         self.data.ij = ij
     def plot(self,cell,i=None,j=None,v=None,W=None,E=None):
-       data = self.data; aux = cell.aux
+       data = self.data;  aux = cell.aux
        if i is not None:
             self.place(data.screen,(i,j))
-            #aux.W = (cell.P >= cell.eta)*1
-            #aux.v = 0*array(cell.g)
-            #aux.v = aux.v if v is None else v
-            #aux.v = aux.v if v == []   else v
-            aux.W = aux.W if W is None else W
-            aux.E = aux.E if E is None else E
-            c = aux.c;
-            s = cell.s(c);
+            c = [] if aux.c is None else aux.c;
+            W = cell.W() if W is None else W
+            E = cell.E(c) if E is None else E
+            s = cell.s(c)
             data.screen.neuron(data.ij,aux.u,cell.x,cell.y,cell.b,
-                               data.v,s,aux.W,aux.E)
+                               data.v,s,W,E)
             #data.screen.input(data.ij[1],aux.u)
             data.screen.show
     def norm1(self,M):

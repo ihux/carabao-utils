@@ -1,11 +1,18 @@
 #===============================================================================
-# carabao/cell package: copyright: Neuronycs 2023
-# - class Cell
+# carabao/rcell package: copyright: Neuronycs 2023
+# - class Rcell:   rule based HTM Neuron class
+# - toy()          quick setup of cell parameter matrices
+# - select():      implementing context selection by index matrix
+# - norm1():       calculate 1-norm of a matrix
+# - sat():         saturate a matrix to elements in [0,1]
+# - column():      create mx1 column matrix from list or array
+# - ones():        setup matrix with all ones
+# - zeros():       setup matrix with all zeros
 #===============================================================================
 
 import numpy
 from numpy import transpose as trn
-from numpy import arange, copy, array
+from numpy import ones, arange, copy, array
 from ypstruct import struct
 
 #=============================================================================
@@ -64,6 +71,16 @@ def norm1(M):    # max of row sums
         result = result if sumj < result else sumj
     return result
 
+#===============================================================================
+# helper: sat function fopr a numpx matrix
+# - truncates every matrix element to range 0.0 ... 1.0
+#===============================================================================
+
+def sat(X):
+    def lt1(X): return 1 + (X-1<=0)*(X-1)
+    def gt0(X): return (X>=0)*X
+    return lt1(gt0(X))
+
 #=============================================================================
 # helper: create column vector from list
 #=============================================================================
@@ -98,24 +115,13 @@ def zeros(arg):
             zero = array([zero])
         return zero
 
-
-#===============================================================================
-# helper: sat function fopr a numpx matrix
-# - truncates every matrix element to range 0.0 ... 1.0
-#===============================================================================
-
-def sat(X):
-    def lt1(X): return 1 + (X-1<=0)*(X-1)
-    def gt0(X): return (X>=0)*X
-    return lt1(gt0(X))
-
 #=============================================================================
 # class Cell
 #=============================================================================
 
-class Cell:
+class Rcell:
     """
-    Cell: class Cell - modelling HTM cell algorithm
+    Rcell: class Rcell - modelling HTM cell algorithm
 
         from carabao.screen import Monitor
         from carabao.cell import Cell,toy
@@ -123,7 +129,7 @@ class Cell:
 
         mon = Monitor(m=1,n=3)
         k,g,K,P,c = toy('cell')
-        cell = Cell(mon,k,g,K,P)
+        cell = Rcell(mon,k,g,K,P)
         cell.plot(i=0,j=0)    # plot at monitor location i,j
 
         cell.u = cell.y = cell.x = cell.b = 1
@@ -132,16 +138,16 @@ class Cell:
         v = [1,0,1,0];  V = ones((2,5));  E = (cell.P >= 0.5)*V
         cell.plot(0,2,v,E)
     """
-
     def __init__(self,mon,k,g,K,P):
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
+        zero = [0 for i in range(0,P.shape[0])]
 
             # input, output, state variables
 
         self.y = 0                     # cell output (axon)
         self.x = 0                     # predictive state
         self.b = 0                     # burst state
-        #self.s = 0*P[:,0]              # zero spike state
+        #self.s = 0*P[:,0]             # zero spike state
         self.P = P                     # permanence matrix (state)
 
             # auxiliary quantities
@@ -198,120 +204,92 @@ class Cell:
              for mu in range(0,E.shape[0])]
         return 1*array(_s)
 
-    def transition(self):              # state & permanence transition
-        self.x = self.x_               # predictive state transition
-        self.P = self.P_               # permanence state transition
-
-    def update(self,u,c,phase,args):   # update context with current output
-        c[self.k] = self.y             # update context with changed output
+    def update(self,u,c,args):
         self.aux.u = u                 # store for analysis
         self.aux.c = c                 # store for analysis
-        if phase == 1:
-            None
-        elif phase == 2:
-            None # self.aux.v = args['v']
-        elif phase == 3:
-                self.aux.V = args['V']
-                self.aux.W = args['W']
-                self.aux.E = args['E']
-                self.aux.L = args['L']
-                self.aux.D = args['D']
-        self.mon.log(self,'(phase %g)'%phase,phase)
-        return c                       # return updated context
+        c[self.k] = self.y             # update context with changed output
+        if args['rule'] == 2:
+            self.aux.v = args['v']
+        if args['rule'] == 4:
+            self.aux.V = args['V']
+            self.aux.W = args['W']
+            self.aux.E = args['E']
+        if args['rule'] == 5:
+            self.aux.L = args['L']
+            self.aux.D = args['D']
 
-    def phase1(self,u,c):              # cell algo phase 1: update context
-        self.transition()              # first perform state transition
+        return c
 
-            # rule 1: excited (u=1) & predictive (x=1) cells get active (y=1)
+      # === rule 1: excited predictive cells get active ===
 
+    def rule1(self,u,c):
         self.y = u * self.x            # excited & predictive cells get active
-        #self.b = 0                    # clear burst state
+        return self.update(u,c,{'rule':1})
 
-        return self.update(u,c,1,{})
+      # === rule 2: excited neurons in non-predictive groups burst
 
-    def phase2(self,u,c):              # cell algo phase 2: bursting
-
-           # rule 2: excited cells in a non-predictive group get bursting
-
+    def rule2(self,u,c):
         v = self.v(c)                  # the group's outputs
         self.b = u * (sum(v) == 0)     # set cell's burst state
 
            # important: don't change output (and context vector) in this phase
            # before all cells in the context have determined their burst state
 
-        return self.update(u,c,2,{'v':v})
+        return self.update(u,c,{'rule':2, 'v':v})
 
-    def phase3(self,u,c):              # cell algo phase 3: process context
+      # === rule 3: excited bursting neurons get active ===
 
-            # rule 3: excited bursting cells get active
-
+    def rule3(self,u,c):
         self.y = u * (self.y or self.b)
+        return self.update(u,c,{'rule':3})
 
-            # rule 4: excided empowered dendritic segments are spiking
+      # === rule 4: empowered dendritic segments spike ===
 
+    def rule4(self,u,c):
         V = self.V(c)                            # pre-synaptic signals
         W = self.W()                             # synaptic weights
         E = V * W                                # empowerment matrix
-        s = u * self.s(c)                        # spike vector
+        #s = u * self.s(c)                       # spike vector
+        s = self.s(c)                            # spike vector
 
-            # rule 5: spiking dentrites of activated cells are learning
-            # (calc permanences after transition)
+        return self.update(u,c,{'rule':4, 'V':V, 'W':W, 'E':E})
 
+       # === rule 5: spiking dentrites of active cells learn
+
+    def rule5(self,u,c):
+        V = self.V(c)                            # pre-synaptic signals
         L = self.L(c)
         D = L*(self.pdelta * V - self.ndelta)
         self.P = sat(self.P + self.y * D)        # learning (adapt permanences)
+        return self.update(u,c,{'rule':5, 'L':L, 'D':D})
 
-            # rule 6: active cells with spiking dendrites get predictive
-            # (calc state after transition)
+      # === rule 6: spiking neurons get always predictive ===
 
-        self.x_ = max(self.s(c))       # dendritic spikes set cells predictive
+    def rule6(self,u,c):
+        self.x = max(self.s(c))       # dendritic spikes set cells predictive
+        return self.update(u,c,{'rule':6})
 
-            # record this stuff
+    def log(self,txt):
+        self.c = self.aux.c
+        self.mon.log(self,txt)
 
-        return self.update(u,c,3,{'V':V, 'W':W, 'E':E, 'L':L, 'D':D})
+    def plot(self,i=None,j=None,v=None,W=None,E=None,xlabel=None,head=None,foot=None):
+        self.u = self.aux.u # for compatibility
+        #v = self.aux.v if v is None else v
+        #V = self.aux.V if V is None else V
+        W = self.aux.W if W is None else W
+        E = self.aux.E if E is None else E
 
-    def phase(self,ph,u,c):            # cell algo phase i
-        if ph == 1:
-            return self.phase1(u,c)
-        elif ph == 2:
-            return self.phase2(u,c)
-        elif ph == 3:
-            return self.phase3(u,c)
-        else:
-            raise Exception("bad phase")
-
-    def select(self,c,K):              # pre-synaptic signals
-        V = 0*K
-        for mu in range(0,K.shape[0]):
-            for nu in range(0,K.shape[1]):
-                V[mu,nu] = c[K[mu,nu]];
-        return V
-
-    def spike(self,u,E,theta):         # generate spike vector from Empowerment
-        return [u * (sum(E[mu]) >= theta)
-                for mu in range(0,E.shape[0])]
-
-    #def group(self,c,g):
-    #    return [c[g[k]] for k in range(0,len(g))]
-
-    def learn(self,E):                  # learning vector
-        d,s = E.shape
-        l = [];  p = []
-        for mu in range(0,d):
-            norm = sum(E[mu]).item()
-            l.append(norm)
-            p.append(int(norm >= self.theta))
-        L = trn(array([p])) @ ones((1,s))
-        return L
-
-    def plot(self,i=None,j=None,v=None,W=None,E=None):
-        self.aux.W = (self.P >= self.eta)*1
-        #aux.v = 0*array(cell.g)
         self.mon.plot(self,i,j,v,W,E)
+        if xlabel is not None:
+            self.mon.xlabel(j,xlabel)
+        if head is not None:
+            self.mon.head(head)
+        if foot is not None:
+            self.mon.foot(foot)
 
     def set(self,u=None,c=None,x=None,y=None,b=None,s=None,v=None,V=None,W=None,E=None):
         self.aux.u = self.aux.u if u is None else u
-        self.aux.c = self.aux.c if c is None else c
         self.c = self.aux.c if c is None else c
         self.x = self.x if x is None else x
         self.y = self.y if y is None else y
@@ -322,7 +300,6 @@ class Cell:
         self.aux.W = self.aux.W if W is None else W
         self.aux.E = self.aux.E if E is None else E
         return self
-
 
 #===============================================================================
 # class Toy
@@ -358,6 +335,3 @@ def toy(tag):
         return k,g,K,P,c
     else:
         raise Exception('unknown tag')
-
-def hello():
-	print("hello, world!")
