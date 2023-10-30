@@ -126,6 +126,16 @@ def rule_2(cell,u,c):
     cell.b = u * (sum(v) == 0)         # set cell's burst state
     return cell.update(u,c,2)          # update c[k] = cell.y
 
+#===============================================================================
+# rule 3: excited bursting neurons get active
+#===============================================================================
+
+def rule_3(cell,u,c):
+    cell.y = u * (cell.y or cell.b)
+    return cell.update(u,c,3)
+
+
+
 #=============================================================================
 # class Cell
 #=============================================================================
@@ -230,12 +240,7 @@ class Cell:
 
     def rule1(self,u,c): return rule_1(self,u,c)
     def rule2(self,u,c): return rule_2(self,u,c)
-
-      # === rule 3: excited bursting neurons get active ===
-
-    def rule3(self,u,c):
-        self.y = u * (self.y or self.b)
-        return self.update(u,c,3)
+    def rule3(self,u,c): return rule_3(self,u,c)
 
       # === rule 4: empowered dendritic segments spike ===
 
