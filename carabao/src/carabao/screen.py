@@ -70,8 +70,9 @@ class Canvas:
         xl = self.position[0];  xh = self.position[2]
         yl = self.position[1];  yh = self.position[3]-1
         self.ax.plot([xl,xh,xh,xl,xl],[yl,yl,yh,yh,yl],color='k',linewidth=0.5)
-    def circle(self,xy,r,col=None):
-        hdl = plt.Circle(xy, r, facecolor=col,edgecolor='k',linewidth=0.5)
+    def circle(self,xy,r,facecolor=None,edgecolor='k',linewidth=0.5):
+        hdl = plt.Circle(xy, r, facecolor=facecolor,edgecolor=edgecolor,
+                         linewidth=linewidth)
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
     def rect(self,xy1,xy2,col=None,angle=None):
@@ -184,7 +185,7 @@ class Screen:
             for i in range(0,n):
                 col = 'w' if q[k] == 0 else self.magenta;  k += 1
                 self.can.circle((x+i*h+dx,ys-i*h),rs,col)
-    def segment(self,x,y,r,d,mu,W,E,s):  # plot mu-th dend-seg out of total d
+    def segment(self,x,y,r,d,mu,P,W,E,s):  # plot mu-th dend-seg out of total d
         H = r*0.9;                     # total height/width of all segments
         yoff = r*0.2                   # y offset of segments
         h = H/d; w = r                 # height and half width of segment
@@ -205,13 +206,13 @@ class Screen:
         for nu in range(0,W.shape[1]):
             xs = x + 2*ws*nu - (self.s*ws/2 + 1.5*ws);
             yy = ys + h*(d0-mu)
-            if E[mu,nu] > 0:
-                col = self.magenta
-            else:
-                col = 'w' if W[mu,nu] > 0 else 'k'
+            ri = self.rs * (P[mu,nu] if W[mu,nu]==0 else 1-P[mu,nu])
+            coli = 'w' if W[mu,nu] == 0 else 'k'
+            col = self.magenta if E[mu,nu] > 0 else coli
             self.can.circle((xs,ys),self.rs,col)
+            self.can.circle((xs,ys),ri,facecolor=coli,edgecolor=coli)
 
-    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,W=None,E=None):
+    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
         y = y if y != None else 0      # output state
@@ -244,7 +245,7 @@ class Screen:
 
         d = self.d #+1
         for mu in range(0,d):
-            self.segment(x,y,self.r0,d,mu,W,E,s)
+            self.segment(x,y,self.r0,d,mu,P,W,E,s)
 
            # draw basal dendritic segment
 
@@ -322,17 +323,18 @@ class Monitor:
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
-    def plot(self,cell,i=None,j=None,v=None,W=None,E=None,u=None,c=None):
+    def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,u=None,c=None):
        data = self.data;  input = cell.input
        if i is not None:
             self.place(data.screen,(i,j))
             u = input.u if u is None else u
             c = input.c if c is None else c
+            P = cell.P if P is None else P
             W = cell.W() if W is None else W
             E = cell.E(c) if E is None else E
             v = cell.v(c) if v is None else v
             s = cell.s(c)
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,W,E)
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
             data.screen.show
     def norm1(self,M):
         if type(M).__name__ == 'list':
