@@ -17,3 +17,4 @@ carabao:
 
 clean:
 	rm -rf dist
+	rm -rf src/carabao.egg-info

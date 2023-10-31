@@ -23,8 +23,9 @@ venv:
 install:
 	python3 -m pip install --upgrade pip
 	pip install --upgrade wheel
-	pip install  --upgrade setuptools
-	pip install  --upgrade twine
+	pip install --upgrade setuptools
+	pip install --upgrade twine
+	pip install --upgrade ypstruct==0.0.2
 	pip install pytest==4.4.1
 	pip install pytest-runner==4.4
 	python3 -m pip install --upgrade build
@@ -32,6 +33,7 @@ install:
 	pip install matplotlib
 	pip install --upgrade torch
 	pip install jupyterlab
+	pip install xeus-python
 
 carabao: dist/carabao-0.0.1-py3-none-any.whl
 

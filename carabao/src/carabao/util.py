@@ -1,9 +1,16 @@
 #===============================================================================
 # carabao/util.py: carabao utilities
+#    Random()    random generator class
+#    peek()      peek submatrix from flat matrix
+#    poke()      poke submatrix to flat matrix
+#    squeeze()   squeeze flat matrix into mxn cell matrix
+#    isa()       check object for specific type name
+#    column()    create mx1 column matrix from list
+#    sat()       truncates every matrix element to range [0,1]
+#    repr()      representation string of numpy array
 #===============================================================================
 
-import numpy as np
-import torch
+from numpy import transpose, array, zeros
 
 #===============================================================================
 # helper: portable pseudo random generator for random integers modulo N. Given
@@ -33,9 +40,9 @@ class Random:
       m = M0.size(0);
       n = M0.size(1)
     else:
-      M0 = torch.zeros(m,n)-1    # no forbidden elements
+      M0 = zeros(m,n)-1    # no forbidden elements
 
-    M = torch.zeros(m,n)-1       # -1 means the element is not yet defined
+    M = zeros(m,n)-1       # -1 means the element is not yet defined
     for i in range(0,m):
       for j in range(0,n):
         while 1:
@@ -55,9 +62,9 @@ class Random:
       m = C0.size(0);  n = C0.size(1)
       s = M0.size(0);  d = M0.size(1)
     else:
-      M0 = torch.zeros(s,d)-1    # no forbidden elements
+      M0 = zeros(s,d)-1    # no forbidden elements
 
-    C = torch.zeros(m,n,s,d)
+    C = zeros(m,n,s,d)
     for i in range(0,m):
       for j in range(0,n):
          Cij = self.matrix(M0,N)
@@ -71,7 +78,7 @@ class Random:
 #===============================================================================
 
 def peek(M,i,j,mm,nn):  # peek sub matrix from flat matrix
-    Mij = torch.zeros(mm,nn)
+    Mij = zeros(mm,nn)
     for ii in range(0,mm):
       for jj in range(0,nn):
         Mij[ii,jj] = M[i+ii,j+jj]
@@ -96,11 +103,11 @@ def poke(M,i,j,Mij):  # peek sub matrix from flat matrix
 def flat(C):  # M = flat(C)
     mC = C.size(0);  nC = C.size(1)
     if mC*nC == 0:
-      M = torch.zeros(0,0)
+      M = zeros(0,0)
       return
     M00 = C[0,0]
     m = M00.size(0);  n = M00.size(1)
-    M = torch.zeros(mC*m,nC*n)
+    M = zeros(mC*m,nC*n)
     for i in range(0,mC):
       for j in range(0,nC):
         Mij = C[i,j]
@@ -115,9 +122,78 @@ def flat(C):  # M = flat(C)
 def squeeze(M, m, n):     # C = squeeze(M,m,n)
     mm = int(M.size(0)/m)
     nn = int(M.size(1)/n)
-    C = torch.zeros(m,n,mm,nn)-1
+    C = zeros(m,n,mm,nn)-1
     for i in range(0,m):
       for j in range(0,n):
         Mij = sw.peek(M,i,j,mm,nn)
         C[i,j] = Mij
     return C
+
+#===============================================================================
+# utility: check object for specific type name
+#===============================================================================
+
+def isa(obj,typ=None):
+    """
+    isa(): has object certain type?
+
+        ok = isa("junk",'string')  # => True
+        ok = isa([1,2,3],'list')   # => True
+        ok = isa((2,3),'tuple')    # => True
+    """
+    if typ is None:
+        print(type(obj),type(obj).__name__)
+    return (type(obj).__name__ == typ)
+
+#===============================================================================
+# helper: create column vector from list
+#===============================================================================
+
+def column(x):
+    """
+    column(): create column vector from list
+
+        v = column([0,1])
+    """
+    return transpose(array([x]))
+
+#===============================================================================
+# helper: sat function for a numpy matrix
+# - truncates every matrix element to range 0.0 ... 1.0
+#===============================================================================
+
+def sat(X):
+    def lt1(X): return 1 + (X-1<=0)*(X-1)
+    def gt0(X): return (X>=0)*X
+    return lt1(gt0(X))
+
+#===============================================================================
+# utility: check object for specific type name
+#===============================================================================
+
+def repr(obj,wide=False):   # string representation of list or matrix
+    if isa(obj,'list'):
+        txt = "[";  M = array([obj])
+        print("repr M:",M,type(M),M.shape)
+    elif isa(obj,'ndarray'):
+        txt = "#[";  M = obj
+        if len(M.shape) == 1:
+            M = array([M])
+    else:
+        return obj
+
+    m,n = M.shape
+    sepi = ''
+    for i in range(0,m):
+        txt += sepi;  sepi = '; ';  sepj = ''
+        for j in range(0,n):
+            if wide == False:
+                txt += sepj + "%g" % M[i,j]
+            else:
+                s = "%4g" %M[i,j].item()
+                s = s if s[0:2] != '0.' else s[1:]
+                s = s if s[0:3] != '-0.' else '-'+s[2:]
+                txt += "%5s" % s
+            sepj = ' '
+    txt += ']'
+    return txt
