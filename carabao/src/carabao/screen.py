@@ -335,7 +335,7 @@ class Monitor:
             c = cell._c if c is None else c
             P = cell.syn.P if P is None else P
             W = cell.syn.W() if W is None else W
-            E = cell.syn.E(c) if E is None else E
+            E = cell.syn.E(cell.V) if E is None else E
             v = cell.group.v(c) if v is None else v
             s = cell.s
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
@@ -361,10 +361,10 @@ class Monitor:
         K = cell.syn.K
         P = cell.syn.P
         W = cell.syn.W()
-        V = cell.syn.V(cell._c)
-        E = cell.syn.E(cell._c)
-        S = cell.syn.S(cell._c)
-        L = cell.syn.L(cell._c)
+        V = cell.V
+        E = cell.syn.E(cell.V)
+        S = cell.syn.S(cell.V)
+        L = cell.syn.L(cell.V)
         nan = float('nan')
         msg = msg if msg != None else ""
         #data.phase = phase if phase != None else data.phase
@@ -444,10 +444,10 @@ class Monitor:
         v = cell.group.v(cell._c)
         s = cell.s
         W = cell.syn.W()
-        V = cell.syn.V(cell._c)
-        E = cell.syn.E(cell._c)
-        S = cell.syn.S(cell._c)
-        L = cell.syn.L(cell._c)
+        V = cell.V
+        E = cell.syn.E(cell.V)
+        S = cell.syn.S(cell.V)
+        L = cell.syn.L(cell.V)
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
         hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
         hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);

@@ -25,10 +25,10 @@ class Synapses:
 
         W = syn.W()               # synaptic weight matrix
         V = syn.V(c)              # presynaptic signals
-        E = syn.E(c)              # empowering matrix
-        L = syn.L(c)              # learning mask
-        D = syn.D(c)              # learning deltas
-        s = syn.s(c)              # spike vector
+        E = syn.E(V)              # empowering matrix
+        S = syn.S(V)              # spike matrix (learning mask)
+        L = syn.L(V)              # learning deltas
+        s = syn.s(V)              # spike vector
         o = syn.one               # [1,1,...,1] matrix (1 x ns)
 
         syn.P = syn.sat(P)        # truncate P matrix to range [0,1]
@@ -52,21 +52,21 @@ class Synapses:
                 V[mu,nu] = c[k] if k < kmax else 0;
         return V
 
-    def E(self,c):                     # E = V(c) * W(P)
-        return self.V(c) * self.W()    # empowerment matrix
+    def E(self,V):                   # E = V * W(P)
+        return V * self.W()    # empowerment matrix
 
-    def S(self,c):
-        E = self.E(c);
+    def S(self,V):
+        E = self.E(V);
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,c):                     # D = (2*plus * V - minus) * L
-        S = self.S(c);  V = self.V(c);
+    def L(self,V):                     # D = (2*plus * V - minus) * L
+        S = self.S(V);
         plus,minus = self.delta
         return (2*plus * V - minus) * S
 
-    def s(self,c):                     # spike vector: s = (sum(E')>=theta)
-        S = self.S(c)
+    def s(self,V):                     # spike vector: s = (sum(E')>=theta)
+        S = self.S(V)
         return array([S[i].max() for i in range(0,S.shape[0])])
 
     def v(self,c):                     # group output
@@ -117,11 +117,12 @@ class Rules:
         return cell.update(u,c,3)
 
     def rule4(self,cell,u,c):   # empowered dendritic segments spike
-        cell.s = cell.syn.s(c)         # spike vector
+        cell.V = cell.syn.V(c)         # pre-synaptic state
+        cell.s = cell.syn.s(cell.V)    # spike vector
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(c)                         # learning deltas
+        L = cell.syn.L(cell.V)                    # learning deltas
         P = cell.syn.P + cell.y * L               # adapt permanences
         cell.syn.P = cell.syn.sat(P)
         return cell.update(u,c,5)
@@ -182,16 +183,8 @@ class Cell:
         self.y = 0                        # cell output (axon)
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
-        self.s = self.syn.s([])           # spike vector
-        self.Z = self.syn.V([])
-
-    #def v(self,c): return self.group.v(c) # group output
-    #def s(self,c): return self.syn.s(c)   # spike vector
-    #def W(self):   return self.syn.W()    # synaptic weights
-    #def V(self,c): return self.syn.V(c)   # pre-synaptic signals
-    #def E(self,c): return self.syn.E(c)   # empowerment matrix
-    #def S(self,c): return self.syn.S(c)   # spike matrix (learning mask)
-    #def L(self,c): return self.syn.L(c)   # learning delta
+        self.V = self.syn.V([])
+        self.s = self.syn.s(self.V)       # spike vector
 
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)
