@@ -8,7 +8,7 @@
 import numpy
 from numpy import arange, copy, array
 from ypstruct import struct
-from carabao.util import column, sat
+from carabao.util import column, sat, repr
 
 #===============================================================================
 # class Synapses
@@ -46,8 +46,6 @@ class Synapses:
     def V(self,c):                    # pre-synaptic signals
         kmax = len(c)
         V = 0*self.K
-		######################
-        #print("K:",repr(self.K))
         for mu in range(0,self.K.shape[0]):
             for nu in range(0,self.K.shape[1]):
                 k = self.K[mu,nu]
@@ -72,6 +70,8 @@ class Synapses:
         return array([S[i].max() for i in range(0,S.shape[0])])
 
     def v(self,c):                     # group output
+        ##########################
+        #print("Synapses.v(): K:",repr(self.K),"c:",c)
         return array([c[k] if k < len(c) else 0
                       for k in self.K])
 
@@ -108,7 +108,7 @@ class Rules:
         return cell.update(u,c,1)      # update c[k] = cell.y
 
     def rule2(self,cell,u,c):   # excited neurons in non-predictive groups burst
-        v = cell.v(c)                  # the group's outputs
+        v = cell.group.v(c)            # the group's outputs
         cell.b = u * (sum(v) == 0)     # set cell's burst state
         return cell.update(u,c,2)      # update c[k] = cell.y
 
@@ -121,7 +121,7 @@ class Rules:
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.L(c)                             # learning deltas
+        L = cell.syn.L(c)                         # learning deltas
         P = cell.syn.P + cell.y * L               # adapt permanences
         cell.syn.P = cell.syn.sat(P)
         return cell.update(u,c,5)
@@ -170,7 +170,7 @@ class Cell:
 
         self.k = k;
         self.syn = Synapses(K,P)          # synaptic bank (any context activity)
-        self.grp = Synapses(g)            # synaptic field (group activity))
+        self.group = Synapses(g)          # synaptic field (group activity))
 
             # input variables
 
@@ -184,14 +184,15 @@ class Cell:
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.s = self.syn.s([])           # spike vector
+        self.Z = self.syn.V([])
 
-    def v(self,c): return self.grp.v(c)   # group output
-    def s(self,c): return self.syn.s(c)   # spike vector
-    def W(self):   return self.syn.W()    # synaptic weights
-    def V(self,c): return self.syn.V(c)   # pre-synaptic signals
-    def E(self,c): return self.syn.E(c)   # empowerment matrix
-    def S(self,c): return self.syn.S(c)   # spike matrix (learning mask)
-    def L(self,c): return self.syn.L(c)   # learning delta
+    #def v(self,c): return self.group.v(c) # group output
+    #def s(self,c): return self.syn.s(c)   # spike vector
+    #def W(self):   return self.syn.W()    # synaptic weights
+    #def V(self,c): return self.syn.V(c)   # pre-synaptic signals
+    #def E(self,c): return self.syn.E(c)   # empowerment matrix
+    #def S(self,c): return self.syn.S(c)   # spike matrix (learning mask)
+    #def L(self,c): return self.syn.L(c)   # learning delta
 
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)

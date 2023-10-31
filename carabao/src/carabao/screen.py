@@ -334,9 +334,9 @@ class Monitor:
             u = input.u if u is None else u
             c = input.c if c is None else c
             P = cell.syn.P if P is None else P
-            W = cell.W() if W is None else W
-            E = cell.E(c) if E is None else E
-            v = cell.v(c) if v is None else v
+            W = cell.syn.W() if W is None else W
+            E = cell.syn.E(c) if E is None else E
+            v = cell.group.v(c) if v is None else v
             s = cell.s
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
             data.screen.show
@@ -353,18 +353,18 @@ class Monitor:
         data = self.data;  input = cell.input
         always = True
         k = cell.k
-        g = cell.grp.K
+        g = cell.group.K
         eta = cell.syn.eta
         theta = cell.syn.theta
-        v = cell.v(input.c)
+        v = cell.group.v(input.c)
         s = cell.s
         K = cell.syn.K
         P = cell.syn.P
-        W = cell.W()
-        V = cell.V(input.c)
-        E = cell.E(input.c)
-        S = cell.S(input.c)
-        L = cell.L(input.c)
+        W = cell.syn.W()
+        V = cell.syn.V(input.c)
+        E = cell.syn.E(input.c)
+        S = cell.syn.S(input.c)
+        L = cell.syn.L(input.c)
         nan = float('nan')
         msg = msg if msg != None else ""
         #data.phase = phase if phase != None else data.phase
@@ -441,14 +441,14 @@ class Monitor:
         print("hello, monitor")
     def hash(self,cell):
         data = self.data;  input = cell.input
-        v = cell.v(input.c)
+        v = cell.group.v(input.c)
         s = cell.s
-        W = cell.W()
-        V = cell.V(input.c)
-        E = cell.E(input.c)
-        S = cell.S(input.c)
-        L = cell.L(input.c)
-        hk = hash(cell.k,2);  hg = hash(cell.grp.K,3);
+        W = cell.syn.W()
+        V = cell.syn.V(input.c)
+        E = cell.syn.E(input.c)
+        S = cell.syn.S(input.c)
+        L = cell.syn.L(input.c)
+        hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
         hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
         hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
