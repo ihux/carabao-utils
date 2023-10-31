@@ -318,7 +318,6 @@ class Monitor:
             data.screen = Screen('Neurons',m,n)
             data.ij = (0,0)
             data.verbose = verbose
-            data.iteration = 0
             data.phase = None
     def copy(self):
         scr = self.data.screen
@@ -334,11 +333,11 @@ class Monitor:
             self.place(data.screen,(i,j))
             u = input.u if u is None else u
             c = input.c if c is None else c
-            P = cell.P if P is None else P
+            P = cell.syn.P if P is None else P
             W = cell.W() if W is None else W
             E = cell.E(c) if E is None else E
             v = cell.v(c) if v is None else v
-            s = cell.s(c)
+            s = cell.s
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
             data.screen.show
     def norm1(self,M):
@@ -354,10 +353,13 @@ class Monitor:
         data = self.data;  input = cell.input
         always = True
         k = cell.k
+        g = cell.grp.K
+        eta = cell.syn.eta
+        theta = cell.syn.theta
         v = cell.v(input.c)
-        s = cell.s(input.c)
-        K = cell.K
-        P = cell.P
+        s = cell.s
+        K = cell.syn.K
+        P = cell.syn.P
         W = cell.W()
         V = cell.V(input.c)
         E = cell.E(input.c)
@@ -369,23 +371,23 @@ class Monitor:
 
             # since we know now the dimensions of K we can replace None's
 
-        if data.V is None: data.V = 0*cell.K
-        if data.W is None: data.W = 0*cell.K
-        if data.E is None: data.E = 0*cell.K
-        if data.S is None: data.S = 0*cell.K
-        if data.L is None: data.L = 0*cell.K
+        if data.V is None: data.V = 0*cell.syn.K
+        if data.W is None: data.W = 0*cell.syn.K
+        if data.E is None: data.E = 0*cell.syn.K
+        if data.S is None: data.S = 0*cell.syn.K
+        if data.L is None: data.L = 0*cell.syn.K
 
         print("--------------------------------------------------------------")
         print(msg)
         print("--------------------------------------------------------------")
-        if (data.k != cell.k) or any(data.g != cell.g) or (data.eta != cell.eta):
-            print("   k%g:" % k,cell.k,", g:",cell.g,", eta:",cell.eta)
-            data.k = cell.k; data.g = cell.g.copy();  data.eta = cell.eta
+        if (data.k != cell.k) or any(data.g != g) or (data.eta != eta):
+            print("   k%g:" % k,cell.k,", g:",g,", eta:",eta)
+            data.k = cell.k; data.g = g.copy();  data.eta = eta
         if any(data.K != K):
-            self.print('matrix',"   K%g:" % k,cell.K)
+            self.print('matrix',"   K%g:" % k,K)
             data.K = K.copy()
         if any(data.P != P):
-            self.print('matrix',"   P%g:" % k,cell.P)
+            self.print('matrix',"   P%g:" % k,P)
             data.P = P.copy()
         if any(data.V != V):
             self.print('matrix',"   V%g:" % k, V)
@@ -405,17 +407,13 @@ class Monitor:
         if any(data.b != cell.b) or any(data.v != v):
             print("   b%g:" % k,cell.b,", v%g:" % k, v)
             data.b = cell.b;  data.v = v.copy()
-        if any(data.E != E) or any(data.s != s) or (data.theta != cell.theta):
-            print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),cell.theta))
-            data.E = E.copy();  data.s = s.copy();  data.theta = cell.theta;
-        print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),
-              ", x%g: %g (-> %g)" % (k,cell.x,cell.x_))
+        if any(data.E != E) or any(data.s != s) or (data.theta != theta):
+            print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),theta))
+            data.E = E.copy();  data.s = s.copy();  data.theta = theta;
+        print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
         if any(data.c != input.c):
             print("   c:",input.c);  data.c = input.c.copy()
 
-        if (phase == 3):
-            #self.invalid(cell,'b,p,l,W,Z')       # invalidate
-            self.data.iteration += 1
     def print(self,tag,msg,arg):   # .print("matrix","E:",E)
         if tag == 'matrix':
             m,n = arg.shape
@@ -444,14 +442,14 @@ class Monitor:
     def hash(self,cell):
         data = self.data;  input = cell.input
         v = cell.v(input.c)
-        s = cell.s(input.c)
+        s = cell.s
         W = cell.W()
         V = cell.V(input.c)
         E = cell.E(input.c)
         S = cell.S(input.c)
         L = cell.L(input.c)
-        hk = hash(cell.k,2);  hg = hash(cell.g,3);
-        hK = hash(cell.K,4);  hP = hash(cell.P,5);
+        hk = hash(cell.k,2);  hg = hash(cell.grp.K,3);
+        hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
         hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
@@ -462,8 +460,9 @@ class Monitor:
         prime = 1*2*3*5*7*11*13*17*19+1
         N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hE*hS*hL)
         n = N % prime
-        #return (h,N,prime,hashes)
-        return n
+        ###############################
+        #print("hash:",n,N,prime,hashes)
+        return int(n)
     def ascii(self,n):  # convert hash to 4 character ascii sequence
         vocal = ['A','E','I','O','U','Y']
         h = ''
