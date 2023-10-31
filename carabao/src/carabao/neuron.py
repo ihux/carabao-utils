@@ -205,15 +205,16 @@ class Cell:
 
     def phase(self,ph,u,c):            # cell algo phase i
         if ph == 1:
+            c = self.rule7(u,c) # burst and spike states are transient
             c = self.rule1(u,c) # excited predictive cells get active
         elif ph == 2:
             c = self.rule2(u,c) # excited neurons in non-predictive groups burst
+        elif ph == 3:
+            c = self.rule3(u,c) # excited bursting neurons get active
+        elif ph == 4:
             c = self.rule4(u,c) # empowered dendritic segments spike
             c = self.rule5(u,c) # spiking dentrites of active neurons learn
             c = self.rule6(u,c) # spiking neurons get always predictive
-        elif ph == 3:
-            c = self.rule3(u,c) # excited bursting neurons get active
-            c = self.rule7(u,c) # burst and spike states are transient
         else:
             raise Exception("bad phase")
         return c

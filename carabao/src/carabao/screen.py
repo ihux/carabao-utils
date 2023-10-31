@@ -349,7 +349,7 @@ class Monitor:
             sumj = M[j].sum().item()
             result = result if sumj < result else sumj
         return result
-    def log(self,cell,msg=None,phase=None):
+    def log(self,cell,msg=None,all=False):
         data = self.data;  input = cell.input
         always = True
         k = cell.k
@@ -367,7 +367,7 @@ class Monitor:
         L = cell.L(input.c)
         nan = float('nan')
         msg = msg if msg != None else ""
-        data.phase = phase if phase != None else data.phase
+        #data.phase = phase if phase != None else data.phase
 
             # since we know now the dimensions of K we can replace None's
 
@@ -380,34 +380,34 @@ class Monitor:
         print("--------------------------------------------------------------")
         print(msg)
         print("--------------------------------------------------------------")
-        if (data.k != cell.k) or any(data.g != g) or (data.eta != eta):
+        if all or (data.k != cell.k) or any(data.g != g) or (data.eta != eta):
             print("   k%g:" % k,cell.k,", g:",g,", eta:",eta)
             data.k = cell.k; data.g = g.copy();  data.eta = eta
-        if any(data.K != K):
+        if all or any(data.K != K):
             self.print('matrix',"   K%g:" % k,K)
             data.K = K.copy()
-        if any(data.P != P):
+        if all or any(data.P != P):
             self.print('matrix',"   P%g:" % k,P)
             data.P = P.copy()
-        if any(data.V != V):
+        if all or any(data.V != V):
             self.print('matrix',"   V%g:" % k, V)
             data.V = V.copy()
-        if any(data.W != W):
+        if all or any(data.W != W):
             self.print('matrix',"   W%g:" % k, W)
             data.W = W.copy()
-        if any(data.E != E):
+        if all or any(data.E != E):
             self.print('matrix',"   E%g:" % k, E)
             data.E = E.copy()
-        if any(data.S != S):
+        if all or any(data.S != S):
             self.print('matrix',"   S%g:" % k, S)
             data.S = S.copy()
-        if any(data.L != L):
+        if all or any(data.L != L):
             self.print('matrix',"   L%g:" % k, L)
             data.L = L.copy()
-        if any(data.b != cell.b) or any(data.v != v):
+        if all or any(data.b != cell.b) or any(data.v != v):
             print("   b%g:" % k,cell.b,", v%g:" % k, v)
             data.b = cell.b;  data.v = v.copy()
-        if any(data.E != E) or any(data.s != s) or (data.theta != theta):
+        if all or any(data.E != E) or any(data.s != s) or (data.theta != theta):
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),theta))
             data.E = E.copy();  data.s = s.copy();  data.theta = theta;
         print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
@@ -490,3 +490,5 @@ class Monitor:
         scr = self.data.screen
         y = scr.m-ij[0]-2
         self.text(ij[1],y+0.35,txt,size=size)
+    def mn(self):
+        return (self.data.screen.m, self.data.screen.n)
