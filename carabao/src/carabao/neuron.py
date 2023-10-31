@@ -174,9 +174,8 @@ class Cell:
 
             # input variables
 
-        self.input = struct()             # structure for all neuron inputs
-        self.input.u = 0                  # basal (feedforwad) input
-        self.input.c = []                 # context input
+        self._u = 0                       # basal (feedforwad) input
+        self._c = []                      # context input
 
             # output, state variables
 
@@ -232,16 +231,16 @@ class Cell:
 
     def plot(self,i=None,j=None,v=None,W=None,E=None,u=None,c=None,
 	         xlabel=None,head=None,foot=None):
-	    self.input.u = self.input.u if u is None else u
-	    self.input.c = self.input.c if c is None else c
+	    self._u = self._u if u is None else u
+	    self._c = self._c if c is None else c
 	    self.mon.plot(self,i,j,v=v,W=W,E=E,u=u,c=c)
 	    if xlabel is not None: self.mon.xlabel(j,xlabel)
 	    if head is not None: self.mon.head(head)
 	    if foot is not None: self.mon.foot(foot)
 
     def set(self,u=None,c=None,x=None,y=None,b=None):
-        self.input.u = self.input.u if u is None else u
-        self.input.c = self.input.c if c is None else c
+        self._u = self._u if u is None else u
+        self._c = self._c if c is None else c
         self.x = self.x if x is None else x
         self.y = self.y if y is None else y
         self.b = self.b if b is None else b

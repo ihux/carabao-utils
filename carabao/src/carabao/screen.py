@@ -328,11 +328,11 @@ class Monitor:
         self.data.screen = screen
         self.data.ij = ij
     def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,u=None,c=None):
-       data = self.data;  input = cell.input
+       data = self.data
        if i is not None:
             self.place(data.screen,(i,j))
-            u = input.u if u is None else u
-            c = input.c if c is None else c
+            u = cell._u if u is None else u
+            c = cell._c if c is None else c
             P = cell.syn.P if P is None else P
             W = cell.syn.W() if W is None else W
             E = cell.syn.E(c) if E is None else E
@@ -350,21 +350,21 @@ class Monitor:
             result = result if sumj < result else sumj
         return result
     def log(self,cell,msg=None,all=False):
-        data = self.data;  input = cell.input
+        data = self.data
         always = True
         k = cell.k
         g = cell.group.K
         eta = cell.syn.eta
         theta = cell.syn.theta
-        v = cell.group.v(input.c)
+        v = cell.group.v(cell._c)
         s = cell.s
         K = cell.syn.K
         P = cell.syn.P
         W = cell.syn.W()
-        V = cell.syn.V(input.c)
-        E = cell.syn.E(input.c)
-        S = cell.syn.S(input.c)
-        L = cell.syn.L(input.c)
+        V = cell.syn.V(cell._c)
+        E = cell.syn.E(cell._c)
+        S = cell.syn.S(cell._c)
+        L = cell.syn.L(cell._c)
         nan = float('nan')
         msg = msg if msg != None else ""
         #data.phase = phase if phase != None else data.phase
@@ -410,9 +410,9 @@ class Monitor:
         if all or any(data.E != E) or any(data.s != s) or (data.theta != theta):
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),theta))
             data.E = E.copy();  data.s = s.copy();  data.theta = theta;
-        print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
-        if any(data.c != input.c):
-            print("   c:",input.c);  data.c = input.c.copy()
+        print("   u%g:"%k,cell._u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
+        if any(data.c != cell._c):
+            print("   c:",cell._c);  data.c = cell._c.copy()
 
     def print(self,tag,msg,arg):   # .print("matrix","E:",E)
         if tag == 'matrix':
@@ -440,17 +440,17 @@ class Monitor:
     def hello(self):
         print("hello, monitor")
     def hash(self,cell):
-        data = self.data;  input = cell.input
-        v = cell.group.v(input.c)
+        data = self.data
+        v = cell.group.v(cell._c)
         s = cell.s
         W = cell.syn.W()
-        V = cell.syn.V(input.c)
-        E = cell.syn.E(input.c)
-        S = cell.syn.S(input.c)
-        L = cell.syn.L(input.c)
+        V = cell.syn.V(cell._c)
+        E = cell.syn.E(cell._c)
+        S = cell.syn.S(cell._c)
+        L = cell.syn.L(cell._c)
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
         hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
-        hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
         hW = hash(W,11);  hV = hash(V,12);  hE = hash(E,13)
