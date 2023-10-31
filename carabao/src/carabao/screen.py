@@ -193,7 +193,7 @@ class Screen:
         ymu = y + yoff - mu*h          # top position of mu-th segment
 
         ################
-        print("segment: s =",s,"W =",repr(W))
+        #print("segment: s =",s,"W =",repr(W))
         col = self.gold if s[mu] > 0 else self.gray
 
         xs = x;  ys = ymu-h/2
