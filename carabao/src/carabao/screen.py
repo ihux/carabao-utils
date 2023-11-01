@@ -364,7 +364,7 @@ class Monitor:
         V = cell.V
         E = cell.syn.E(cell.V)
         S = cell.syn.S(cell.V)
-        L = cell.syn.L(cell.V)
+        L = cell.syn.L(cell.V,cell.y)
         nan = float('nan')
         msg = msg if msg != None else ""
         #data.phase = phase if phase != None else data.phase
@@ -447,7 +447,7 @@ class Monitor:
         V = cell.V
         E = cell.syn.E(cell.V)
         S = cell.syn.S(cell.V)
-        L = cell.syn.L(cell.V)
+        L = cell.syn.L(cell.V,cell.y)
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
         hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
         hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);

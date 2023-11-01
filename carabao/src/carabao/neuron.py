@@ -27,7 +27,7 @@ class Synapses:
         V = syn.V(c)              # presynaptic signals
         E = syn.E(V)              # empowering matrix
         S = syn.S(V)              # spike matrix (learning mask)
-        L = syn.L(V)              # learning deltas
+        L = syn.L(V,y)            # learning deltas
         s = syn.s(V)              # spike vector
         o = syn.one               # [1,1,...,1] matrix (1 x ns)
 
@@ -60,10 +60,10 @@ class Synapses:
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,V):                     # L(V) = (2*plus * V - minus) * S(V)
+    def L(self,V,y):                   # L(V) = (2*plus * V - minus) * y * S(V)
         S = self.S(V)
         plus,minus = self.delta
-        return (2*plus * V - minus) * S
+        return (2*plus * V - minus) * y * S
 
     def s(self,V):                     # spike vector: s = max(S')
         S = self.S(V)
@@ -120,8 +120,8 @@ class Rules:
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(cell.V)                    # learning deltas
-        P = cell.syn.P + cell.y * L               # adapt permanences
+        L = cell.syn.L(cell.V,cell.y)             # learning deltas
+        P = cell.syn.P + L                        # adapt permanences
         cell.syn.P = cell.syn.sat(P)
         return cell.update(u,c,5)
 
@@ -131,7 +131,7 @@ class Rules:
 
     def rule7(self,cell,u,c):   # burst and spike states are transient
         cell.b = 0                     # clear burst state
-        cell.s = 0 * cell.s            # clear spike state
+        #cell.s = 0 * cell.s            # clear spike state
         return cell.update(u,c,6)
 
 
