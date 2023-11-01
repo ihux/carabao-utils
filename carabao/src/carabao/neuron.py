@@ -18,34 +18,36 @@ class Synapses:
     """
     Synapses: class
         syn = Synapses(K,P,eta,theta,(plus,minus))   # full arg list
-        syn = Synapses(K,P)       # eta=0.5, plus=minus=0.02
-        syn = Synapses(g)         # P=one
+        syn = Synapses(K,P)            # eta=0.5, plus=minus=0.02
+        syn = Synapses(g)              # P=one
 
-        K = syn.K                 # synaptic index matrix
-        P = syn.P                 # permanences
-        eta = syn.eta             # synaptic threshold
-        theta = syn.theta         # spiking threshold
-        plus,minus = syn.delta    # learning deltas
+        K = syn.K                      # synaptic index matrix
+        P = syn.P                      # permanences
+        eta = syn.eta                  # synaptic threshold
+        theta = syn.theta              # spiking threshold
+        plus,minus = syn.delta         # learning deltas
 
-        W = syn.W()               # synaptic weight matrix
-        V = syn.V(c)              # presynaptic signals
-        E = syn.E(V)              # empowering matrix
-        S = syn.S(V)              # spike matrix (learning mask)
-        L = syn.L(V,y)            # learning matrix (deltas)
+        v = syn.v(c)                   # group activation
+        V = syn.V(c)                   # presynaptic signals
+        W = syn.W(P)                   # synaptic weight matrix
+        E = syn.E(V,P)                 # empowering matrix
+        S = syn.S(V,P)                 # spike matrix (learning mask)
+        L = syn.L(V,P,y)               # learning matrix (deltas)
 
-        syn.P = syn.sat(P)        # truncate P matrix to range [0,1]
+        syn.P = syn.sat(P)             # truncate P matrix to range [0,1]
     """
     def __init__(self,K,P=None,eta=0.5,theta=2,delta=(0.02,0.02)):
-        self.K = array(K)         # always store as numpy array
-        self.P = array(P)         # always store as numpy array
-        self.eta = eta            # synaptic threshold
-        self.theta = theta        # spiking threshold
-        self.delta = delta        # learning delta (plus,minus)
+        self.K = array(K)              # always store as numpy array
+        self.P = array(P)              # always store as numpy array
+        self.eta = eta                 # synaptic threshold
+        self.theta = theta             # spiking threshold
+        self.delta = delta             # learning delta (plus,minus)
 
-    def W(self):                      # binary weights W(;P)
-        return (self.P >= self.eta)*1
+    def v(self,c):                     # group activation
+        v = [c[k] if k < len(c) else 0 for k in self.K]
+        return array(v)
 
-    def V(self,c):                    # pre-synaptic signals V(c;K)
+    def V(self,c):                     # pre-synaptic signals V(c;K)
         kmax = len(c)
         V = 0*self.K
         for mu in range(0,self.K.shape[0]):
@@ -54,22 +56,21 @@ class Synapses:
                 V[mu,nu] = c[k] if k < kmax else 0;
         return V
 
-    def E(self,V):                   # E(V) = V * W
-        return V * self.W()    # empowerment matrix
+    def W(self,P):                     # binary weights W(P)
+        return (P >= self.eta)*1
 
-    def S(self,V):
-        E = self.E(V);
+    def E(self,V,P):                   # E(V,P) = V * W(P)
+        return V * self.W(P)           # empowerment matrix
+
+    def S(self,V,P):
+        E = self.E(V,P);
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,V,y):                   # L(V) = (2*plus * V - minus) * y * S(V)
-        S = self.S(V)
+    def L(self,V,P,y):                 # learning matrix
+        S = self.S(V,P)
         plus,minus = self.delta
         return (2*plus * V - minus) * y * S
-
-    def v(self,c):                     # group output
-        v = [c[k] if k < len(c) else 0 for k in self.K]
-        return array(v)
 
     def sat(self,X):  # truncates every matrix element of X to range 0.0 ... 1.0
         def lt1(X): return 1 + (X-1<=0)*(X-1)
@@ -117,13 +118,13 @@ class Rules:
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(cell.V,cell.y)             # learning deltas
+        L = cell.syn.L(cell.V,cell.syn.P,cell.y)  # learning deltas
         P = cell.syn.P + L                        # adapt permanences
         cell.syn.P = cell.syn.sat(P)
         return cell.update(u,c,5)
 
     def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        S = cell.syn.S(cell.V)
+        S = cell.syn.S(cell.V,cell.syn.P)
         cell.x = S.max()               # dendritic spikes set cell predictive
         return cell.update(u,c,6)
 

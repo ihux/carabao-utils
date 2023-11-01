@@ -328,17 +328,17 @@ class Monitor:
         self.data.screen = screen
         self.data.ij = ij
     def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,u=None,c=None):
-       data = self.data
+       data = self.data;  syn = cell.syn
        if i is not None:
             self.place(data.screen,(i,j))
             u = cell._u if u is None else u
             c = cell._c if c is None else c
-            P = cell.syn.P if P is None else P
-            W = cell.syn.W() if W is None else W
-            E = cell.syn.E(cell.V) if E is None else E
+            P = syn.P if P is None else P
+            W = syn.W(syn.P) if W is None else W
+            E = syn.E(cell.V,syn.P) if E is None else E
             v = cell.group.v(c) if v is None else v
-            S = cell.syn.S(cell.V)
-            L = cell.syn.L(cell.V,cell.y)
+            S = syn.S(cell.V,syn.P)
+            L = syn.L(cell.V,syn.P,cell.y)
             SL = S*L
             sl = array([SL[i].max() for i in range(0,SL.shape[0])])
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
@@ -353,21 +353,21 @@ class Monitor:
             result = result if sumj < result else sumj
         return result
     def log(self,cell,msg=None,all=False):
-        data = self.data
+        data = self.data;  syn = cell.syn
         always = True
         k = cell.k
         g = cell.group.K
-        eta = cell.syn.eta
-        theta = cell.syn.theta
+        eta = syn.eta
+        theta = syn.theta
         v = cell.group.v(cell._c)
         #s = cell.s
-        K = cell.syn.K
-        P = cell.syn.P
-        W = cell.syn.W()
+        K = syn.K
+        P = syn.P
+        W = syn.W(syn.P)
         V = cell.V
-        E = cell.syn.E(cell.V)
-        S = cell.syn.S(cell.V)
-        L = cell.syn.L(cell.V,cell.y)
+        E = syn.E(cell.V,syn.P)
+        S = syn.S(cell.V,syn.P)
+        L = syn.L(cell.V,syn.P,cell.y)
         s = array([S[i].max() for i in range(0,S.shape[0])])
         nan = float('nan')
         msg = msg if msg != None else ""
@@ -375,11 +375,11 @@ class Monitor:
 
             # since we know now the dimensions of K we can replace None's
 
-        if data.V is None: data.V = 0*cell.syn.K
-        if data.W is None: data.W = 0*cell.syn.K
-        if data.E is None: data.E = 0*cell.syn.K
-        if data.S is None: data.S = 0*cell.syn.K
-        if data.L is None: data.L = 0*cell.syn.K
+        if data.V is None: data.V = 0*syn.K
+        if data.W is None: data.W = 0*syn.K
+        if data.E is None: data.E = 0*syn.K
+        if data.S is None: data.S = 0*syn.K
+        if data.L is None: data.L = 0*syn.K
 
         print("--------------------------------------------------------------")
         print(msg)
@@ -447,13 +447,13 @@ class Monitor:
         data = self.data
         v = cell.group.v(cell._c)
         s = cell.s
-        W = cell.syn.W()
+        W = syn.W(syn.P)
         V = cell.V
-        E = cell.syn.E(cell.V)
-        S = cell.syn.S(cell.V)
-        L = cell.syn.L(cell.V,cell.y)
+        E = syn.E(cell.V,syn.P)
+        S = syn.S(cell.V,syn.P)
+        L = syn.L(cell.V,syn.P,cell.y)
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
-        hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
+        hK = hash(syn.K,4);  hP = hash(syn.P,5);
         hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
