@@ -33,7 +33,7 @@ class Synapses:
         W = syn.W(P)                   # synaptic weight matrix
         E = syn.E(c,P)                 # empowering matrix
         S = syn.S(c,P)                 # spike matrix (learning mask)
-        L = syn.L(c,P)                 # learning matrix (deltas)
+        L = syn.L(c,S)                 # learning matrix (deltas)
 
         P = syn.sat(P)                 # truncate P matrix to range [0,1]
     """
@@ -71,8 +71,8 @@ class Synapses:
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,c,P):                 # learning matrix
-        V = self.V(c);  S = self.S(c,P);
+    def L(self,c,S):                 # learning matrix
+        V = self.V(c);
         plus,minus = self.delta
         return (2*plus * V - minus) * S
 
@@ -105,34 +105,38 @@ class Rules:
         return
 
     def rule0(self,cell,u,c):   # a burst state is transient
+        cell.P = cell._P.copy()        # permanence matrix transition
+        cell.L = cell._L.copy()        # learning matrix transition
         cell.b = 0                     # clear burst state
-        return cell.update(u,c,6)
+        return cell.update(u,c,0)      # P=P', L=L', b=0
 
     def rule1(self,cell,u,c):   # excited predictive cells get active
         cell.y = u * cell.x
-        return cell.update(u,c,1)      # update c[k] = cell.y
+        return cell.update(u,c,1)      # y = u*x
 
     def rule2(self,cell,u,c):   # excited neurons in non-predictive groups burst
         v = cell.group.v(c)            # the group's outputs
         cell.b = u * (sum(v) == 0)     # set cell's burst state
-        return cell.update(u,c,2)      # update c[k] = cell.y
+        return cell.update(u,c,2)      # b = u*(sum(v)==0)
 
     def rule3(self,cell,u,c):   # excited bursting neurons get active
         cell.y = u * (cell.x or cell.b)
-        return cell.update(u,c,3)
+        return cell.update(u,c,3)      # y = u*(x|b)
 
-    def rule4(self,cell,u,c):   # spiking dentrites of active neurons learn
-        cell.P = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
-        return cell.update(u,c,5)
+    def rule4(self,cell,u,c):   # active predictive neurons learn
+        cell.P_ = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
+        return cell.update(u,c,4)      # P' = sat(P+y*L)
 
-    def rule5(self,cell,u,c):   # empowered dendritic segments spike
-        self.L = cell.syn.L(c,cell.P)  # learning deltas
-        return cell.update(u,c,4)
-
-    def rule6(self,cell,u,c):   # spiking neurons get always predictive
+    def rule5(self,cell,u,c):   # spiking neurons get always predictive
         S = cell.syn.S(c,cell.P)
         cell.x = S.max()               # dendritic spikes set cell predictive
-        return cell.update(u,c,6)
+        return cell.update(u,c,5)      # x = max(S(c,P))
+
+    def rule6(self,cell,u,c):   # spiking dendritic segments potentially learn
+        S = cell.syn.S(c,cell.P)
+        cell._L = cell.syn.L(c,S)      # learning deltas
+        return cell.update(u,c,6)      # L' = L(c,S(c,P))
+
 
 
 #=============================================================================
@@ -176,7 +180,10 @@ class Cell:
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.P = P                        # permanence matrix
-        self.L = self.syn.V([])           # pre-synaptic pattern
+        self.L = 0*P.copy()               # pre-synaptic pattern
+
+        self._P = self.P.copy()           # new permanences @ t+1
+        self._L = self.L.copy()           # new learning matrix @ t+1
 
     def rule0(self,u,c): return self.rules.rule0(self,u,c)
     def rule1(self,u,c): return self.rules.rule1(self,u,c)

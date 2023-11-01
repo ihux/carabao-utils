@@ -403,7 +403,7 @@ class Monitor:
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),theta))
             data.E = E.copy();  data.s = s.copy();  data.theta = theta;
         print("   u%g:"%k,cell._u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
-        if any(data.c != cell._c):
+        if all or any(data.c != cell._c):
             print("   c:",cell._c);  data.c = cell._c.copy()
 
     def print(self,tag,msg,arg):   # .print("matrix","E:",E)
