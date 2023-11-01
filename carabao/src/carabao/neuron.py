@@ -28,7 +28,7 @@ class Synapses:
         E = syn.E(V)              # empowering matrix
         S = syn.S(V)              # spike matrix (learning mask)
         L = syn.L(V,y)            # learning deltas
-        s = syn.s(V)              # spike vector
+        #s = syn.s(V)              # spike vector
         o = syn.one               # [1,1,...,1] matrix (1 x ns)
 
         syn.P = syn.sat(P)        # truncate P matrix to range [0,1]
@@ -64,11 +64,11 @@ class Synapses:
         S = self.S(V)
         plus,minus = self.delta
         return (2*plus * V - minus) * y * S
-
+    """
     def s(self,V):                     # spike vector: s = max(S')
         S = self.S(V)
         return array([S[i].max() for i in range(0,S.shape[0])])
-
+    """
     def v(self,c):                     # group output
         v = [c[k] if k < len(c) else 0 for k in self.K]
         return array(v)
@@ -184,7 +184,7 @@ class Cell:
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.V = self.syn.V([])
-        self.s = self.syn.s(self.V)       # spike vector
+        #self.s = self.syn.s(self.V)       # spike vector
 
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)
