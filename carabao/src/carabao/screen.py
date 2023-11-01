@@ -337,8 +337,11 @@ class Monitor:
             W = cell.syn.W() if W is None else W
             E = cell.syn.E(cell.V) if E is None else E
             v = cell.group.v(c) if v is None else v
-            s = cell.s
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
+            S = cell.syn.S(cell.V)
+            L = cell.syn.L(cell.V,cell.y)
+            SL = S*L
+            sl = array([SL[i].max() for i in range(0,SL.shape[0])])
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
             data.screen.show
     def norm1(self,M):
         if type(M).__name__ == 'list':
@@ -357,7 +360,7 @@ class Monitor:
         eta = cell.syn.eta
         theta = cell.syn.theta
         v = cell.group.v(cell._c)
-        s = cell.s
+        #s = cell.s
         K = cell.syn.K
         P = cell.syn.P
         W = cell.syn.W()
@@ -365,6 +368,7 @@ class Monitor:
         E = cell.syn.E(cell.V)
         S = cell.syn.S(cell.V)
         L = cell.syn.L(cell.V,cell.y)
+        s = array([S[i].max() for i in range(0,S.shape[0])])
         nan = float('nan')
         msg = msg if msg != None else ""
         #data.phase = phase if phase != None else data.phase

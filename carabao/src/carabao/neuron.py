@@ -115,8 +115,8 @@ class Rules:
         return cell.update(u,c,3)
 
     def rule4(self,cell,u,c):   # empowered dendritic segments spike
-        cell.V = cell.syn.V(c)         # pre-synaptic state
-        cell.s = cell.syn.s(cell.V)    # spike vector
+        cell.V = cell.syn.V(c)          # pre-synaptic state
+        #cell.s = cell.syn.s(cell.V)    # spike vector
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
@@ -126,12 +126,14 @@ class Rules:
         return cell.update(u,c,5)
 
     def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        cell.x = max(cell.s)           # dendritic spikes set cell predictive
+        #cell.x = max(cell.s)          # dendritic spikes set cell predictive
+        S = cell.syn.S(cell.V)
+        cell.x = S.max()               # dendritic spikes set cell predictive
         return cell.update(u,c,6)
 
     def rule7(self,cell,u,c):   # burst and spike states are transient
         cell.b = 0                     # clear burst state
-        #cell.s = 0 * cell.s            # clear spike state
+        #cell.s = 0 * cell.s           # clear spike state
         return cell.update(u,c,6)
 
 
