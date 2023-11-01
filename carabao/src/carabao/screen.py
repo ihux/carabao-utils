@@ -213,6 +213,9 @@ class Screen:
             self.can.circle((xs,ys),self.rs,col)
             self.can.circle((xs,ys),ri,facecolor=icol,edgecolor=icol)
 
+    def xy(self,i,j):
+        return (j,self.m-i-1)
+
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
@@ -230,7 +233,8 @@ class Screen:
         coly = self.red if y>0 else self.gray
 
         i = ij[0];  j = ij[1]
-        x = j; y = self.m-i-1;
+        #x = j; y = self.m-i-1;
+        x,y = self.xy(i,j)
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
         dy1 = r0*0.1;    dy2 = r0*0.1
@@ -327,19 +331,6 @@ class Monitor:
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
-    def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,u=None,c=None):
-       data = self.data;  input = cell.input
-       if i is not None:
-            self.place(data.screen,(i,j))
-            u = input.u if u is None else u
-            c = input.c if c is None else c
-            P = cell.syn.P if P is None else P
-            W = cell.W() if W is None else W
-            E = cell.E(c) if E is None else E
-            v = cell.v(c) if v is None else v
-            s = cell.s
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,s,P,W,E)
-            data.screen.show
     def norm1(self,M):
         if type(M).__name__ == 'list':
             return sum(M)
@@ -349,70 +340,71 @@ class Monitor:
             sumj = M[j].sum().item()
             result = result if sumj < result else sumj
         return result
-    def log(self,cell,msg=None,phase=None):
-        data = self.data;  input = cell.input
+    def log(self,cell,msg=None,all=False):
+        data = self.data;  syn = cell.syn
         always = True
         k = cell.k
-        g = cell.grp.K
-        eta = cell.syn.eta
-        theta = cell.syn.theta
-        v = cell.v(input.c)
-        s = cell.s
-        K = cell.syn.K
-        P = cell.syn.P
-        W = cell.W()
-        V = cell.V(input.c)
-        E = cell.E(input.c)
-        S = cell.S(input.c)
-        L = cell.L(input.c)
+        g = cell.group.K
+        eta = syn.eta
+        theta = syn.theta
+        v = cell.group.v(cell._c)
+        #s = cell.s
+        K = syn.K
+        P = cell.P
+        W = syn.W(cell.P)
+        V = syn.V(cell._c)
+        E = syn.E(cell._c,cell.P)
+        S = syn.S(cell._c,cell.P)
+        L = cell.L
+        s = array([S[i].max() for i in range(0,S.shape[0])])
         nan = float('nan')
         msg = msg if msg != None else ""
-        data.phase = phase if phase != None else data.phase
+        #data.phase = phase if phase != None else data.phase
 
             # since we know now the dimensions of K we can replace None's
 
-        if data.V is None: data.V = 0*cell.syn.K
-        if data.W is None: data.W = 0*cell.syn.K
-        if data.E is None: data.E = 0*cell.syn.K
-        if data.S is None: data.S = 0*cell.syn.K
-        if data.L is None: data.L = 0*cell.syn.K
+        if data.V is None: data.V = 0*syn.K
+        if data.W is None: data.W = 0*syn.K
+        if data.E is None: data.E = 0*syn.K
+        if data.S is None: data.S = 0*syn.K
+        if data.L is None: data.L = 0*syn.K
 
         print("--------------------------------------------------------------")
         print(msg)
         print("--------------------------------------------------------------")
-        if (data.k != cell.k) or any(data.g != g) or (data.eta != eta):
+        if all or (data.k != cell.k) or any(data.g != g) or (data.eta != eta):
             print("   k%g:" % k,cell.k,", g:",g,", eta:",eta)
             data.k = cell.k; data.g = g.copy();  data.eta = eta
-        if any(data.K != K):
+        if all or any(data.K != K):
             self.print('matrix',"   K%g:" % k,K)
             data.K = K.copy()
-        if any(data.P != P):
+        if all or any(data.P != P):
             self.print('matrix',"   P%g:" % k,P)
             data.P = P.copy()
-        if any(data.V != V):
+        if all or any(data.V != V):
             self.print('matrix',"   V%g:" % k, V)
             data.V = V.copy()
-        if any(data.W != W):
+        if all or any(data.W != W):
             self.print('matrix',"   W%g:" % k, W)
             data.W = W.copy()
-        if any(data.E != E):
+        if all or any(data.E != E):
             self.print('matrix',"   E%g:" % k, E)
             data.E = E.copy()
-        if any(data.S != S):
+        if all or any(data.S != S):
             self.print('matrix',"   S%g:" % k, S)
             data.S = S.copy()
-        if any(data.L != L):
+        if all or any(data.L != L):
             self.print('matrix',"   L%g:" % k, L)
             data.L = L.copy()
-        if any(data.b != cell.b) or any(data.v != v):
+        if all or any(data.b != cell.b) or any(data.v != v):
             print("   b%g:" % k,cell.b,", v%g:" % k, v)
             data.b = cell.b;  data.v = v.copy()
-        if any(data.E != E) or any(data.s != s) or (data.theta != theta):
+        if all or any(data.E != E) or any(data.s != s) or (data.theta != theta):
             print("   s%g:" % k, s,"(||E||=%g, theta:%g)" % (self.norm1(E),theta))
             data.E = E.copy();  data.s = s.copy();  data.theta = theta;
-        print("   u%g:"%k,input.u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
-        if any(data.c != input.c):
-            print("   c:",input.c);  data.c = input.c.copy()
+        print("   u%g:"%k,cell._u,", y%g: %g" % (k,cell.y),", x%g:" % k,cell.x)
+        if all or any(data.c != cell._c):
+            print("   c:",cell._c);  data.c = cell._c.copy()
 
     def print(self,tag,msg,arg):   # .print("matrix","E:",E)
         if tag == 'matrix':
@@ -440,21 +432,21 @@ class Monitor:
     def hello(self):
         print("hello, monitor")
     def hash(self,cell):
-        data = self.data;  input = cell.input
-        v = cell.v(input.c)
+        data = self.data
+        v = cell.group.v(cell._c)
         s = cell.s
-        W = cell.W()
-        V = cell.V(input.c)
-        E = cell.E(input.c)
-        S = cell.S(input.c)
-        L = cell.L(input.c)
-        hk = hash(cell.k,2);  hg = hash(cell.grp.K,3);
-        hK = hash(cell.syn.K,4);  hP = hash(cell.syn.P,5);
-        hu = hash(input.u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
+        V = syn.V(cell._c)
+        W = syn.W(cell.P)
+        E = syn.E(cell._c,cell.P)
+        S = syn.S(cell._c,cell.P)
+        L = cell.L
+        hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
+        hK = hash(syn.K,4);  hP = hash(cell.P,5);
+        hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
         hW = hash(W,11);  hV = hash(V,12);  hE = hash(E,13)
-        hS = hash(S,14);  hL = hash(L,15)
+        hS = hash(S,14);  hL = hash(L,15);
 
         hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hS,hL]]
         prime = 1*2*3*5*7*11*13*17*19+1
@@ -470,6 +462,27 @@ class Monitor:
            h = h + chr(65 + n % 26);  n = n // 26;
            k = n % 6;  n = n // 6;  h += vocal[k]
         return h
+    def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,
+             u=None,c=None,index=None,size=None):
+       data = self.data;  syn = cell.syn
+       if i is not None:
+            self.place(data.screen,(i,j))
+            u = cell._u if u is None else u
+            c = cell._c if c is None else c
+            P = cell.P if P is None else P
+            W = syn.W(cell.P) if W is None else W
+            E = syn.E(cell._c,cell.P) if E is None else E
+            v = cell.group.v(c) if v is None else v
+            S = syn.S(cell._c,cell.P)
+            L = cell.L
+            SL = S*L
+            sl = array([SL[i].max() for i in range(0,SL.shape[0])])
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
+            data.screen.show
+            if index is not None:
+                size = 7 if size is None else size
+                x,y = data.screen.xy(i,j)
+                self.text(x-0.35,y+0.3,"%g"%index,size=size)
     def line(self,x,y,color='k',linewidth=0.5):
         plt.plot(x,y,color,linewidth=linewidth)
     def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
@@ -490,3 +503,5 @@ class Monitor:
         scr = self.data.screen
         y = scr.m-ij[0]-2
         self.text(ij[1],y+0.35,txt,size=size)
+    def mn(self):
+        return (self.data.screen.m, self.data.screen.n)

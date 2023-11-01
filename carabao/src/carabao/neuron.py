@@ -6,9 +6,9 @@
 #===============================================================================
 
 import numpy
-from numpy import arange, copy, array
+from numpy import arange, copy, array, transpose
 from ypstruct import struct
-from carabao.util import column, sat
+from carabao.util import column, sat, repr
 
 #===============================================================================
 # class Synapses
@@ -17,63 +17,64 @@ from carabao.util import column, sat
 class Synapses:
     """
     Synapses: class
-        syn = Synapses(K,P,eta,theta,(plus,minus))   # full arg list
-        syn = Synapses(K,P)       # eta=0.5, plus=minus=0.02
-        syn = Synapses(g)         # P=one
+        syn = Synapses(g)              # construct synaptic field
+        syn = Synapses(K)              # construct synaptic bank
 
-        P = syn.P                 # permanences
+        syn.parameter(eta,theta,(plus,minus))  # setup synaptic parameters
+        syn.parameter()                # eta=0.5, theta=2, plus=minus=0.02
 
-        W = syn.W()               # synaptic weight matrix
-        V = syn.V(c)              # presynaptic signals
-        E = syn.E(c)              # empowering matrix
-        L = syn.L(c)              # learning mask
-        D = syn.D(c)              # learning deltas
-        s = syn.s(c)              # spike vector
-        o = syn.one               # [1,1,...,1] matrix (1 x ns)
+        K = syn.K                      # synaptic index matrix
+        eta = syn.eta                  # synaptic threshold
+        theta = syn.theta              # spiking threshold
+        plus,minus = syn.delta         # learning deltas
 
-        syn.P = syn.sat(P)        # truncate P matrix to range [0,1]
+        v = syn.v(c)                   # group activation
+        V = syn.V(c)                   # presynaptic signals
+        W = syn.W(P)                   # synaptic weight matrix
+        E = syn.E(c,P)                 # empowering matrix
+        S = syn.S(c,P)                 # spike matrix (learning mask)
+        L = syn.L(c,S)                 # learning matrix (deltas)
+
+        P = syn.sat(P)                 # truncate P matrix to range [0,1]
     """
-    def __init__(self,K,P=None,eta=0.5,theta=2,delta=(0.02,0.02)):
-        self.K = array(K)         # always store as numpy array
-        self.P = array(P)         # always store as numpy array
-        self.eta = eta            # synaptic threshold
-        self.theta = theta        # spiking threshold
-        self.delta = delta        # learning delta (plus,minus)
+    def __init__(self,K):
+        self.K = array(K)              # always store as numpy array
+        self.parameter()               # setup default parameters
 
-    def W(self):                  # binary weights
-        return (self.P >= self.eta)*1
+    def parameter(self,eta=0.5,theta=2,delta=(0.02,0.02)):
+        self.eta = eta                 # synaptic threshold
+        self.theta = theta             # spiking threshold
+        self.delta = delta             # learning delta (plus,minus)
 
-    def V(self,c):                    # pre-synaptic signals
+    def v(self,c):                     # group activation
+        v = [c[k] if k < len(c) else 0 for k in self.K]
+        return array(v)
+
+    def V(self,c):                     # pre-synaptic signals V(c;K)
         kmax = len(c)
         V = 0*self.K
-		######################
-        #print("K:",repr(self.K))
         for mu in range(0,self.K.shape[0]):
             for nu in range(0,self.K.shape[1]):
                 k = self.K[mu,nu]
                 V[mu,nu] = c[k] if k < kmax else 0;
         return V
 
-    def E(self,c):                     # E = V(c) * W(P)
-        return self.V(c) * self.W()    # empowerment matrix
+    def W(self,P):                     # binary weights W(P)
+        return (P >= self.eta)*1
 
-    def S(self,c):
-        E = self.E(c);
+    def E(self,c,P):                   # E(c,P) = V(c) * W(P)
+        V = self.V(c)
+        return V * self.W(P)           # empowerment matrix
+
+    def S(self,c,P):
+        E = self.E(c,P);
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,c):                     # D = (2*plus * V - minus) * L
-        S = self.S(c);  V = self.V(c);
+    def L(self,c,S):                 # learning matrix
+        V = self.V(c);
         plus,minus = self.delta
         return (2*plus * V - minus) * S
-
-    def s(self,c):                     # spike vector: s = (sum(E')>=theta)
-        S = self.S(c)
-        return array([S[i].max() for i in range(0,S.shape[0])])
-
-    def v(self,c):                     # group output
-        return array([c[k] if k < len(c) else 0
-                      for k in self.K])
 
     def sat(self,X):  # truncates every matrix element of X to range 0.0 ... 1.0
         def lt1(X): return 1 + (X-1<=0)*(X-1)
@@ -103,37 +104,37 @@ class Rules:
     def __init__(self):
         return
 
+    def rule0(self,cell,u,c):   # a burst state is transient
+        cell.b = 0                     # clear burst state
+        return cell.update(u,c,0)      # P=P', L=L', b=0
+
     def rule1(self,cell,u,c):   # excited predictive cells get active
         cell.y = u * cell.x
-        return cell.update(u,c,1)      # update c[k] = cell.y
+        return cell.update(u,c,1)      # y = u*x
 
     def rule2(self,cell,u,c):   # excited neurons in non-predictive groups burst
-        v = cell.v(c)                  # the group's outputs
+        v = cell.group.v(c)            # the group's outputs
         cell.b = u * (sum(v) == 0)     # set cell's burst state
-        return cell.update(u,c,2)      # update c[k] = cell.y
+        return cell.update(u,c,2)      # b = u*(sum(v)==0)
 
     def rule3(self,cell,u,c):   # excited bursting neurons get active
         cell.y = u * (cell.x or cell.b)
-        return cell.update(u,c,3)
+        return cell.update(u,c,3)      # y = u*(x|b)
 
-    def rule4(self,cell,u,c):   # empowered dendritic segments spike
-        cell.s = cell.syn.s(c)         # spike vector
-        return cell.update(u,c,4)
+    def rule4(self,cell,u,c):   # active predictive neurons learn
+        cell._P = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
+        return cell.update(u,c,4)      # P' = sat(P+y*L)
 
-    def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.L(c)                             # learning deltas
-        P = cell.syn.P + cell.y * L               # adapt permanences
-        cell.syn.P = cell.syn.sat(P)
-        return cell.update(u,c,5)
+    def rule5(self,cell,u,c):   # spiking neurons get always predictive
+        S = cell.syn.S(c,cell.P)
+        cell.x = S.max()               # dendritic spikes set cell predictive
+        return cell.update(u,c,5)      # x = max(S(c,P))
 
-    def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        cell.x = max(cell.s)           # dendritic spikes set cell predictive
-        return cell.update(u,c,6)
+    def rule6(self,cell,u,c):   # spiking dendritic segments potentially learn
+        S = cell.syn.S(c,cell.P)
+        cell._L = cell.syn.L(c,S)      # learning deltas
+        return cell.update(u,c,6)      # L' = L(c,S(c,P))
 
-    def rule7(self,cell,u,c):   # burst and spike states are transient
-        cell.b = 0                     # clear burst state
-        cell.s = 0 * cell.s            # clear spike state
-        return cell.update(u,c,6)
 
 
 #=============================================================================
@@ -166,54 +167,47 @@ class Cell:
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
         self.rules = Rules()   # add a rules object
 
-            # neuron index, synaptic bank and synaptic field
-
         self.k = k;
-        self.syn = Synapses(K,P)          # synaptic bank (any context activity)
-        self.grp = Synapses(g)            # synaptic field (group activity))
+        self.group = Synapses(g)          # synaptic field (group activity))
+        self.syn = Synapses(K)            # synaptic bank (any context activity)
 
-            # input variables
-
-        self.input = struct()             # structure for all neuron inputs
-        self.input.u = 0                  # basal (feedforwad) input
-        self.input.c = []                 # context input
-
-            # output, state variables
+        self._u = 0                       # basal (feedforwad) input
+        self._c = []                      # context input
 
         self.y = 0                        # cell output (axon)
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
-        self.s = self.syn.s([])           # spike vector
+        self.P = P                        # permanence matrix
+        self.L = 0*P.copy()               # pre-synaptic pattern
 
-    def v(self,c): return self.grp.v(c)   # group output
-    def s(self,c): return self.syn.s(c)   # spike vector
-    def W(self):   return self.syn.W()    # synaptic weights
-    def V(self,c): return self.syn.V(c)   # pre-synaptic signals
-    def E(self,c): return self.syn.E(c)   # empowerment matrix
-    def S(self,c): return self.syn.S(c)   # spike matrix (learning mask)
-    def L(self,c): return self.syn.L(c)   # learning delta
+        self._P = self.P.copy()           # new permanences @ t+1
+        self._L = self.L.copy()           # new learning matrix @ t+1
 
+    def rule0(self,u,c): return self.rules.rule0(self,u,c)
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)
     def rule3(self,u,c): return self.rules.rule3(self,u,c)
     def rule4(self,u,c): return self.rules.rule4(self,u,c)
     def rule5(self,u,c): return self.rules.rule5(self,u,c)
     def rule6(self,u,c): return self.rules.rule6(self,u,c)
-    def rule7(self,u,c): return self.rules.rule7(self,u,c)
 
-       # dynamic algorithm (comprising 3 phases)
+    def transition(self):
+        self.P = self._P.copy()        # permanence matrix transition
+        self.L = self._L.copy()        # learning matrix transition
 
-    def phase(self,ph,u,c):            # cell algo phase i
+    def phase(self,ph,u,c):            # cell algo phase `ph`
         if ph == 1:
+            c = self.rule0(u,c) # a burst state is transient
             c = self.rule1(u,c) # excited predictive cells get active
         elif ph == 2:
             c = self.rule2(u,c) # excited neurons in non-predictive groups burst
-            c = self.rule4(u,c) # empowered dendritic segments spike
-            c = self.rule5(u,c) # spiking dentrites of active neurons learn
-            c = self.rule6(u,c) # spiking neurons get always predictive
         elif ph == 3:
             c = self.rule3(u,c) # excited bursting neurons get active
-            c = self.rule7(u,c) # burst and spike states are transient
+            c = self.rule4(u,c) # spiking dentrites of active neurons learn
+        elif ph == 4:
+            c = self.rule5(u,c) # empowered dendritic segments spike
+            c = self.rule6(u,c) # spiking neurons get always predictive
+            self.transition()
         else:
             raise Exception("bad phase")
         return c
@@ -230,16 +224,16 @@ class Cell:
 
     def plot(self,i=None,j=None,v=None,W=None,E=None,u=None,c=None,
 	         xlabel=None,head=None,foot=None):
-	    self.input.u = self.input.u if u is None else u
-	    self.input.c = self.input.c if c is None else c
+	    self._u = self._u if u is None else u
+	    self._c = self._c if c is None else c
 	    self.mon.plot(self,i,j,v=v,W=W,E=E,u=u,c=c)
 	    if xlabel is not None: self.mon.xlabel(j,xlabel)
 	    if head is not None: self.mon.head(head)
 	    if foot is not None: self.mon.foot(foot)
 
     def set(self,u=None,c=None,x=None,y=None,b=None):
-        self.input.u = self.input.u if u is None else u
-        self.input.c = self.input.c if c is None else c
+        self._u = self._u if u is None else u
+        self._c = self._c if c is None else c
         self.x = self.x if x is None else x
         self.y = self.y if y is None else y
         self.b = self.b if b is None else b
@@ -256,6 +250,7 @@ def toy(tag):
 
        k,g,K,P,c = toy('cell')
        k,g,K,P,c = toy('mini3')
+       G,K,P,c,token,xlabel,minicol = toy('tiny')
     """
     if tag == 'cell':
         k = 0                        # cell index
@@ -277,6 +272,20 @@ def toy(tag):
         P = [P0,P1,P2]
         c = [0,0,0,0,1,1,0,1,1,0];
         return k,g,K,P,c
+    elif tag == 'tiny':
+        m = 2;  n = 7
+        K = array([[array([[0,1,2,3,4],[5,6,7,8,9]])
+                    for j in range(0,n)] for i in range(0,m)])
+        P = array([[array([[0,0,0,0,0],[0,0,0,0,0]])
+            for j in range(0,n)] for i in range(0,m)])
+        G = transpose(array([k for k in range(0,m*n)]).reshape(m,n,order='F'))
+        c = [0,0,0,0, 0,0,0, 0,0,0,0, 0,0,0]
+        token = {'Mary':[1,0,0,0,0,0,1], 'John':[0,1,0,0,0,0,1],
+                 'likes':[0,0,1,0,0,0,1], 'to':[0,0,0,1,0,0,1],
+                 'sing':[0,0,0,0,1,0,1], 'dance':[0,0,0,0,0,1,1]}
+        xlabel = ['Mary','John','likes','to','sing','dance','X']
+        minicol = {'Mary':0, 'John':1, 'likes':2, 'to':3, 'sing':4, 'dance':5}
+        return G,K,P,c,token,xlabel,minicol
     else:
         raise Exception('unknown tag')
 

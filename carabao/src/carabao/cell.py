@@ -250,8 +250,8 @@ class Cell:
         S = self.S(c)                  # spike matrix (learning mask)
         return S*(2*self.pdelta * V - self.ndelta)
 
-    def s(self,c):                     # spike vector
-        E = self.E(c)
+    def s(self,V):                     # spike vector
+        E = self.E(V)
         _s = [(sum(E[mu]) >= self.theta)
              for mu in range(0,E.shape[0])]
         return 1*array(_s)
