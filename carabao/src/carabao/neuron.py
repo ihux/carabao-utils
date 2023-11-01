@@ -6,7 +6,7 @@
 #===============================================================================
 
 import numpy
-from numpy import arange, copy, array
+from numpy import arange, copy, array, transpose
 from ypstruct import struct
 from carabao.util import column, sat, repr
 
@@ -240,6 +240,7 @@ def toy(tag):
 
        k,g,K,P,c = toy('cell')
        k,g,K,P,c = toy('mini3')
+       G,K,P,c,token,xlabel,minicol = toy('tiny')
     """
     if tag == 'cell':
         k = 0                        # cell index
@@ -261,6 +262,20 @@ def toy(tag):
         P = [P0,P1,P2]
         c = [0,0,0,0,1,1,0,1,1,0];
         return k,g,K,P,c
+    elif tag == 'tiny':
+        m = 2;  n = 7
+        K = array([[array([[0,1,2,3,4],[5,6,7,8,9]])
+                    for j in range(0,n)] for i in range(0,m)])
+        P = array([[array([[0,0,0,0,0],[0,0,0,0,0]])
+            for j in range(0,n)] for i in range(0,m)])
+        G = transpose(array([k for k in range(0,m*n)]).reshape(m,n,order='F'))
+        c = [0,0,0,0, 0,0,0, 0,0,0,0, 0,0,0]
+        token = {'Mary':[1,0,0,0,0,0,1], 'John':[0,1,0,0,0,0,1],
+                 'likes':[0,0,1,0,0,0,1], 'to':[0,0,0,1,0,0,1],
+                 'sing':[0,0,0,0,1,0,1], 'dance':[0,0,0,0,0,1,1]}
+        xlabel = ['Mary','John','likes','to','sing','dance','X']
+        minicol = {'Mary':0, 'John':1, 'likes':2, 'to':3, 'sing':4, 'dance':5}
+        return G,K,P,c,token,xlabel,minicol
     else:
         raise Exception('unknown tag')
 
