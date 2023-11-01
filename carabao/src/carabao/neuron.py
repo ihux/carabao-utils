@@ -31,9 +31,9 @@ class Synapses:
         v = syn.v(c)                   # group activation
         V = syn.V(c)                   # presynaptic signals
         W = syn.W(P)                   # synaptic weight matrix
-        E = syn.E(V,P)                 # empowering matrix
-        S = syn.S(V,P)                 # spike matrix (learning mask)
-        L = syn.L(V,P,y)               # learning matrix (deltas)
+        E = syn.E(c,P)                 # empowering matrix
+        S = syn.S(c,P)                 # spike matrix (learning mask)
+        L = syn.L(c,Z,P,y)             # learning matrix (deltas)
 
         P = syn.sat(P)                 # truncate P matrix to range [0,1]
     """
@@ -62,18 +62,19 @@ class Synapses:
     def W(self,P):                     # binary weights W(P)
         return (P >= self.eta)*1
 
-    def E(self,V,P):                   # E(V,P) = V * W(P)
+    def E(self,c,P):                   # E(c,P) = V(c) * W(P)
+        V = self.V(c)
         return V * self.W(P)           # empowerment matrix
 
-    def S(self,V,P):
-        E = self.E(V,P);
+    def S(self,c,P):
+        E = self.E(c,P);
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,V,P,y):                 # learning matrix
-        S = self.S(V,P)
+    def L(self,c,Z,P,y):                 # learning matrix
+        S = self.S(c,P)
         plus,minus = self.delta
-        return (2*plus * V - minus) * y * S
+        return (2*plus * Z - minus) * y * S
 
     def sat(self,X):  # truncates every matrix element of X to range 0.0 ... 1.0
         def lt1(X): return 1 + (X-1<=0)*(X-1)
@@ -103,6 +104,10 @@ class Rules:
     def __init__(self):
         return
 
+    def rule0(self,cell,u,c):   # a burst state is transient
+        cell.b = 0                     # clear burst state
+        return cell.update(u,c,6)
+
     def rule1(self,cell,u,c):   # excited predictive cells get active
         cell.y = u * cell.x
         return cell.update(u,c,1)      # update c[k] = cell.y
@@ -116,22 +121,18 @@ class Rules:
         cell.y = u * (cell.x or cell.b)
         return cell.update(u,c,3)
 
-    def rule4(self,cell,u,c):   # empowered dendritic segments spike
-        cell.V = cell.syn.V(c)          # pre-synaptic state
-        return cell.update(u,c,4)
-
-    def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(cell.V,cell.P,cell.y)      # learning deltas
+    def rule4(self,cell,u,c):   # spiking dentrites of active neurons learn
+        L = cell.syn.L(c,cell.Z,cell.P,cell.y)      # learning deltas
         cell.P = cell.syn.sat(cell.P+L)           # adapt permanences
         return cell.update(u,c,5)
 
-    def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        S = cell.syn.S(cell.V,cell.P)
-        cell.x = S.max()               # dendritic spikes set cell predictive
-        return cell.update(u,c,6)
+    def rule5(self,cell,u,c):   # empowered dendritic segments spike
+        cell.Z = cell.syn.V(c)          # pre-synaptic state
+        return cell.update(u,c,4)
 
-    def rule7(self,cell,u,c):   # burst and spike states are transient
-        cell.b = 0                     # clear burst state
+    def rule6(self,cell,u,c):   # spiking neurons get always predictive
+        S = cell.syn.S(c,cell.P)
+        cell.x = S.max()               # dendritic spikes set cell predictive
         return cell.update(u,c,6)
 
 
@@ -176,27 +177,27 @@ class Cell:
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.P = P                        # permanence matrix
-        self.V = self.syn.V([])           # pre-synaptic pattern
+        self.Z = self.syn.V([])           # pre-synaptic pattern
 
+    def rule0(self,u,c): return self.rules.rule0(self,u,c)
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)
     def rule3(self,u,c): return self.rules.rule3(self,u,c)
     def rule4(self,u,c): return self.rules.rule4(self,u,c)
     def rule5(self,u,c): return self.rules.rule5(self,u,c)
     def rule6(self,u,c): return self.rules.rule6(self,u,c)
-    def rule7(self,u,c): return self.rules.rule7(self,u,c)
 
     def phase(self,ph,u,c):            # cell algo phase `ph`
         if ph == 1:
-            c = self.rule7(u,c) # burst and spike states are transient
+            c = self.rule0(u,c) # a burst state is transient
             c = self.rule1(u,c) # excited predictive cells get active
         elif ph == 2:
             c = self.rule2(u,c) # excited neurons in non-predictive groups burst
         elif ph == 3:
             c = self.rule3(u,c) # excited bursting neurons get active
-            c = self.rule5(u,c) # spiking dentrites of active neurons learn
+            c = self.rule4(u,c) # spiking dentrites of active neurons learn
         elif ph == 4:
-            c = self.rule4(u,c) # empowered dendritic segments spike
+            c = self.rule5(u,c) # empowered dendritic segments spike
             c = self.rule6(u,c) # spiking neurons get always predictive
         else:
             raise Exception("bad phase")
