@@ -8,6 +8,6 @@ Project-URL: Bug Tracker, https://github.com/pypa/sampleproject/issues
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.11.5
+Requires-Python: >=3.8.2
 Description-Content-Type: text/markdown
 License-File: LICENSE
