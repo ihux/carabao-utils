@@ -17,12 +17,13 @@ from carabao.util import column, sat, repr
 class Synapses:
     """
     Synapses: class
-        syn = Synapses(K,P,eta,theta,(plus,minus))   # full arg list
-        syn = Synapses(K,P)            # eta=0.5, plus=minus=0.02
-        syn = Synapses(g)              # P=one
+        syn = Synapses(g)              # construct synaptic field
+        syn = Synapses(K)              # construct synaptic bank
+
+        syn.parameter(eta,theta,(plus,minus))  # setup synaptic parameters
+        syn.parameter()                # eta=0.5, theta=2, plus=minus=0.02
 
         K = syn.K                      # synaptic index matrix
-        P = syn.P                      # permanences
         eta = syn.eta                  # synaptic threshold
         theta = syn.theta              # spiking threshold
         plus,minus = syn.delta         # learning deltas
@@ -34,11 +35,13 @@ class Synapses:
         S = syn.S(V,P)                 # spike matrix (learning mask)
         L = syn.L(V,P,y)               # learning matrix (deltas)
 
-        syn.P = syn.sat(P)             # truncate P matrix to range [0,1]
+        P = syn.sat(P)                 # truncate P matrix to range [0,1]
     """
-    def __init__(self,K,P=None,eta=0.5,theta=2,delta=(0.02,0.02)):
+    def __init__(self,K):
         self.K = array(K)              # always store as numpy array
-        self.P = array(P)              # always store as numpy array
+        self.parameter()               # setup default parameters
+
+    def parameter(self,eta=0.5,theta=2,delta=(0.02,0.02)):
         self.eta = eta                 # synaptic threshold
         self.theta = theta             # spiking threshold
         self.delta = delta             # learning delta (plus,minus)
@@ -118,13 +121,12 @@ class Rules:
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(cell.V,cell.syn.P,cell.y)  # learning deltas
-        P = cell.syn.P + L                        # adapt permanences
-        cell.syn.P = cell.syn.sat(P)
+        L = cell.syn.L(cell.V,cell.P,cell.y)      # learning deltas
+        cell.P = cell.syn.sat(cell.P+L)           # adapt permanences
         return cell.update(u,c,5)
 
     def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        S = cell.syn.S(cell.V,cell.syn.P)
+        S = cell.syn.S(cell.V,cell.P)
         cell.x = S.max()               # dendritic spikes set cell predictive
         return cell.update(u,c,6)
 
@@ -164,8 +166,8 @@ class Cell:
         self.rules = Rules()   # add a rules object
 
         self.k = k;
-        self.syn = Synapses(K,P)          # synaptic bank (any context activity)
         self.group = Synapses(g)          # synaptic field (group activity))
+        self.syn = Synapses(K)            # synaptic bank (any context activity)
 
         self._u = 0                       # basal (feedforwad) input
         self._c = []                      # context input
@@ -173,7 +175,8 @@ class Cell:
         self.y = 0                        # cell output (axon)
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
-        self.V = self.syn.V([])
+        self.P = P                        # permanence matrix
+        self.V = self.syn.V([])           # pre-synaptic pattern
 
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)

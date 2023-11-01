@@ -333,12 +333,12 @@ class Monitor:
             self.place(data.screen,(i,j))
             u = cell._u if u is None else u
             c = cell._c if c is None else c
-            P = syn.P if P is None else P
-            W = syn.W(syn.P) if W is None else W
-            E = syn.E(cell.V,syn.P) if E is None else E
+            P = cell.P if P is None else P
+            W = syn.W(cell.P) if W is None else W
+            E = syn.E(cell.V,cell.P) if E is None else E
             v = cell.group.v(c) if v is None else v
-            S = syn.S(cell.V,syn.P)
-            L = syn.L(cell.V,syn.P,cell.y)
+            S = syn.S(cell.V,cell.P)
+            L = syn.L(cell.V,cell.P,cell.y)
             SL = S*L
             sl = array([SL[i].max() for i in range(0,SL.shape[0])])
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
@@ -362,12 +362,12 @@ class Monitor:
         v = cell.group.v(cell._c)
         #s = cell.s
         K = syn.K
-        P = syn.P
-        W = syn.W(syn.P)
+        P = cell.P
+        W = syn.W(cell.P)
         V = cell.V
-        E = syn.E(cell.V,syn.P)
-        S = syn.S(cell.V,syn.P)
-        L = syn.L(cell.V,syn.P,cell.y)
+        E = syn.E(cell.V,cell.P)
+        S = syn.S(cell.V,cell.P)
+        L = syn.L(cell.V,cell.P,cell.y)
         s = array([S[i].max() for i in range(0,S.shape[0])])
         nan = float('nan')
         msg = msg if msg != None else ""
@@ -447,13 +447,13 @@ class Monitor:
         data = self.data
         v = cell.group.v(cell._c)
         s = cell.s
-        W = syn.W(syn.P)
+        W = syn.W(cell.P)
         V = cell.V
-        E = syn.E(cell.V,syn.P)
-        S = syn.S(cell.V,syn.P)
-        L = syn.L(cell.V,syn.P,cell.y)
+        E = syn.E(cell.V,cell.P)
+        S = syn.S(cell.V,cell.P)
+        L = syn.L(cell.V,cell.P,cell.y)
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
-        hK = hash(syn.K,4);  hP = hash(syn.P,5);
+        hK = hash(syn.K,4);  hP = hash(cell.P,5);
         hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
