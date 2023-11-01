@@ -213,6 +213,9 @@ class Screen:
             self.can.circle((xs,ys),self.rs,col)
             self.can.circle((xs,ys),ri,facecolor=icol,edgecolor=icol)
 
+    def xy(self,i,j):
+        return (j,self.m-i-1)
+
     def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
@@ -230,7 +233,8 @@ class Screen:
         coly = self.red if y>0 else self.gray
 
         i = ij[0];  j = ij[1]
-        x = j; y = self.m-i-1;
+        #x = j; y = self.m-i-1;
+        x,y = self.xy(i,j)
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
         dy1 = r0*0.1;    dy2 = r0*0.1
@@ -327,22 +331,6 @@ class Monitor:
     def place(self,screen,ij):
         self.data.screen = screen
         self.data.ij = ij
-    def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,u=None,c=None):
-       data = self.data;  syn = cell.syn
-       if i is not None:
-            self.place(data.screen,(i,j))
-            u = cell._u if u is None else u
-            c = cell._c if c is None else c
-            P = cell.P if P is None else P
-            W = syn.W(cell.P) if W is None else W
-            E = syn.E(cell.V,cell.P) if E is None else E
-            v = cell.group.v(c) if v is None else v
-            S = syn.S(cell.V,cell.P)
-            L = syn.L(cell.V,cell.P,cell.y)
-            SL = S*L
-            sl = array([SL[i].max() for i in range(0,SL.shape[0])])
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
-            data.screen.show
     def norm1(self,M):
         if type(M).__name__ == 'list':
             return sum(M)
@@ -474,6 +462,27 @@ class Monitor:
            h = h + chr(65 + n % 26);  n = n // 26;
            k = n % 6;  n = n // 6;  h += vocal[k]
         return h
+    def plot(self,cell,i=None,j=None,v=None,P=None,W=None,E=None,
+             u=None,c=None,index=None,size=None):
+       data = self.data;  syn = cell.syn
+       if i is not None:
+            self.place(data.screen,(i,j))
+            u = cell._u if u is None else u
+            c = cell._c if c is None else c
+            P = cell.P if P is None else P
+            W = syn.W(cell.P) if W is None else W
+            E = syn.E(cell.V,cell.P) if E is None else E
+            v = cell.group.v(c) if v is None else v
+            S = syn.S(cell.V,cell.P)
+            L = syn.L(cell.V,cell.P,cell.y)
+            SL = S*L
+            sl = array([SL[i].max() for i in range(0,SL.shape[0])])
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
+            data.screen.show
+            if index is not None:
+                size = 7 if size is None else size
+                x,y = data.screen.xy(i,j)
+                self.text(x-0.35,y+0.3,"%g"%index,size=size)
     def line(self,x,y,color='k',linewidth=0.5):
         plt.plot(x,y,color,linewidth=linewidth)
     def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
