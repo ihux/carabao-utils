@@ -40,10 +40,10 @@ class Synapses:
         self.theta = theta        # spiking threshold
         self.delta = delta        # learning delta (plus,minus)
 
-    def W(self):                  # binary weights
+    def W(self):                      # binary weights W(;P)
         return (self.P >= self.eta)*1
 
-    def V(self,c):                    # pre-synaptic signals
+    def V(self,c):                    # pre-synaptic signals V(c;K)
         kmax = len(c)
         V = 0*self.K
         for mu in range(0,self.K.shape[0]):
@@ -52,7 +52,7 @@ class Synapses:
                 V[mu,nu] = c[k] if k < kmax else 0;
         return V
 
-    def E(self,V):                   # E = V * W(P)
+    def E(self,V):                   # E(V) = V * W
         return V * self.W()    # empowerment matrix
 
     def S(self,V):
@@ -60,20 +60,18 @@ class Synapses:
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,V):                     # D = (2*plus * V - minus) * L
-        S = self.S(V);
+    def L(self,V):                     # L(V) = (2*plus * V - minus) * S(V)
+        S = self.S(V)
         plus,minus = self.delta
         return (2*plus * V - minus) * S
 
-    def s(self,V):                     # spike vector: s = (sum(E')>=theta)
+    def s(self,V):                     # spike vector: s = max(S')
         S = self.S(V)
         return array([S[i].max() for i in range(0,S.shape[0])])
 
     def v(self,c):                     # group output
-        ##########################
-        #print("Synapses.v(): K:",repr(self.K),"c:",c)
-        return array([c[k] if k < len(c) else 0
-                      for k in self.K])
+        v = [c[k] if k < len(c) else 0 for k in self.K]
+        return array(v)
 
     def sat(self,X):  # truncates every matrix element of X to range 0.0 ... 1.0
         def lt1(X): return 1 + (X-1<=0)*(X-1)
@@ -204,9 +202,10 @@ class Cell:
             c = self.rule2(u,c) # excited neurons in non-predictive groups burst
         elif ph == 3:
             c = self.rule3(u,c) # excited bursting neurons get active
+            c = self.rule5(u,c) # spiking dentrites of active neurons learn
         elif ph == 4:
             c = self.rule4(u,c) # empowered dendritic segments spike
-            c = self.rule5(u,c) # spiking dentrites of active neurons learn
+            #c = self.rule5(u,c) # spiking dentrites of active neurons learn
             c = self.rule6(u,c) # spiking neurons get always predictive
         else:
             raise Exception("bad phase")
