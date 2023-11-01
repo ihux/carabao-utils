@@ -21,15 +21,17 @@ class Synapses:
         syn = Synapses(K,P)       # eta=0.5, plus=minus=0.02
         syn = Synapses(g)         # P=one
 
+        K = syn.K                 # synaptic index matrix
         P = syn.P                 # permanences
+        eta = syn.eta             # synaptic threshold
+        theta = syn.theta         # spiking threshold
+        plus,minus = syn.delta    # learning deltas
 
         W = syn.W()               # synaptic weight matrix
         V = syn.V(c)              # presynaptic signals
         E = syn.E(V)              # empowering matrix
         S = syn.S(V)              # spike matrix (learning mask)
-        L = syn.L(V,y)            # learning deltas
-        #s = syn.s(V)              # spike vector
-        o = syn.one               # [1,1,...,1] matrix (1 x ns)
+        L = syn.L(V,y)            # learning matrix (deltas)
 
         syn.P = syn.sat(P)        # truncate P matrix to range [0,1]
     """
@@ -64,11 +66,7 @@ class Synapses:
         S = self.S(V)
         plus,minus = self.delta
         return (2*plus * V - minus) * y * S
-    """
-    def s(self,V):                     # spike vector: s = max(S')
-        S = self.S(V)
-        return array([S[i].max() for i in range(0,S.shape[0])])
-    """
+
     def v(self,c):                     # group output
         v = [c[k] if k < len(c) else 0 for k in self.K]
         return array(v)
@@ -116,7 +114,6 @@ class Rules:
 
     def rule4(self,cell,u,c):   # empowered dendritic segments spike
         cell.V = cell.syn.V(c)          # pre-synaptic state
-        #cell.s = cell.syn.s(cell.V)    # spike vector
         return cell.update(u,c,4)
 
     def rule5(self,cell,u,c):   # spiking dentrites of active neurons learn
@@ -126,14 +123,12 @@ class Rules:
         return cell.update(u,c,5)
 
     def rule6(self,cell,u,c):   # spiking neurons get always predictive
-        #cell.x = max(cell.s)          # dendritic spikes set cell predictive
         S = cell.syn.S(cell.V)
         cell.x = S.max()               # dendritic spikes set cell predictive
         return cell.update(u,c,6)
 
     def rule7(self,cell,u,c):   # burst and spike states are transient
         cell.b = 0                     # clear burst state
-        #cell.s = 0 * cell.s           # clear spike state
         return cell.update(u,c,6)
 
 
@@ -167,24 +162,17 @@ class Cell:
         self.mon = mon.copy()  # Monitor(mon.screen.m,mon.screen.n,mon.verbose)
         self.rules = Rules()   # add a rules object
 
-            # neuron index, synaptic bank and synaptic field
-
         self.k = k;
         self.syn = Synapses(K,P)          # synaptic bank (any context activity)
         self.group = Synapses(g)          # synaptic field (group activity))
 
-            # input variables
-
         self._u = 0                       # basal (feedforwad) input
         self._c = []                      # context input
-
-            # output, state variables
 
         self.y = 0                        # cell output (axon)
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.V = self.syn.V([])
-        #self.s = self.syn.s(self.V)       # spike vector
 
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
     def rule2(self,u,c): return self.rules.rule2(self,u,c)
@@ -194,9 +182,7 @@ class Cell:
     def rule6(self,u,c): return self.rules.rule6(self,u,c)
     def rule7(self,u,c): return self.rules.rule7(self,u,c)
 
-       # dynamic algorithm (comprising 3 phases)
-
-    def phase(self,ph,u,c):            # cell algo phase i
+    def phase(self,ph,u,c):            # cell algo phase `ph`
         if ph == 1:
             c = self.rule7(u,c) # burst and spike states are transient
             c = self.rule1(u,c) # excited predictive cells get active
@@ -207,7 +193,6 @@ class Cell:
             c = self.rule5(u,c) # spiking dentrites of active neurons learn
         elif ph == 4:
             c = self.rule4(u,c) # empowered dendritic segments spike
-            #c = self.rule5(u,c) # spiking dentrites of active neurons learn
             c = self.rule6(u,c) # spiking neurons get always predictive
         else:
             raise Exception("bad phase")
