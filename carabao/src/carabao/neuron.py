@@ -105,8 +105,6 @@ class Rules:
         return
 
     def rule0(self,cell,u,c):   # a burst state is transient
-        cell.P = cell._P.copy()        # permanence matrix transition
-        cell.L = cell._L.copy()        # learning matrix transition
         cell.b = 0                     # clear burst state
         return cell.update(u,c,0)      # P=P', L=L', b=0
 
@@ -124,7 +122,7 @@ class Rules:
         return cell.update(u,c,3)      # y = u*(x|b)
 
     def rule4(self,cell,u,c):   # active predictive neurons learn
-        cell.P_ = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
+        cell._P = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
         return cell.update(u,c,4)      # P' = sat(P+y*L)
 
     def rule5(self,cell,u,c):   # spiking neurons get always predictive
@@ -193,6 +191,10 @@ class Cell:
     def rule5(self,u,c): return self.rules.rule5(self,u,c)
     def rule6(self,u,c): return self.rules.rule6(self,u,c)
 
+    def transition(self):
+        self.P = self._P.copy()        # permanence matrix transition
+        self.L = self._L.copy()        # learning matrix transition
+
     def phase(self,ph,u,c):            # cell algo phase `ph`
         if ph == 1:
             c = self.rule0(u,c) # a burst state is transient
@@ -205,6 +207,7 @@ class Cell:
         elif ph == 4:
             c = self.rule5(u,c) # empowered dendritic segments spike
             c = self.rule6(u,c) # spiking neurons get always predictive
+            self.transition()
         else:
             raise Exception("bad phase")
         return c
