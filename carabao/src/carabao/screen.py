@@ -315,7 +315,7 @@ class Monitor:
     def __init__(self,m=None,n=None,verbose=0):
         data = self.data
         data.k = data.g = data.eta = data.theta = None
-        data.K = data.P = data.Z = data.V = data.W = data.E = data.S = data.L = None
+        data.K = data.P = data.V = data.W = data.E = data.S = data.L = None
         data.b = data.v = data.s = None
         data.c = []
         if m is not None:
@@ -353,10 +353,9 @@ class Monitor:
         P = cell.P
         W = syn.W(cell.P)
         V = syn.V(cell._c)
-        Z = cell.Z
         E = syn.E(cell._c,cell.P)
         S = syn.S(cell._c,cell.P)
-        L = syn.L(cell._c,cell.Z,cell.P,cell.y)
+        L = cell.L
         s = array([S[i].max() for i in range(0,S.shape[0])])
         nan = float('nan')
         msg = msg if msg != None else ""
@@ -366,7 +365,6 @@ class Monitor:
 
         if data.V is None: data.V = 0*syn.K
         if data.W is None: data.W = 0*syn.K
-        if data.Z is None: data.Z = 0*syn.K
         if data.E is None: data.E = 0*syn.K
         if data.S is None: data.S = 0*syn.K
         if data.L is None: data.L = 0*syn.K
@@ -386,9 +384,6 @@ class Monitor:
         if all or any(data.V != V):
             self.print('matrix',"   V%g:" % k, V)
             data.V = V.copy()
-        if all or any(data.Z != Z):
-            self.print('matrix',"   Z%g:" % k, Z)
-            data.Z = Z.copy()
         if all or any(data.W != W):
             self.print('matrix',"   W%g:" % k, W)
             data.W = W.copy()
@@ -442,21 +437,20 @@ class Monitor:
         s = cell.s
         V = syn.V(cell._c)
         W = syn.W(cell.P)
-        Z = cell.Z
         E = syn.E(cell._c,cell.P)
         S = syn.S(cell._c,cell.P)
-        L = syn.L(cell._c,cell.Z,cell.P,cell.y)
+        L = cell.L
         hk = hash(cell.k,2);  hg = hash(cell.group.K,3);
         hK = hash(syn.K,4);  hP = hash(cell.P,5);
         hu = hash(cell._u,5);    hx = hash(cell.x,6);  hy = hash(cell.y,7);
         hs = hash(s,8);  hb = hash(cell.b,9)
         hq = hash(v,10)
         hW = hash(W,11);  hV = hash(V,12);  hE = hash(E,13)
-        hS = hash(S,14);  hL = hash(L,15);  hZ = hash(Z,16);
+        hS = hash(S,14);  hL = hash(L,15);
 
-        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hZ,hE,hS,hL]]
+        hashes = [[hk,hg,hK,hP],[hu,hx,hy,hs,hb],[hq,hW,hV,hE,hS,hL]]
         prime = 1*2*3*5*7*11*13*17*19+1
-        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hZ*hE*hS*hL)
+        N = (1 + hk*hg*hk*hP * hu*hx*hy*hs*hb + hq*hW*hV*hE*hS*hL)
         n = N % prime
         ###############################
         #print("hash:",n,N,prime,hashes)
@@ -480,7 +474,7 @@ class Monitor:
             E = syn.E(cell._c,cell.P) if E is None else E
             v = cell.group.v(c) if v is None else v
             S = syn.S(cell._c,cell.P)
-            L = syn.L(cell._c,cell.Z,cell.P,cell.y)
+            L = cell.L
             SL = S*L
             sl = array([SL[i].max() for i in range(0,SL.shape[0])])
             data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)

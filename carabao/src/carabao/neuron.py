@@ -33,7 +33,7 @@ class Synapses:
         W = syn.W(P)                   # synaptic weight matrix
         E = syn.E(c,P)                 # empowering matrix
         S = syn.S(c,P)                 # spike matrix (learning mask)
-        L = syn.L(c,Z,P,y)             # learning matrix (deltas)
+        L = syn.L(c,P)                 # learning matrix (deltas)
 
         P = syn.sat(P)                 # truncate P matrix to range [0,1]
     """
@@ -71,10 +71,10 @@ class Synapses:
         zero = 0 * E[0];  rng = range(0,E.shape[0])
         return array([zero + (sum(E[i])>=self.theta) for i in rng]);
 
-    def L(self,c,Z,P,y):                 # learning matrix
-        S = self.S(c,P)
+    def L(self,c,P):                 # learning matrix
+        V = self.V(c);  S = self.S(c,P);
         plus,minus = self.delta
-        return (2*plus * Z - minus) * y * S
+        return (2*plus * V - minus) * S
 
     def sat(self,X):  # truncates every matrix element of X to range 0.0 ... 1.0
         def lt1(X): return 1 + (X-1<=0)*(X-1)
@@ -122,12 +122,11 @@ class Rules:
         return cell.update(u,c,3)
 
     def rule4(self,cell,u,c):   # spiking dentrites of active neurons learn
-        L = cell.syn.L(c,cell.Z,cell.P,cell.y)      # learning deltas
-        cell.P = cell.syn.sat(cell.P+L)           # adapt permanences
+        cell.P = cell.syn.sat(cell.P+cell.y*cell.L)  # adapt permanences
         return cell.update(u,c,5)
 
     def rule5(self,cell,u,c):   # empowered dendritic segments spike
-        cell.Z = cell.syn.V(c)          # pre-synaptic state
+        self.L = cell.syn.L(c,cell.P)  # learning deltas
         return cell.update(u,c,4)
 
     def rule6(self,cell,u,c):   # spiking neurons get always predictive
@@ -177,7 +176,7 @@ class Cell:
         self.x = 0                        # predictive state
         self.b = 0                        # burst state
         self.P = P                        # permanence matrix
-        self.Z = self.syn.V([])           # pre-synaptic pattern
+        self.L = self.syn.V([])           # pre-synaptic pattern
 
     def rule0(self,u,c): return self.rules.rule0(self,u,c)
     def rule1(self,u,c): return self.rules.rule1(self,u,c)
