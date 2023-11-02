@@ -217,7 +217,8 @@ class Screen:
     def xy(self,i,j):
         return (j,self.m-i-1)
 
-    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
+    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,
+                       P=None,W=None,E=None,p=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
         y = y if y != None else 0      # output state
@@ -239,6 +240,15 @@ class Screen:
 
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
         dy1 = r0*0.1;    dy2 = r0*0.1
+
+            # draw phase state if provided
+
+        if p is not None:
+            colp = 'w'
+            if p == 1: colp = self.gray
+            if p == 2: colp = self.dark
+            if p == 3: colp = 'k'
+            self.can.circle((x,y+r0),r0*0.15,colp)
 
             # draw different parts of neuron cell
 
@@ -469,6 +479,7 @@ class Monitor:
        if i is not None:
             self.place(data.screen,(i,j))
             u = cell._u if u is None else u
+            p = cell.p if hasattr(cell,'p') else None
             c = cell._c if c is None else c
             P = cell.P if P is None else P
             W = syn.W(cell.P) if W is None else W
@@ -478,7 +489,7 @@ class Monitor:
             L = cell.L
             SL = S*L
             sl = array([SL[i].max() for i in range(0,SL.shape[0])])
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E,p)
             data.screen.show
             if index is not None:
                 size = 7 if size is None else size
