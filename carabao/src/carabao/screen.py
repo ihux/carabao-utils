@@ -203,9 +203,9 @@ class Screen:
         ws = min(h*0.4,w/self.s)
         self.rs = ws*0.8
 
-        ox = (self.s-2)/2*ws-2*ws
+        nd,ns = P.shape
         for nu in range(0,W.shape[1]):
-            xs = x + 2*ws*nu - (self.s*ws/2 + ox);
+            xs = x + 2*ws*nu - (ns-1)*ws;
             yy = ys + h*(d0-mu)
             ri = 0.8*(self.rs * (P[mu,nu] if W[mu,nu]==0 else 1-P[mu,nu]))
             icol = 'w' if W[mu,nu] == 0 else 'k'   # inner color
