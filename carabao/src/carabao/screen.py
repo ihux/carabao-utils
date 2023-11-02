@@ -432,9 +432,9 @@ class Monitor:
     def hello(self):
         print("hello, monitor")
     def hash(self,cell):
-        data = self.data
+        data = self.data;  syn = cell.syn
         v = cell.group.v(cell._c)
-        s = cell.s
+        s = syn.s(cell._c,cell.P)
         V = syn.V(cell._c)
         W = syn.W(cell.P)
         E = syn.E(cell._c,cell.P)
