@@ -5,6 +5,6 @@ dist
 .DS_Store
 
 .ipynb_checkpoints/
-.egg-info
+carabao.egg-info/
 
 ~$*
