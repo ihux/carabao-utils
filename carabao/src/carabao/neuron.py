@@ -29,6 +29,8 @@ class Synapses:
         plus,minus = syn.delta         # learning deltas
 
         v = syn.v(c)                   # group activation
+        s = syn.s(c,P)                 # spike vector
+
         V = syn.V(c)                   # presynaptic signals
         W = syn.W(P)                   # synaptic weight matrix
         E = syn.E(c,P)                 # empowering matrix
@@ -49,6 +51,10 @@ class Synapses:
     def v(self,c):                     # group activation
         v = [c[k] if k < len(c) else 0 for k in self.K]
         return array(v)
+
+    def s(self,c,P):                   # group activation
+        S = self.S(c,P)
+        return array([S[k].max() for k in S])
 
     def V(self,c):                     # pre-synaptic signals V(c;K)
         kmax = len(c)
@@ -88,13 +94,13 @@ class Synapses:
 class Rules:
     """
     class Rules: provides the following rules:
+        rule 0: a burst state is transient
         rule 1: excited predictive cells get active
         rule 2: excited neurons in non-predictive groups burst
         rule 3: excited bursting neurons get active
         rule 4: empowered dendritic segments spike
         rule 5: spiking dentrites of active neurons learn
         rule 6: spiking neurons get always predictive
-        rule 7: burst states have limited duration
 
     To apply rule:
         rules = Rules()
