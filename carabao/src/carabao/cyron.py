@@ -187,7 +187,7 @@ class Cyron:
         self.P = P                        # permanence matrix
         self.L = 0*P.copy()               # pre-synaptic pattern
 
-        self._p = self.p
+        self._p = self.p                  # new cyclo state
         self._P = self.P.copy()           # new permanences @ t+1
         self._L = self.L.copy()           # new learning matrix @ t+1
 
