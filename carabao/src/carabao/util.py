@@ -197,3 +197,16 @@ def repr(obj,wide=False):   # string representation of list or matrix
             sepj = ' '
     txt += ']'
     return txt
+
+#===============================================================================
+# utility: check if argument is scalar (either in or float)
+#===============================================================================
+
+def isscalar(x):
+    """
+    isscalar(): check if arg is either int or float
+    >>> ok = isscalar(5)                => True
+    >>> ok = isscalar(3.14)             => True
+    >>> ok = isscalar(numpy.array(1.2)) => False
+    """
+    return isinstance(x,int) or isinstance(x,float)
