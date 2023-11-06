@@ -7,6 +7,7 @@ src/carabao/graphics.py
 src/carabao/htm.py
 src/carabao/math.py
 src/carabao/neuron.py
+src/carabao/neurotron.py
 src/carabao/rcell.py
 src/carabao/screen.py
 src/carabao/toy.py
