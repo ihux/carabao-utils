@@ -4,6 +4,7 @@
 """
 Module carabao.neurotron supports the following classes:
     class Pulse
+    class Terminal
 
 Example 1:
     Test a Pulse(1,2) module (1 lag cycle, 2 duty cycles) with a delta
@@ -40,7 +41,22 @@ Pulse(1,2): 1 -> ([1,0],1/2) -> 1
 Pulse(1,2): 0 -> ([0,1],2/2) -> 1
 Pulse(1,2): 0 -> ([0,0],1/2) -> 1
 ((1, 0, 1, 0, 0), (0, 1, 1, 1, 1))
+
+Example 3:
+    Create a Terminal object and demonstrate its functionality.
+
+>>> par = toy('sarah')
+>>> excite = Terminal(par[0].w[0],par[0].theta,None,'excite')
+Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 """
+
+#===============================================================================
+# imports
+#===============================================================================
+
+from numpy import array
+from ypstruct import struct
+from carabao.util import repr
 
 #===============================================================================
 # class: Pulse
@@ -79,6 +95,78 @@ class Pulse:
             return s + ']'
         o = self;  body = "(%s,%g/%g)" % (string(o.s),o.c,o.n)
         return o.head + " %g -> " % o.inp() + body +  " -> %g" % o.out()
+
+#===============================================================================
+# class: Terminal
+#===============================================================================
+
+class Terminal:
+    """
+    class Terminal: to model a McCulloch-Pitts-type synapse terminal
+    >>> w = [1,1,0,1,1,1,0,1,0,1]   # binary weights
+    >>> theta = 6                   # spiking threshold
+    >>> excite = Terminal(w,theta,None,'excite')
+    Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
+    """
+
+    def __init__(self,W,theta,select=None,log=None):
+        def matrix(X):
+            X = array(X)
+            return X if len(X.shape) > 1 else array([X])
+
+        self.select = select        # select unit
+        self.W = matrix(W)
+        self.theta = theta          # spiking threshold
+        self.log = log              # log string
+        if log is not None:
+            print(self)
+
+    def empower(self,V):            # determine empowerment
+        return self.W * array(V)
+
+    def spike(self,E):              # spike function
+        S = array([sum(E[k]) for k in range(0,E.shape[0])])
+        return (S >= self.theta)*1
+
+    def __repr__(self):
+        head = "(" if self.log is None else "('%s'," % self.log
+        par = head + repr(self.W) + "," + "%g)"%self.theta;
+        return "Terminal" + par
+
+#===============================================================================
+# helper: set up toy stuff
+#===============================================================================
+
+def toy(mode):
+    """
+    toy(): setup toy stuff
+    >>> excite,predict,depress,token = toy('sarah') # get params for 'sarah' app
+    """
+    def bundle(obj,n):                      # create a bunch of object as a list
+        return [obj for k in range(0,n)]
+
+    if mode == 'sarah':
+        token = {'Sarah':[1,1,0,1,1,1,0,1,0,1],
+                 'likes':[0,1,1,1,0,1,1,0,1,1],
+                 'music':[1,1,1,0,0,1,0,1,1,1]}
+
+        f1 = token['Sarah']
+        f2 = token['likes']
+        f3 = token['music']
+
+        e = struct();                       # excitation terminal parameters
+        e.w = [f1,f2,f3]                    # excitation weights
+        e.theta = 6                         # spiking threshold
+
+        p = struct()                        # prediction terminal parameters
+        p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
+        p.theta = 2                         # prediction threshold
+
+        d = struct()                        # depression terminal parameters
+        d.w = bundle([1,1,0],1)             # depression weights
+        d.theta = 1                         # depression threshold
+
+        return (e,d,p,token)
 
 #===============================================================================
 # doctest:
