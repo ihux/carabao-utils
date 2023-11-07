@@ -178,6 +178,7 @@ def repr(obj,wide=False):   # string representation of list or matrix
     elif isa(obj,'ndarray'):
         txt = "#[";  M = obj
         if len(M.shape) == 1:
+            txt = ":[";  M = obj
             M = array([M])
     else:
         return obj

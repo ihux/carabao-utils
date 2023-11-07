@@ -1,8 +1,14 @@
 #===============================================================================
-# carabao/neuron package: copyright: Neuronycs 2023
-# - class Synapses
-# - class Rules
-# - class Cell
+# carabao.neuron package: copyright: Neuronycs 2023
+#===============================================================================
+"""
+Module carabao.neuron supports the following classes:
+    class Synapses
+    class Rules
+    class Cell
+"""
+#===============================================================================
+# imports
 #===============================================================================
 
 import numpy
