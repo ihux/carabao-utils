@@ -45,7 +45,7 @@ Pulse(1,2): 0 -> ([0,0],1/2) -> 1
 Example 3:
     Create a Terminal object and demonstrate its functionality.
 
->>> par = toy('sarah')
+>>> par,token = toy('sarah')
 >>> excite = Terminal(par[0].w[0],par[0].theta,None,'excite')
 >>> print(excite)
 Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
@@ -106,6 +106,7 @@ class Synapses:
     class Synapses: terminal selector
     >>> K = [[10,11,12],[10,11,12]];  P = [[.5,.4,.1],[.6,.2,.3]];  eta = 0.5
     >>> syn = Synapses(K,P,eta,log='Synapses:')
+    >>> print(syn)
     {#[10 11 12; 10 11 12], #[0.5 0.4 0.1; 0.6 0.2 0.3] @ 0.5}
     >>> V = syn.feed(x:=[0,0,0,0,0,0,0,0,0,0,1,1,0])
     Synapses: [0 0 0 0 0 0 0 0 0 0 1 1 0]  ->  #[1 0 0; 1 0 0]
@@ -119,7 +120,7 @@ class Synapses:
         self.P = matrix(P)             # permanence matrix
         self.eta = eta                 # synaptic threshold
         self.log = log                 # log header (no logging if log=None)
-        if log is not None: print(self)
+        #if log is not None: print(self)
 
     def feed(self,x):                  # feed network state to synapses
         eta = self.eta;  K = self.K;  V = 0*K;
@@ -160,15 +161,23 @@ class Terminal:
         #if name is not None:
         #    print(self)
 
-    def empower(self,V):            # determine empowerment
-        return self.W * array(V)
+    def empower(self,V,log=None):   # determine empowerment
+        E = self.W * array(V)
+        if log is not None:
+            #print(log,repr(V)," -> ",self," -> ",repr(E))
+            print(log,repr(V)," -> ",repr(E))
+        return E
 
-    def spike(self,E):              # spike function
+    def spike(self,E,log=None):     # spike function
         S = array([sum(E[k]) for k in range(0,E.shape[0])])
-        return (S >= self.theta)*1
+        s = (S >= self.theta)*1
+        if log is not None:
+            #print(log,repr(E)," -> ",self," -> ",repr(s))
+            print(log,repr(E)," -> ",repr(s))
+        return s
 
     def feed(self,x):               # feed x vector to terminal
-        if self.synapses is not None:
+        if self.synapses is None:
             return ([],[])
         E = self.empower(x)
         s = self.spike(E)
@@ -188,7 +197,8 @@ class Terminal:
 def toy(mode):
     """
     toy(): setup toy stuff
-    >>> excite,depress,predict,token = toy('sarah') # get params for 'sarah' app
+    >>> par,token = toy('sarah') # get params for 'sarah' app
+    >>> excite,depress,predict = par
     """
     def bundle(obj,n):                      # create a bunch of object as a list
         return [obj for k in range(0,n)]
@@ -225,7 +235,7 @@ def toy(mode):
         p.theta = 2                         # prediction threshold
         p.eta = 0.5                         # synaptic threshold
 
-        return (e,d,p,token)
+        return (e,d,p),token
 
 #===============================================================================
 # doctest:
