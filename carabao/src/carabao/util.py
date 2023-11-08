@@ -174,7 +174,7 @@ def sat(X):
 def repr(obj,wide=False):   # string representation of list or matrix
     if isa(obj,'list'):
         txt = "[";  M = array([obj])
-        print("repr M:",M,type(M),M.shape)
+        #print("repr M:",M,type(M),M.shape)
     elif isa(obj,'ndarray'):
         txt = "#[";  M = obj
         if len(M.shape) == 1:

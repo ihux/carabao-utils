@@ -5,7 +5,6 @@ src/carabao/cell.py
 src/carabao/cyron.py
 src/carabao/graphics.py
 src/carabao/htm.py
-src/carabao/math.py
 src/carabao/mod.py
 src/carabao/neuron.py
 src/carabao/neurotron.py
