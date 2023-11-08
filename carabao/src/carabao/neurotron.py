@@ -46,7 +46,7 @@ Example 3:
     Create a Terminal object and demonstrate its functionality.
 
 >>> par,token = toy('sarah')
->>> excite = Terminal(par[0].w[0],par[0].theta,None,'excite')
+>>> excite = Terminal(par[0].w[0],par[0].theta,'excite')
 >>> print(excite)
 Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 """
@@ -108,8 +108,8 @@ class Synapses:
     >>> syn = Synapses(K,P,eta,log='Synapses:')
     >>> print(syn)
     {#[10 11 12; 10 11 12], #[0.5 0.4 0.1; 0.6 0.2 0.3] @ 0.5}
-    >>> V = syn.feed(x:=[0,0,0,0,0,0,0,0,0,0,1,1,0])
-    Synapses: [0 0 0 0 0 0 0 0 0 0 1 1 0]  ->  #[1 0 0; 1 0 0]
+    >>> V = syn(x:=[0,0,0,0,0,0,0,0,0,0,1,1,0])
+    Synapses: [0 0 0 0 0 0 0 0 0 0 1 1 0] -> #[1 0 0; 1 0 0] -> #[1 0 0; 1 0 0]
     """
     def __init__(self,K,P,eta=0.5,log=None):
         def matrix(X):
@@ -122,13 +122,18 @@ class Synapses:
         self.log = log                 # log header (no logging if log=None)
         #if log is not None: print(self)
 
-    def feed(self,x):                  # feed network state to synapses
+    def weight(self):
+        W = (self.P >= self.eta)*1;
+        return W
+
+    def __call__(self,x,log=None):     # feed network state to synapses
         eta = self.eta;  K = self.K;  V = 0*K;
+        W = self.weight()
         for i in range(0,K.shape[0]):
             for j in range(0,K.shape[1]):
-                V[i,j] = x[K[i,j]] if self.P[i,j] >= eta else 0
+                V[i,j] = x[K[i,j]] if W[i,j] > 0 else 0
         if self.log is not None:
-            print(self.log,repr(x)," -> ",repr(V))
+            print(self.log,repr(x),"->",repr(W),"->",repr(V))
         return V
 
     def __repr__(self):
@@ -144,17 +149,17 @@ class Terminal:
     class Terminal: to model a McCulloch-Pitts-type synapse terminal
     >>> w = [1,1,0,1,1,1,0,1,0,1]   # binary weights
     >>> theta = 6                   # spiking threshold
-    >>> excite = Terminal(w,theta,None,'excite')
+    >>> excite = Terminal(w,theta,'excite')
     >>> print(excite)
     Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
     """
 
-    def __init__(self,W,theta,synapses=None,name=None):
+    def __init__(self,W,theta,name=None):
         def matrix(X):
             X = array(X)
             return X if len(X.shape) > 1 else array([X])
 
-        self.synapses = synapses    # synapses instance
+        self.synapses = None        # synapses object
         self.W = matrix(W)
         self.theta = theta          # spiking threshold
         self.name = name              # name string
@@ -162,25 +167,31 @@ class Terminal:
         #    print(self)
 
     def empower(self,V,log=None):   # determine empowerment
-        E = self.W * array(V)
+        if self.synapses is not None:
+            self.W = self.synapses.weight()
+        E = self.W * V
         if log is not None:
-            #print(log,repr(V)," -> ",self," -> ",repr(E))
-            print(log,repr(V)," -> ",repr(E))
+            print(log,repr(V),"->",repr(E))
         return E
 
     def spike(self,E,log=None):     # spike function
         S = array([sum(E[k]) for k in range(0,E.shape[0])])
         s = (S >= self.theta)*1
         if log is not None:
-            #print(log,repr(E)," -> ",self," -> ",repr(s))
-            print(log,repr(E)," -> ",repr(s))
+            print(log,repr(E),"->",repr(s))
         return s
 
-    def feed(self,x):               # feed x vector to terminal
+    def __call__(self,x,log=None):      # feed x vector to terminal
         if self.synapses is None:
             return ([],[])
         E = self.empower(x)
         s = self.spike(E)
+        if log is not None:
+            if self.synapses is None:
+                print(log,repr(x),"->",repr(E),"->",repr(s))
+            else:
+                W = self.synapses.weight()
+                print(log,repr(x),"->",repr(W),"->",repr(E),"->",repr(s))
         return (s,E)
 
     def __repr__(self):
