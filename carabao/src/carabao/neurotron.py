@@ -66,12 +66,16 @@ from carabao.util import repr
 class Pulse:
     """
     pulse: pulse unit
-    >>> o = Pulse(lag=2,duty=3)             # mandatory args
-    >>> o = Pulse(lag=2,duty=3,name='P2/3') # set name
-    >>> y = o(u:=1)                         # apply input, receive new output
-    P2/3 1 -> ([1,0,0],0/3) -> 0
-    >>> u = o.inp()                         # retrieve recent input
-    >>> y = o.out()                         # get pulse output
+    >>> u=Pulse(2,3)
+    >>> for i in range(6): o = u(int(i<1),'u%g:'%i)
+    u0:  1 -> ([1,0,0],0/3) -> 0
+    u1:  0 -> ([0,1,0],0/3) -> 0
+    u2:  0 -> ([0,0,1],3/3) -> 1
+    u3:  0 -> ([0,0,0],2/3) -> 1
+    u4:  0 -> ([0,0,0],1/3) -> 1
+    u5:  0 -> ([0,0,0],0/3) -> 0
+    >>> i = u.inp()                     # retrieve recent input
+    >>> o = u.out()                     # get pulse output
     """
     def __init__(self,lag,duty,name=None):
         def zeros(n): return [0 for k in range(0,n)]
