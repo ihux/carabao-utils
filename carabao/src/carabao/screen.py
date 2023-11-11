@@ -162,10 +162,10 @@ class Screen:
 
         self.ds = 0.11; self.rs = self.ds/3;
         self.gray = (0.8,0.8,0.8);  self.red = (1,0,0)
-        self.gold = (1,0.9,0);      self.dark = (0.5,0.5,0.5)
-        self.blue = (0,0.5,1);      self.green=(0,0.8,0)
-        self.magenta = (1,0.2,1);   self.orange = (1,0.5,0)
-        self.lila = (.7,0.3,1)
+        self.gold = (1,0.9,0);      self.dark = (.5,.5,.5)
+        self.blue = (0,0.5,1);      self.green=(0,.8,0)
+        self.magenta = (1,0.2,1);   self.orange = (1,.5,0)
+        self.lila = (.7,0.3,1);     self.cyan = (0,.7,1)
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
@@ -279,15 +279,16 @@ class Screen:
 
         self.basal(x,y,v)
 
-    def neurotron(self,ij,u=None,q=None,p=None,y=None,d=None):
+    def neurotron(self,ij,u=None,q=None,p=None,y=None,d=None,b=None):
         u = u if u is not None else 0      # excitation input
         q = q if q is not None else 0      # burst enable
         p = p if p is not None else 0      # prediction state
         y = y if y is not None else 0      # activation state
         d = d if d is not None else 0      # depression state
 
-        colu = self.lila  if u > 0 else self.gray
+        colu = self.cyan  if u > 0 else self.gray
         colu = self.blue  if q > 0 else colu
+        colu = self.lila  if b > 0 else colu
         colp = self.green if p > 0 else self.gray
         coly = self.red   if y > 0 else self.gray
         cold = self.orange if d > 0 else self.gray
@@ -300,7 +301,7 @@ class Screen:
         self.can.wedge((x,y),self.r0,(-90,90),coly)
         self.can.wedge((x,y),self.r0*0.7,(90,270),colp)
         self.can.wedge((x,y),self.r0*0.7,(-90,90),cold)
-        self.can.fancy((x-w,y-h),(x+w,y+h),cold,r=self.r0/10)
+        self.can.fancy((x-w,y-h),(x+w,y+h),self.gray,r=self.r0/10)
 
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
