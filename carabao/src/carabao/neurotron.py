@@ -210,7 +210,7 @@ class Terminal:
                 print(log,repr(x),"->",repr(W),"->",repr(E),"->",repr(s))
         if len(s) == 1:
            return s.item()  # (s,E)
-        return s
+        return s.any()*1
 
     def __repr__(self):
         head = "(" if self.name is None else "('%s'," % self.name
@@ -232,7 +232,7 @@ def toy(mode):
     def bundle(obj,n):                      # create a bunch of object as a list
         return [obj for k in range(0,n)]
     idx = [k for k in range(0,13)]
-    prm = [.5,.4,.1,.6,.2,.3]
+    prm = [.3,.4,.1, .5,.2,.3, .1,.7,.3,]
 
     if mode == 'sarah':
         token = {'Sarah':[1,1,0,1,1,1,0,1,0,1],
@@ -260,8 +260,10 @@ def toy(mode):
         p = struct()                        # prediction terminal parameters
         p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
         p.K = bundle([idx[10:],idx[10:]],3)
-        p.P = bundle([prm[0:3],prm[3:6]],3)
-        p.theta = 2                         # prediction threshold
+        p.P = [[prm[0:3],prm[0:3]],
+               [prm[3:6],prm[0:3]],
+               [prm[6:9],prm[0:3]]]
+        p.theta = 1                         # prediction threshold
         p.eta = 0.5                         # synaptic threshold
 
         return (e,d,p),token
