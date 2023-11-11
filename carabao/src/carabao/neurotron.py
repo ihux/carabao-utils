@@ -208,7 +208,9 @@ class Terminal:
             else:
                 W = self.synapses.weight()
                 print(log,repr(x),"->",repr(W),"->",repr(E),"->",repr(s))
-        return (s,E)
+        if len(s) == 1:
+           return s.item()  # (s,E)
+        return s
 
     def __repr__(self):
         head = "(" if self.name is None else "('%s'," % self.name
