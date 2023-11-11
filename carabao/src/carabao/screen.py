@@ -347,6 +347,9 @@ class Screen:
     def at(self,i,j):  # to tell a Cell constructor where to place a cell
         self.ij = (i,j)
         return self
+    def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
+        size = 10 if size is None else size
+        plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
     def show(self):
         plt.show()
 
