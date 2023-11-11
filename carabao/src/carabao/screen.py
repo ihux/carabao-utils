@@ -75,6 +75,16 @@ class Canvas:
                          linewidth=linewidth)
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
+    def wedge(self,xy,r,angle,facecolor=None,edgecolor='k',linewidth=0.5):
+        """
+        wedge: draw wedge
+        hdl = wedge((x,y),r,(0,360),facecolor='r',edgecolor='g',linewidth=0.5)
+        """
+        a1,a2 = angle
+        hdl = patches.Wedge(xy,r, a1,a2, facecolor=facecolor,
+                           edgecolor=edgecolor, linewidth=linewidth)
+        self.ax.add_patch(hdl)               # add rectangle to axis' patches
+        return hdl
     def rect(self,xy1,xy2,col=None,angle=None):
         angle = 0 if angle == None else angle
         width = xy2[0]-xy1[0]; height = xy2[1]-xy1[1];
@@ -281,13 +291,14 @@ class Screen:
         colb = self.magenta if b > 0 else self.dark
 
         i,j = ij;  x = j; y = self.m-i-1;
-        w = self.r2/5;  h = self.r0
+        w = self.r2*0.26  # 0.35;  
+        h = self.r0
 
-        self.can.circle((x,y),self.r0,coly)
-        self.can.circle((x,y),self.r1,colp)
-        self.can.circle((x,y),self.ri,cold)
-        self.can.circle((x,y),self.ri*0.6,colb)
-        self.can.fancy((x-w,y-h),(x+w,y+h),colu,r=self.r0/10)
+        self.can.wedge((x,y),self.r0,(90,270),colu)
+        self.can.wedge((x,y),self.r0,(-90,90),coly)
+        self.can.wedge((x,y),self.r0*0.7,(90,270),colp)
+        self.can.wedge((x,y),self.r0*0.7,(-90,90),cold)
+        self.can.fancy((x-w,y-h),(x+w,y+h),self.gray,r=self.r0/10)
 
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
