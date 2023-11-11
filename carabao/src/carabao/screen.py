@@ -146,7 +146,8 @@ class Screen:
         return self.can
     def setup(self):
         kr = 0.9
-        self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.r2 = kr*0.31
+        self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.ri = kr*0.27
+        self.r2 = kr*0.31
         self.r3 = 0.16;  self.rs = (self.r2-self.r3)*0.4
 
         self.ds = 0.11; self.rs = self.ds/3;
@@ -266,6 +267,28 @@ class Screen:
            # draw basal dendritic segment
 
         self.basal(x,y,v)
+    def neurotron(self,ij,u=None,p=None,d=None,y=None,b=None):
+        u = u if u is not None else 0      # excitation input
+        p = p if p is not None else 0      # prediction state
+        d = d if d is not None else 0      # depression state
+        y = y if y is not None else 0      # activation state
+        b = b if b is not None else 0      # burst enable
+
+        colu = self.blue  if u > 0 else self.gray
+        colp = self.green if p > 0 else self.dark
+        coly = self.red   if y > 0 else self.gray
+        cold = self.orange if d > 0 else self.dark
+        colb = self.magenta if b > 0 else self.dark
+
+        i,j = ij;  x = j; y = self.m-i-1;
+        w = self.r2/5;  h = self.r0
+
+        self.can.circle((x,y),self.r0,coly)
+        self.can.circle((x,y),self.r1,colp)
+        self.can.circle((x,y),self.ri,cold)
+        self.can.circle((x,y),self.ri*0.6,colb)
+        self.can.fancy((x-w,y-h),(x+w,y+h),colu,r=self.r0/10)
+
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
         x = x if x is not None else 0      # predictive state
@@ -281,7 +304,7 @@ class Screen:
 
         i = ij[0];  j = ij[1]
 #>>>>>>>>>>>>>>>>>>>>>>>
-        x = j; y = self.m-i;
+        x = j; y = self.m-i-1;
         self.can.circle((x,y),self.r0,outer)
         self.can.circle((x,y),self.r1,inner)
         self.can.circle((x,y),self.r2,core)
