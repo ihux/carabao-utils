@@ -76,6 +76,7 @@ class Pulse:
     u5:  0 -> ([0,0,0],0/3) -> 0
     >>> i = u.inp()                     # retrieve recent input
     >>> o = u.out()                     # get pulse output
+    >>> u.set(1)                        # set output 1 (over full duty)
     """
     def __init__(self,lag,duty,name=None):
         def zeros(n): return [0 for k in range(0,n)]
@@ -92,6 +93,10 @@ class Pulse:
 
     def inp(self): return self.s[0]
     def out(self): return (self.c > 0) + 0
+    def set(self,val,log=None):
+        self.c = self.n if val > 0 else 0
+        if log is not None:
+            print(log,self)
 
     def __call__(self,u,log=None):
         y = self.feed(u)

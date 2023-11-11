@@ -165,6 +165,7 @@ class Screen:
         self.gold = (1,0.9,0);      self.dark = (0.5,0.5,0.5)
         self.blue = (0,0.5,1);      self.green=(0,0.8,0)
         self.magenta = (1,0.2,1);   self.orange = (1,0.5,0)
+        self.lila = (.7,0.3,1)
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
@@ -277,28 +278,29 @@ class Screen:
            # draw basal dendritic segment
 
         self.basal(x,y,v)
-    def neurotron(self,ij,u=None,p=None,d=None,y=None,b=None):
-        u = u if u is not None else 0      # excitation input
-        p = p if p is not None else 0      # prediction state
-        d = d if d is not None else 0      # depression state
-        y = y if y is not None else 0      # activation state
-        b = b if b is not None else 0      # burst enable
 
-        colu = self.blue  if u > 0 else self.gray
-        colp = self.green if p > 0 else self.dark
+    def neurotron(self,ij,u=None,q=None,p=None,y=None,d=None):
+        u = u if u is not None else 0      # excitation input
+        q = q if q is not None else 0      # burst enable
+        p = p if p is not None else 0      # prediction state
+        y = y if y is not None else 0      # activation state
+        d = d if d is not None else 0      # depression state
+
+        colu = self.lila  if u > 0 else self.gray
+        colu = self.blue  if q > 0 else colu
+        colp = self.green if p > 0 else self.gray
         coly = self.red   if y > 0 else self.gray
-        cold = self.orange if d > 0 else self.dark
-        colb = self.magenta if b > 0 else self.dark
+        cold = self.orange if d > 0 else self.gray
 
         i,j = ij;  x = j; y = self.m-i-1;
-        w = self.r2*0.26  # 0.35;  
+        w = self.r2*0.26  # 0.35;
         h = self.r0
 
         self.can.wedge((x,y),self.r0,(90,270),colu)
         self.can.wedge((x,y),self.r0,(-90,90),coly)
         self.can.wedge((x,y),self.r0*0.7,(90,270),colp)
         self.can.wedge((x,y),self.r0*0.7,(-90,90),cold)
-        self.can.fancy((x-w,y-h),(x+w,y+h),self.gray,r=self.r0/10)
+        self.can.fancy((x-w,y-h),(x+w,y+h),cold,r=self.r0/10)
 
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
