@@ -75,6 +75,16 @@ class Canvas:
                          linewidth=linewidth)
         self.ax.add_patch(hdl)               # add circle to axis' patches
         return hdl
+    def wedge(self,xy,r,angle,facecolor=None,edgecolor='k',linewidth=0.5):
+        """
+        wedge: draw wedge
+        hdl = wedge((x,y),r,(0,360),facecolor='r',edgecolor='g',linewidth=0.5)
+        """
+        a1,a2 = angle
+        hdl = patches.Wedge(xy,r, a1,a2, facecolor=facecolor,
+                           edgecolor=edgecolor, linewidth=linewidth)
+        self.ax.add_patch(hdl)               # add rectangle to axis' patches
+        return hdl
     def rect(self,xy1,xy2,col=None,angle=None):
         angle = 0 if angle == None else angle
         width = xy2[0]-xy1[0]; height = xy2[1]-xy1[1];
@@ -146,14 +156,16 @@ class Screen:
         return self.can
     def setup(self):
         kr = 0.9
-        self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.r2 = kr*0.31
+        self.r0 = kr*0.45;  self.r1 = kr*0.36;  self.ri = kr*0.27
+        self.r2 = kr*0.31
         self.r3 = 0.16;  self.rs = (self.r2-self.r3)*0.4
 
         self.ds = 0.11; self.rs = self.ds/3;
         self.gray = (0.8,0.8,0.8);  self.red = (1,0,0)
-        self.gold = (1,0.9,0);      self.dark = (0.5,0.5,0.5)
-        self.blue = (0,0.5,1);      self.green=(0,0.8,0)
-        self.magenta = (1,0.2,1);   self.orange = (1,0.5,0)
+        self.gold = (1,0.9,0);      self.dark = (.5,.5,.5)
+        self.blue = (0,0.5,1);      self.green=(0,.8,0)
+        self.magenta = (1,0.2,1);   self.orange = (1,.5,0)
+        self.lila = (.7,0.3,1);     self.cyan = (0,.7,1)
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
@@ -203,8 +215,9 @@ class Screen:
         ws = min(h*0.4,w/self.s)
         self.rs = ws*0.8
 
+        nd,ns = P.shape
         for nu in range(0,W.shape[1]):
-            xs = x + 2*ws*nu - (self.s*ws/2 + 1.5*ws);
+            xs = x + 2*ws*nu - (ns-1)*ws;
             yy = ys + h*(d0-mu)
             ri = 0.8*(self.rs * (P[mu,nu] if W[mu,nu]==0 else 1-P[mu,nu]))
             icol = 'w' if W[mu,nu] == 0 else 'k'   # inner color
@@ -216,7 +229,8 @@ class Screen:
     def xy(self,i,j):
         return (j,self.m-i-1)
 
-    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,P=None,W=None,E=None):
+    def neuron(self,ij,u=None,x=None,y=None,b=None,v=None,s=None,
+                       P=None,W=None,E=None,p=None):
         u = u if u != None else 0      # basal input
         x = x if x != None else 0      # predictive state
         y = y if y != None else 0      # output state
@@ -239,6 +253,15 @@ class Screen:
         r0 = self.r0;  r2 = self.r2;  r3 = self.r3
         dy1 = r0*0.1;    dy2 = r0*0.1
 
+            # draw phase state if provided
+
+        if p is not None:
+            colp = 'w'
+            if p == 1: colp = self.gray
+            if p == 2: colp = self.dark
+            if p == 3: colp = 'k'
+            self.can.circle((x,y+r0),r0*0.15,colp)
+
             # draw different parts of neuron cell
 
         self.can.fancy((x-r0*0.9,y-r0*1.0),(x+r0*0.9,y-r0*0.2),colb,r=0.2)
@@ -255,6 +278,30 @@ class Screen:
            # draw basal dendritic segment
 
         self.basal(x,y,v)
+
+    def neurotron(self,ij,u=None,q=None,p=None,y=None,d=None):
+        u = u if u is not None else 0      # excitation input
+        q = q if q is not None else 0      # burst enable
+        p = p if p is not None else 0      # prediction state
+        y = y if y is not None else 0      # activation state
+        d = d if d is not None else 0      # depression state
+
+        colu = self.lila  if u > 0 else self.gray
+        colu = self.blue  if q > 0 else colu
+        colp = self.green if p > 0 else self.gray
+        coly = self.red   if y > 0 else self.gray
+        cold = self.orange if d > 0 else self.gray
+
+        i,j = ij;  x = j; y = self.m-i-1;
+        w = self.r2*0.26  # 0.35;
+        h = self.r0
+
+        self.can.wedge((x,y),self.r0,(90,270),colu)
+        self.can.wedge((x,y),self.r0,(-90,90),coly)
+        self.can.wedge((x,y),self.r0*0.7,(90,270),colp)
+        self.can.wedge((x,y),self.r0*0.7,(-90,90),cold)
+        self.can.fancy((x-w,y-h),(x+w,y+h),self.gray,r=self.r0/10)
+
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
         x = x if x is not None else 0      # predictive state
@@ -270,7 +317,7 @@ class Screen:
 
         i = ij[0];  j = ij[1]
 #>>>>>>>>>>>>>>>>>>>>>>>
-        x = j; y = self.m-i;
+        x = j; y = self.m-i-1;
         self.can.circle((x,y),self.r0,outer)
         self.can.circle((x,y),self.r1,inner)
         self.can.circle((x,y),self.r2,core)
@@ -300,6 +347,9 @@ class Screen:
     def at(self,i,j):  # to tell a Cell constructor where to place a cell
         self.ij = (i,j)
         return self
+    def text(self,x,y,txt,color='k',size=None,rotation=0,ha='center',va='center'):
+        size = 10 if size is None else size
+        plt.text(x,y, txt, size=size, rotation=rotation, ha=ha, va=va, color=color)
     def show(self):
         plt.show()
 
@@ -468,6 +518,7 @@ class Monitor:
        if i is not None:
             self.place(data.screen,(i,j))
             u = cell._u if u is None else u
+            p = cell.p if hasattr(cell,'p') else None
             c = cell._c if c is None else c
             P = cell.P if P is None else P
             W = syn.W(cell.P) if W is None else W
@@ -477,7 +528,7 @@ class Monitor:
             L = cell.L
             SL = S*L
             sl = array([SL[i].max() for i in range(0,SL.shape[0])])
-            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E)
+            data.screen.neuron((i,j),u,cell.x,cell.y,cell.b,v,sl,P,W,E,p)
             data.screen.show
             if index is not None:
                 size = 7 if size is None else size

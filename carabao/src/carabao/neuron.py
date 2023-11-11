@@ -1,8 +1,14 @@
 #===============================================================================
-# carabao/neuron package: copyright: Neuronycs 2023
-# - class Synapses
-# - class Rules
-# - class Cell
+# carabao.neuron package: copyright: Neuronycs 2023
+#===============================================================================
+"""
+Module carabao.neuron supports the following classes:
+    class Synapses
+    class Rules
+    class Cell
+"""
+#===============================================================================
+# imports
 #===============================================================================
 
 import numpy
@@ -291,6 +297,20 @@ def toy(tag):
                  'sing':[0,0,0,0,1,0,1], 'dance':[0,0,0,0,0,1,1]}
         xlabel = ['Mary','John','likes','to','sing','dance','X']
         minicol = {'Mary':0, 'John':1, 'likes':2, 'to':3, 'sing':4, 'dance':5}
+        return G,K,P,c,token,xlabel,minicol
+    elif tag == 'pico':
+        m = 2;  n = 4
+        K = array([[array([[0,1,2],[3,4,5]])
+                    for j in range(0,n)] for i in range(0,m)])
+        P = array([[array([[0,0,0],[0,0,0]])
+            for j in range(0,n)] for i in range(0,m)])
+        G = transpose(array([k for k in range(0,m*n)]).reshape(m,n,order='F'))
+        c = [0,0,0,0, 0,0,0, 0,0,0,0, 0,0,0]
+        token = {'Mary':[1,0,1,0], 'John':[1,0,0,1],
+                 'likes':[1,1,0,0], 'to':[0,0,1,1],
+                 'sing':[0,1,1,0], 'dance':[0,1,0,1]}
+        xlabel = ['MJL','LSD','MTS','JTD']
+        minicol = {'MJL':0, 'LSD':1, 'MTS':2, 'JTD':3}
         return G,K,P,c,token,xlabel,minicol
     else:
         raise Exception('unknown tag')

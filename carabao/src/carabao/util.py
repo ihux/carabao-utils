@@ -174,10 +174,11 @@ def sat(X):
 def repr(obj,wide=False):   # string representation of list or matrix
     if isa(obj,'list'):
         txt = "[";  M = array([obj])
-        print("repr M:",M,type(M),M.shape)
+        #print("repr M:",M,type(M),M.shape)
     elif isa(obj,'ndarray'):
         txt = "#[";  M = obj
         if len(M.shape) == 1:
+            txt = ":[";  M = obj
             M = array([M])
     else:
         return obj
@@ -197,3 +198,16 @@ def repr(obj,wide=False):   # string representation of list or matrix
             sepj = ' '
     txt += ']'
     return txt
+
+#===============================================================================
+# utility: check if argument is scalar (either in or float)
+#===============================================================================
+
+def isscalar(x):
+    """
+    isscalar(): check if arg is either int or float
+    >>> ok = isscalar(5)                => True
+    >>> ok = isscalar(3.14)             => True
+    >>> ok = isscalar(numpy.array(1.2)) => False
+    """
+    return isinstance(x,int) or isinstance(x,float)

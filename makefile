@@ -38,6 +38,7 @@ install:
 carabao: dist/carabao-0.0.1-py3-none-any.whl
 
 dist/carabao-0.0.1-py3-none-any.whl: carabao/src/carabao/*.py
+	python carabao/src/carabao/neurotron.py
 	cd carabao &&	make carabao
 
 clean:
