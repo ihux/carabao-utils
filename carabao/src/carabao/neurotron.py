@@ -4,45 +4,12 @@
 """
 Module carabao.neurotron supports the following classes:
     class Pulse
+    class Synapses
     class Terminal
+    class Monitor
+    function toy()
 
-Example 1:
-    Test a Pulse(1,2) module (1 lag cycle, 2 duty cycles) with a delta
-    sequence u = [1,0,0,0,0]. The expected response is: y = [0,1,1,0,0]
-
-pls = Pulse(1,2,name="Pulse(1,2):")
-y0 = pls.feed(u0:=1)
-y1 = pls.feed(u1:=0)
-y2 = pls.feed(u2:=0)
-y3 = pls.feed(u3:=0)
-y4 = pls.feed(u4:=0)
-((u0,u1,u2,u3,u4),(y0,y1,y2,y3,y4))
-Pulse(1,2): 1 -> ([1,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 0 -> ([0,0],1/2) -> 1
-Pulse(1,2): 0 -> ([0,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,0],0/2) -> 0
-((1, 0, 0, 0, 0), (0, 1, 1, 0, 0))
-
-Example 2:
-    Similar case but retrigger the pulse module before the niveau collapses.
-    Input sequence: u = [1,0,0,0,0], desired response: y = [0,1,1,1,1]
-
-pls = Pulse(1,2,log="Pulse(1,2):")
-y0 = pls.feed(u0:=1)
-y1 = pls.feed(u1:=0)
-y2 = pls.feed(u2:=1)
-y3 = pls.feed(u3:=0)
-y4 = pls.feed(u4:=0)
-((u0,u1,u2,u3,u4),(y0,y1,y2,y3,y4))
-Pulse(1,2): 1 -> ([1,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 1 -> ([1,0],1/2) -> 1
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 0 -> ([0,0],1/2) -> 1
-((1, 0, 1, 0, 0), (0, 1, 1, 1, 1))
-
-Example 3:
+Example:
     Create a Terminal object and demonstrate its functionality.
 
 >>> par,token = toy('sarah')
@@ -58,6 +25,7 @@ Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 from numpy import array
 from ypstruct import struct
 from carabao.util import repr
+from carabao.screen import Screen
 
 #===============================================================================
 # class: Pulse
@@ -68,26 +36,38 @@ class Pulse:
     pulse: pulse unit
     >>> u=Pulse(2,3)
     >>> for i in range(6): o = u(int(i<1),'u%g:'%i)
-    u0:  1 -> ([1,0,0],0/3) -> 0
-    u1:  0 -> ([0,1,0],0/3) -> 0
-    u2:  0 -> ([0,0,1],3/3) -> 1
-    u3:  0 -> ([0,0,0],2/3) -> 1
-    u4:  0 -> ([0,0,0],1/3) -> 1
-    u5:  0 -> ([0,0,0],0/3) -> 0
+    u0:  1 -> ([1,0,0], 0/3/0) -> 0
+    u1:  0 -> ([0,1,0], 0/3/0) -> 0
+    u2:  0 -> ([0,0,1], 3/3/0) -> 1
+    u3:  0 -> ([0,0,0], 2/3/0) -> 1
+    u4:  0 -> ([0,0,0], 1/3/0) -> 1
+    u5:  0 -> ([0,0,0], 0/3/0) -> 0
     >>> i = u.inp()                     # retrieve recent input
     >>> o = u.out()                     # get pulse output
     >>> u.set(1)                        # set output 1 (over full duty)
     """
-    def __init__(self,lag,duty,name=None):
-        def zeros(n): return [0 for k in range(0,n)]
+    def __init__(self,lag,duty,relax=0,name=None):
         self.name = name                # name header
-        self.n = duty                  # duty = pulse length
-        self.s = zeros(lag+1)          # shift register
-        self.c = 0                     # counter
+        self.n = duty                   # duty = pulse length
+        self.s = self.zeros(lag+1)      # shift register
+        self.c = 0                      # counter
+        self.r = relax
+
+    def zeros(self,n):
+        return [0 for k in range(n)]
 
     def feed(self,u):
-        self.s = [u] + self.s[:-1]
-        self.c = self.n if self.s[-1] > 0 else max(0,self.c-1)
+        if self.c < 0:                  # relax mode?
+            self.s = self.zeros(len(self.s))
+            self.s[0] = u;  self.c += 1
+        else:
+            self.s = [u] + self.s[:-1]
+            if self.r > 0 and self.c == 1:
+                self.c = -self.r
+            elif self.r > 0 and self.c > 1:
+                self.c -= 1
+            else:
+                self.c = self.n if self.s[-1] > 0 else max(0,self.c-1)
         if self.name is not None: print(self)
         return self.out()
 
@@ -109,7 +89,8 @@ class Pulse:
             s = '['; sep = ''
             for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
             return s + ']'
-        o = self;  body = "(%s,%g/%g)" % (string(o.s),o.c,o.n)
+        o = self;  sgn = ' ' if o.c >= 0 else ''
+        body = "(%s,%s%g/%g/%g)" % (string(o.s),sgn,o.c,o.n,o.r)
         name = o.name if o.name is not None else ""
         return name + " %g -> " % o.inp() + body +  " -> %g" % o.out()
 
@@ -218,6 +199,30 @@ class Terminal:
         syn = "" if self.synapses is None \
                  else " @ " + self.synapses.__repr__()
         return "Terminal" + par + syn
+
+#===========================================================================
+# class Monitor
+#===========================================================================
+
+class Monitor:
+    def __init__(self,m,n,title=None):
+        self.screen = Screen('Neurons',m,n)
+        if title is not None: self.title(title)
+    def __call__(self,cell,i,j):
+        u = cell.u.out()
+        q = cell.q.out()
+        x = cell.x.out()
+        y = cell.y.out()
+        b = cell.b.out()
+        d = cell.d.out()
+        l = cell.l.out()
+        self.screen.neurotron((i,j),u,q,x,y,b,d,l)
+    def xlabel(self,x,txt,size=None):
+        self.screen.text(x,-0.75,txt)
+    def title(self,txt,size=10):
+        scr = self.screen
+        x = (scr.n-1)/2;  y = scr.m + 0.3
+        self.screen.text(x,y,txt,size=size)
 
 #===============================================================================
 # helper: set up toy stuff

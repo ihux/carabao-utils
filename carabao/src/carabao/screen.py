@@ -279,28 +279,32 @@ class Screen:
 
         self.basal(x,y,v)
 
-    def neurotron(self,ij,u=None,q=None,p=None,y=None,d=None):
+    def neurotron(self,ij,u=None,q=None,x=None,y=None,b=None,d=None,l=None):
         u = u if u is not None else 0      # excitation input
         q = q if q is not None else 0      # burst enable
-        p = p if p is not None else 0      # prediction state
+        x = x if x is not None else 0      # prediction state
         y = y if y is not None else 0      # activation state
+        b = b if b is not None else 0      # burst state
         d = d if d is not None else 0      # depression state
+        l = l if l is not None else 0      # learning state
 
-        colu = self.lila  if u > 0 else self.gray
-        colu = self.blue  if q > 0 else colu
-        colp = self.green if p > 0 else self.gray
-        coly = self.red   if y > 0 else self.gray
-        cold = self.orange if d > 0 else self.gray
+        ucol = self.lila   if u > 0 else self.gray
+        ucol = self.blue   if q > 0 else ucol
+        pcol = self.green  if x > 0 else self.gray
+        ycol = self.red    if y > 0 else self.gray
+        bcol = self.dark   if d > 0 else self.gray
+        bcol = self.orange if b > 0 else bcol
+        lcol = self.gold   if l > 0 else self.gray
 
         i,j = ij;  x = j; y = self.m-i-1;
         w = self.r2*0.26  # 0.35;
         h = self.r0
 
-        self.can.wedge((x,y),self.r0,(90,270),colu)
-        self.can.wedge((x,y),self.r0,(-90,90),coly)
-        self.can.wedge((x,y),self.r0*0.7,(90,270),colp)
-        self.can.wedge((x,y),self.r0*0.7,(-90,90),cold)
-        self.can.fancy((x-w,y-h),(x+w,y+h),self.gray,r=self.r0/10)
+        self.can.wedge((x,y),self.r0,(90,270),ucol)
+        self.can.wedge((x,y),self.r0,(-90,90),ycol)
+        self.can.wedge((x,y),self.r0*0.7,(90,270),pcol)
+        self.can.wedge((x,y),self.r0*0.7,(-90,90),bcol)
+        self.can.fancy((x-w,y-h),(x+w,y+h),lcol,r=self.r0/10)
 
     def cell(self,ij,u=None,x=None,y=None,P=None,E=None,L=None):
         u = u if u is not None else 0      # basal input
