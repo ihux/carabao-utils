@@ -4,45 +4,12 @@
 """
 Module carabao.neurotron supports the following classes:
     class Pulse
+    class Synapses
     class Terminal
+    class Monitor
+    function toy()
 
-Example 1:
-    Test a Pulse(1,2) module (1 lag cycle, 2 duty cycles) with a delta
-    sequence u = [1,0,0,0,0]. The expected response is: y = [0,1,1,0,0]
-
-pls = Pulse(1,2,name="Pulse(1,2):")
-y0 = pls.feed(u0:=1)
-y1 = pls.feed(u1:=0)
-y2 = pls.feed(u2:=0)
-y3 = pls.feed(u3:=0)
-y4 = pls.feed(u4:=0)
-((u0,u1,u2,u3,u4),(y0,y1,y2,y3,y4))
-Pulse(1,2): 1 -> ([1,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 0 -> ([0,0],1/2) -> 1
-Pulse(1,2): 0 -> ([0,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,0],0/2) -> 0
-((1, 0, 0, 0, 0), (0, 1, 1, 0, 0))
-
-Example 2:
-    Similar case but retrigger the pulse module before the niveau collapses.
-    Input sequence: u = [1,0,0,0,0], desired response: y = [0,1,1,1,1]
-
-pls = Pulse(1,2,log="Pulse(1,2):")
-y0 = pls.feed(u0:=1)
-y1 = pls.feed(u1:=0)
-y2 = pls.feed(u2:=1)
-y3 = pls.feed(u3:=0)
-y4 = pls.feed(u4:=0)
-((u0,u1,u2,u3,u4),(y0,y1,y2,y3,y4))
-Pulse(1,2): 1 -> ([1,0],0/2) -> 0
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 1 -> ([1,0],1/2) -> 1
-Pulse(1,2): 0 -> ([0,1],2/2) -> 1
-Pulse(1,2): 0 -> ([0,0],1/2) -> 1
-((1, 0, 1, 0, 0), (0, 1, 1, 1, 1))
-
-Example 3:
+Example:
     Create a Terminal object and demonstrate its functionality.
 
 >>> par,token = toy('sarah')
@@ -58,6 +25,7 @@ Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 from numpy import array
 from ypstruct import struct
 from carabao.util import repr
+from carabao.screen import Screen
 
 #===============================================================================
 # class: Pulse
@@ -231,6 +199,28 @@ class Terminal:
         syn = "" if self.synapses is None \
                  else " @ " + self.synapses.__repr__()
         return "Terminal" + par + syn
+
+#===========================================================================
+# class Monitor
+#===========================================================================
+
+class Monitor:
+    def __init__(self,m,n):
+        self.screen = Screen('Neurons',m,n)
+    def __call__(self,cell,i,j):
+        u = cell.u.out()
+        q = cell.q.out()
+        p = cell.p.out()
+        y = cell.y.out()
+        #d = cell.d.out()
+        b = cell.b.out()
+        self.screen.neurotron((i,j),u,q,p,y,b)
+    def xlabel(self,x,txt,size=None):
+        self.screen.text(x,-0.75,txt)
+    def title(self,txt,size=10):
+        scr = self.screen
+        x = (scr.n-1)/2;  y = scr.m + 0.3
+        self.screen.text(x,y,txt,size=size)
 
 #===============================================================================
 # helper: set up toy stuff
