@@ -211,12 +211,12 @@ class Monitor:
     def __call__(self,cell,i,j):
         u = cell.u.out()
         q = cell.q.out()
-        p = cell.p.out()
+        x = cell.x.out()
         y = cell.y.out()
         b = cell.b.out()
         d = cell.d.out()
         l = cell.l.out()
-        self.screen.neurotron((i,j),u,q,p,y,b,d,l)
+        self.screen.neurotron((i,j),u,q,x,y,b,d,l)
     def xlabel(self,x,txt,size=None):
         self.screen.text(x,-0.75,txt)
     def title(self,txt,size=10):

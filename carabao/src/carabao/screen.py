@@ -279,10 +279,10 @@ class Screen:
 
         self.basal(x,y,v)
 
-    def neurotron(self,ij,u=None,q=None,p=None,y=None,b=None,d=None,l=None):
+    def neurotron(self,ij,u=None,q=None,x=None,y=None,b=None,d=None,l=None):
         u = u if u is not None else 0      # excitation input
         q = q if q is not None else 0      # burst enable
-        p = p if p is not None else 0      # prediction state
+        x = x if x is not None else 0      # prediction state
         y = y if y is not None else 0      # activation state
         b = b if b is not None else 0      # burst state
         d = d if d is not None else 0      # depression state
@@ -290,7 +290,7 @@ class Screen:
 
         ucol = self.lila   if u > 0 else self.gray
         ucol = self.blue   if q > 0 else ucol
-        pcol = self.green  if p > 0 else self.gray
+        pcol = self.green  if x > 0 else self.gray
         ycol = self.red    if y > 0 else self.gray
         bcol = self.dark   if d > 0 else self.gray
         bcol = self.orange if b > 0 else bcol
