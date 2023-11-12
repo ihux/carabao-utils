@@ -68,26 +68,38 @@ class Pulse:
     pulse: pulse unit
     >>> u=Pulse(2,3)
     >>> for i in range(6): o = u(int(i<1),'u%g:'%i)
-    u0:  1 -> ([1,0,0],0/3) -> 0
-    u1:  0 -> ([0,1,0],0/3) -> 0
-    u2:  0 -> ([0,0,1],3/3) -> 1
-    u3:  0 -> ([0,0,0],2/3) -> 1
-    u4:  0 -> ([0,0,0],1/3) -> 1
-    u5:  0 -> ([0,0,0],0/3) -> 0
+    u0:  1 -> ([1,0,0], 0/3/0) -> 0
+    u1:  0 -> ([0,1,0], 0/3/0) -> 0
+    u2:  0 -> ([0,0,1], 3/3/0) -> 1
+    u3:  0 -> ([0,0,0], 2/3/0) -> 1
+    u4:  0 -> ([0,0,0], 1/3/0) -> 1
+    u5:  0 -> ([0,0,0], 0/3/0) -> 0
     >>> i = u.inp()                     # retrieve recent input
     >>> o = u.out()                     # get pulse output
     >>> u.set(1)                        # set output 1 (over full duty)
     """
-    def __init__(self,lag,duty,name=None):
-        def zeros(n): return [0 for k in range(0,n)]
+    def __init__(self,lag,duty,relax=0,name=None):
         self.name = name                # name header
-        self.n = duty                  # duty = pulse length
-        self.s = zeros(lag+1)          # shift register
-        self.c = 0                     # counter
+        self.n = duty                   # duty = pulse length
+        self.s = self.zeros(lag+1)      # shift register
+        self.c = 0                      # counter
+        self.r = relax
+
+    def zeros(self,n):
+        return [0 for k in range(n)]
 
     def feed(self,u):
-        self.s = [u] + self.s[:-1]
-        self.c = self.n if self.s[-1] > 0 else max(0,self.c-1)
+        if self.c < 0:                  # relax mode?
+            self.s = self.zeros(len(self.s))
+            self.s[0] = u;  self.c += 1
+        else:
+            self.s = [u] + self.s[:-1]
+            if self.r > 0 and self.c == 1:
+                self.c = -self.r
+            elif self.r > 0 and self.c > 1:
+                self.c -= 1
+            else:
+                self.c = self.n if self.s[-1] > 0 else max(0,self.c-1)
         if self.name is not None: print(self)
         return self.out()
 
@@ -109,7 +121,8 @@ class Pulse:
             s = '['; sep = ''
             for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
             return s + ']'
-        o = self;  body = "(%s,%g/%g)" % (string(o.s),o.c,o.n)
+        o = self;  sgn = ' ' if o.c >= 0 else ''
+        body = "(%s,%s%g/%g/%g)" % (string(o.s),sgn,o.c,o.n,o.r)
         name = o.name if o.name is not None else ""
         return name + " %g -> " % o.inp() + body +  " -> %g" % o.out()
 
