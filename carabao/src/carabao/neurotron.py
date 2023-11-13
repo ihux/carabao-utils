@@ -35,6 +35,76 @@ class Pulse:
     """
     pulse: pulse unit
     >>> u=Pulse(2,3)
+    >>> for i in range(6): o = u(int(i<2),'u%g:'%i)
+    u0:  1 -> ([1,0,0], 0/3/0) -> 0
+    u1:  1 -> ([1,1,0], 0/3/0) -> 0
+    u2:  0 -> ([0,1,1], 3/3/0) -> 1
+    u3:  0 -> ([0,0,1], 2/3/0) -> 1
+    u4:  0 -> ([0,0,0], 1/3/0) -> 1
+    u5:  0 -> ([0,0,0], 0/3/0) -> 0
+    >>> i = u.inp()                     # retrieve recent input
+    >>> o = u.out()                     # get pulse output
+    >>> u.set(1)                        # set output 1 (over full duty)
+    """
+    def __init__(self,lag,duty,relax=0,name=None):
+        self.name = name                # name header
+        self.n = duty                   # duty = pulse length
+        self.s = self.zeros(lag+1)      # shift register
+        self.c = 0                      # counter
+        self.r = relax
+
+    def zeros(self,n):
+        return [0 for k in range(n)]
+
+    def call(self,u):
+        o = self
+        if o.c < 0:                  # relax mode?
+            o.s = o.zeros(len(o.s))
+            o.s[0] = u;  o.c += 1
+        else:
+            o.s = [u] + o.s[:-1]
+            if o.r > 0 and o.c == 1:
+                o.c = -o.r
+            elif o.r > 0 and o.c > 1:
+                o.c -= 1
+            elif len(o.s) > 1:
+                o.c = o.n if sum(o.s[1:]) >= len(o.s)-1 else max(0,o.c-1)
+            else:
+                o.c = o.n if o.s[0] > 0 else max(0,o.c-1)
+        if o.name is not None: print(o)
+        return o.out()
+
+    def inp(self): return self.s[0]
+    def out(self): return (self.c > 0) + 0
+    def set(self,val,log=None):
+        self.c = self.n if val > 0 else 0
+        if log is not None:
+            print(log,self)
+
+    def __call__(self,u,log=None):
+        y = self.call(u)
+        if log is not None:
+            print(log,self)
+        return y
+
+    def __repr__(self):
+        def string(l):
+            s = '['; sep = ''
+            for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
+            return s + ']'
+        o = self;  sgn = ' ' if o.c >= 0 else ''
+        body = "(%s,%s%g/%g/%g)" % (string(o.s),sgn,o.c,o.n,o.r)
+        name = o.name if o.name is not None else ""
+        return name + " %g -> " % o.inp() + body +  " -> %g" % o.out()
+
+#===============================================================================
+# class: Pulse
+#===============================================================================
+
+class Pulse1:
+    """
+    pulse: pulse unit
+    >>> u=Pulse1(2,3)
     >>> for i in range(6): o = u(int(i<1),'u%g:'%i)
     u0:  1 -> ([1,0,0], 0/3/0) -> 0
     u1:  0 -> ([0,1,0], 0/3/0) -> 0
@@ -56,7 +126,7 @@ class Pulse:
     def zeros(self,n):
         return [0 for k in range(n)]
 
-    def feed(self,u):
+    def call(self,u):
         if self.c < 0:                  # relax mode?
             self.s = self.zeros(len(self.s))
             self.s[0] = u;  self.c += 1
@@ -79,7 +149,7 @@ class Pulse:
             print(log,self)
 
     def __call__(self,u,log=None):
-        y = self.feed(u)
+        y = self.call(u)
         if log is not None:
             print(log,self)
         return y
