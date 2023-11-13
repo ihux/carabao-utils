@@ -1,5 +1,6 @@
 # .gitignore for python development
 
+.venv
 venv
 dist
 .DS_Store
