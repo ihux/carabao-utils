@@ -36,12 +36,12 @@ class Pulse:
     pulse: pulse unit with debouncer based on state machine
     >>> u=Pulse(2,3)
     >>> for i in range(6): o = u(int(i<3),'u%g:'%i)
-    u0:  1 -> (L1,[2,3,0]) -> 0
-    u1:  1 -> (L2,[2,3,0]) -> 0
-    u2:  1 -> (D3,[2,3,0]) -> 1
-    u3:  0 -> (D2,[2,3,0]) -> 1
-    u4:  0 -> (D1,[2,3,0]) -> 1
-    u5:  0 -> (L0,[2,3,0]) -> 0
+    u0:  1 -> (1,L1,[2,3,0]) -> 0
+    u1:  1 -> (2,L2,[2,3,0]) -> 0
+    u2:  1 -> (2,D3,[2,3,0]) -> 1
+    u3:  0 -> (1,D2,[2,3,0]) -> 1
+    u4:  0 -> (0,D1,[2,3,0]) -> 1
+    u5:  0 -> (0,L0,[2,3,0]) -> 0
     >>> i = u.inp()                     # retrieve recent input
     >>> o = u.out()                     # get pulse output
     >>> u.set(1)                        # set output 1 (over full duty)
@@ -49,38 +49,42 @@ class Pulse:
     def __init__(self,lag,duty,relax=0,name=None):
         self.name = name                # name header
         self.n = [lag,duty,relax]       # phase durations
-        self.s = 0                      # state
+        self.s = 'L'                    # state, initialized as `lag state`
+        self.i = 0                      # integrator
         self.c = 0                      # counter
         self.u = 0                      # input
         self.y = 0                      # output
 
     def trans(self,state):              # state transition
-        if state == 'lag':              # transition to lag state
-            self.s = 0;  self.c = self.u
-        elif state == 'duty':           # transition to duty state
-            self.s = 1;  self.c = self.n[1]
-        elif state == 'relax':          # transition to relax state
-            self.s = 2;  self.c = self.n[2]
+        if state == 'L':                # transition to lag state
+            self.i = self.c = self.u    # init integration counter
+        elif state == 'D':              # transition to duty state
+            self.c = self.n[1]          # init duration counter
+        elif state == 'R':              # transition to relax state
+            self.c = self.n[2]          # init duration counter
+        self.s = state                  # actual state change
 
     def call(self,u):
         self.u = u
-        if self.s == 0:                 # lag state (debouncing)
-            if u > 0:
-                self.c += u             # integrate up
+        i = self.i + 2*u - 1            # integrate
+        self.i = max(0,min(i,self.n[0]))
+        if self.s == 'L':               # L: lag state (debouncing)
+            self.y = int(i > self.n[0] and self.n[1] > 0)
+            self.c = self.i
+            if self.y > 0: self.trans('D')
+        elif self.s == 'D':             # D: duty state
+            if self.i >= self.n[0] and self.n[0] > 0:
+                self.c = self.n[1]
             else:
-                self.c = max(0,self.c-1)
-            self.y = 1 if self.c > self.n[0] else 0
-            if self.y > 0: self.trans('duty')
-        elif self.s == 1:               # duty state
-            self.c -= 1                 # count down duty duration
-            self.y = 1 if self.c > 0 else 0
+                self.c -= 1             # count down duty duration
+            self.y = int(self.c > 0)
             if self.y == 0 and self.n[2] > 0:
-                self.trans('relax')     # transition to relax state
+                self.trans('R')         # transition to relax state
             elif self.y == 0 and self.n[2] == 0:
-                self.trans('lag')       # transition to lag state
-        else:
+                self.trans('L')         # transition to lag state
+        elif self.s == 'R':             # R: relax state
             self.c -= 1                 # count down relax period
-            if self.c <= 0: self.trans('lag')
+            if self.c <= 0: self.trans('L')
         if self.name is not None: print(self)
         return self.out()
 
@@ -88,9 +92,9 @@ class Pulse:
     def out(self): return self.y
     def set(self,val,log=None):
         if val > 0:
-            self.trans('duty')
+            self.trans('D')
         else:
-            self.trans('lag')
+            self.trans('L')
         if log is not None:
             print(log,self)
 
@@ -101,13 +105,12 @@ class Pulse:
         return y
 
     def __repr__(self):
-        tag = ['L','D','R']
         def string(l):
             s = '['; sep = ''
             for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
             return s + ']'
         o = self
-        body = "(%s%g,%s)" % (tag[self.s],self.c,string(self.n))
+        body = "(%g,%s%g,%s)" % (self.i,self.s,self.c,string(self.n))
         name = self.name if self.name is not None else ""
         return name + " %g -> " % self.inp() + body +  " -> %g" % self.out()
 
@@ -426,6 +429,74 @@ def toy(mode):
         p.eta = 0.5                         # synaptic threshold
 
         return (e,d,p),token
+
+#===============================================================================
+# unit test cases:
+#===============================================================================
+
+def _case1():
+    """
+    >>> P = Pulse(0,0)
+    >>> for k in range(3): y = P(k<1,'')
+      1 -> (0,L0,[0,0,0]) -> 0
+      0 -> (0,L0,[0,0,0]) -> 0
+      0 -> (0,L0,[0,0,0]) -> 0
+    """
+
+def _case2():
+    """
+    >>> P = Pulse(1,0)
+    >>> for k in range(3): y = P(k<1,'')
+      1 -> (1,L1,[1,0,0]) -> 0
+      0 -> (0,L0,[1,0,0]) -> 0
+      0 -> (0,L0,[1,0,0]) -> 0
+    """
+
+def _case3():
+    """
+    >>> P = Pulse(1,0)
+    >>> for k in range(4): y = P(k<2,'')
+      1 -> (1,L1,[1,0,0]) -> 0
+      1 -> (1,L1,[1,0,0]) -> 0
+      0 -> (0,L0,[1,0,0]) -> 0
+      0 -> (0,L0,[1,0,0]) -> 0
+    """
+
+def _case4():
+    """
+    >>> P = Pulse(0,2)
+    >>> for k in range(4): y = P(k<1,'')
+      1 -> (0,D2,[0,2,0]) -> 1
+      0 -> (0,D1,[0,2,0]) -> 1
+      0 -> (0,L0,[0,2,0]) -> 0
+      0 -> (0,L0,[0,2,0]) -> 0
+    """
+
+def _case5():
+    """
+    >>> P = Pulse(2,3)
+    >>> for k in range(7): y = P(k<3,'')
+      1 -> (1,L1,[2,3,0]) -> 0
+      1 -> (2,L2,[2,3,0]) -> 0
+      1 -> (2,D3,[2,3,0]) -> 1
+      0 -> (1,D2,[2,3,0]) -> 1
+      0 -> (0,D1,[2,3,0]) -> 1
+      0 -> (0,L0,[2,3,0]) -> 0
+      0 -> (0,L0,[2,3,0]) -> 0
+    """
+
+def _case6():
+    """
+    >>> P = Pulse(2,3)
+    >>> for k in range(7): y = P(k<5 and k!=2,'')
+      1 -> (1,L1,[2,3,0]) -> 0
+      1 -> (2,L2,[2,3,0]) -> 0
+      0 -> (1,L1,[2,3,0]) -> 0
+      1 -> (2,L2,[2,3,0]) -> 0
+      1 -> (2,D3,[2,3,0]) -> 1
+      0 -> (1,D2,[2,3,0]) -> 1
+      0 -> (0,D1,[2,3,0]) -> 1
+    """
 
 #===============================================================================
 # doctest:
