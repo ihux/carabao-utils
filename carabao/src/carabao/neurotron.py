@@ -78,6 +78,8 @@ class Pulse:
         x,i = self.integrate(u)         # integrate
 
         def fy(i): return i > l and d > 0
+        def fc(x,c): return d if x >= l > 0 and r == 0 else c - 1
+
 
         if self.s == 'L':               # L: lag state (debouncing)
             if fy(i) > 0:
@@ -88,13 +90,12 @@ class Pulse:
                 self.c = x
                 self.y = fy(i)
         elif self.s == 'D':             # D: duty state
-            if self.n[2] > 0:           # no retrigger if relax
-                self.c -= 1
-            elif x >= l > 0:
-                self.c = d
-            else:
-                self.c -= 1             # count down duty duration
-            self.y = int(self.c > 0)
+            #if x >= l > 0 and r == 0:
+            #    self.c = d
+            #else:
+            #    self.c -= 1             # count down duty duration
+            self.y = int(fc(x,self.c) > 0)
+            self.c = fc(x,self.c)
             if self.y == 0 and r > 0:
                 self.trans('R')         # transition to relax state
             elif self.y == r == 0:
