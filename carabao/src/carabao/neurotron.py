@@ -66,15 +66,16 @@ class Pulse:
         self.s = state                  # actual state change
 
     def integrate(self,u):
+        self.u = u;
         l = self.n[0]                   # lag duration
         i = self.x + 2*u - 1            # integrator output
         self.x = max(0,min(i,l))        # limit integrator state
         return self.x,i                 # return integrator state/output
 
     def call(self,u):
-        self.u = u;
-        l,d,r = self.n                  # get parameters
         x,i = self.integrate(u)         # integrate
+        l,d,r = self.n                  # get parameters
+
         if self.s == 'L':               # L: lag state (debouncing)
             self.y = int(i > l and d > 0)
             self.c = x
