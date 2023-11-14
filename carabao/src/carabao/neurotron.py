@@ -77,32 +77,31 @@ class Pulse:
         l,d,r = self.n                  # get parameters
         x,i = self.integrate(u)         # integrate
 
-        def fy(i): return i > l and d > 0
-        def fc(x,c): return d if x >= l > 0 and r == 0 else c - 1
-
-
         if self.s == 'L':               # L: lag state (debouncing)
-            if fy(i) > 0:
-                self.c = d
-                self.y = fy(i)
+            y_ = int(i > l and d >0)    # output after transition
+            if y_ > 0:
+                self.c = d;  self.y = y_
                 self.s = 'D'
             else:
-                self.c = x
-                self.y = fy(i)
+                self.c = x;  self.y = y_
         elif self.s == 'D':             # D: duty state
-            #if x >= l > 0 and r == 0:
-            #    self.c = d
-            #else:
-            #    self.c -= 1             # count down duty duration
-            self.y = int(fc(x,self.c) > 0)
-            self.c = fc(x,self.c)
-            if self.y == 0 and r > 0:
+            c_ = d if x >= l > 0 and r == 0 else self.c - 1
+            if self.c <= 1 and r > 0:
+                self.y = 0;  self.c = r
                 self.trans('R')         # transition to relax state
-            elif self.y == r == 0:
+            elif c_ <= 0 and r == 0:
+                self.y = 0;  self.c = u
                 self.trans('L')         # transition to lag state
+            else:
+                self.c = c_;
+                self.y = int(c_ > 0)
         elif self.s == 'R':             # R: relax state
-            self.c -= 1                 # count down relax period
-            if self.c <= 0: self.trans('L')
+            if self.c <= 1:
+                self.c = u              # count down relax period
+                self.trans('L')
+            else:
+                self.c -= 1             # count down relax period
+
         if self.name is not None: print(self)
         return self.out()
 
