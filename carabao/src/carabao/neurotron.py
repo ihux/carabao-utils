@@ -77,14 +77,14 @@ class Pulse:
         elif self.s == 'D':             # D: duty state
             if self.n[2] > 0:           # no retrigger if relax
                 self.c -= 1
-            elif self.i >= l and l > 0:
+            elif self.i >= l > 0:
                 self.c = d
             else:
                 self.c -= 1             # count down duty duration
             self.y = int(self.c > 0)
             if self.y == 0 and r > 0:
                 self.trans('R')         # transition to relax state
-            elif self.y == 0 and r == 0:
+            elif self.y == r == 0:
                 self.trans('L')         # transition to lag state
         elif self.s == 'R':             # R: relax state
             self.c -= 1                 # count down relax period
