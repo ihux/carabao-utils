@@ -61,6 +61,7 @@ class Pulse:
             self.x = self.c = self.u    # init integration counter
         elif state == 'D':              # transition to duty state
             self.c = d                  # set duration counter
+            raise Exception()
         elif state == 'R':              # transition to relax state
             self.c = r                  # set relax counter
         self.s = state                  # actual state change
@@ -73,13 +74,19 @@ class Pulse:
         return self.x,i                 # return integrator state/output
 
     def call(self,u):
-        x,i = self.integrate(u)         # integrate
         l,d,r = self.n                  # get parameters
+        x,i = self.integrate(u)         # integrate
+
+        def fy(i): return i > l and d > 0
 
         if self.s == 'L':               # L: lag state (debouncing)
-            self.y = int(i > l and d > 0)
-            self.c = x
-            if self.y > 0: self.trans('D')
+            if fy(i) > 0:
+                self.c = d
+                self.y = fy(i)
+                self.s = 'D'
+            else:
+                self.c = x
+                self.y = fy(i)
         elif self.s == 'D':             # D: duty state
             if self.n[2] > 0:           # no retrigger if relax
                 self.c -= 1
@@ -102,7 +109,7 @@ class Pulse:
     def out(self): return self.y
     def set(self,val,log=None):
         if val > 0:
-            self.trans('D')
+            self.c = self.n[1];  self.s = 'D'
         else:
             self.trans('L')
         if log is not None:
