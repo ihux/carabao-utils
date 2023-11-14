@@ -50,7 +50,7 @@ class Pulse:
         self.name = name                # name header
         self.n = [lag,duty,relax]       # phase durations
         self.s = 'L'                    # state, initialized as `lag state`
-        self.i = 0                      # integrator
+        self.x = 0                      # integrator
         self.c = 0                      # counter
         self.u = 0                      # input
         self.y = 0                      # output
@@ -58,26 +58,31 @@ class Pulse:
     def trans(self,state):              # state transition
         l,d,r = self.n                  # get parameters
         if state == 'L':                # transition to lag state
-            self.i = self.c = self.u    # init integration counter
+            self.x = self.c = self.u    # init integration counter
         elif state == 'D':              # transition to duty state
             self.c = d                  # set duration counter
         elif state == 'R':              # transition to relax state
             self.c = r                  # set relax counter
         self.s = state                  # actual state change
 
+    def integrate(self,u):
+        l = self.n[0]                   # lag duration
+        i = self.x + 2*u - 1            # integrator output
+        self.x = max(0,min(i,l))        # limit integrator state
+        return self.x,i                 # return integrator state/output
+
     def call(self,u):
         self.u = u;
         l,d,r = self.n                  # get parameters
-        i = self.i + 2*u - 1            # integrate
-        self.i = max(0,min(i,l))
+        x,i = self.integrate(u)         # integrate
         if self.s == 'L':               # L: lag state (debouncing)
             self.y = int(i > l and d > 0)
-            self.c = self.i
+            self.c = x
             if self.y > 0: self.trans('D')
         elif self.s == 'D':             # D: duty state
             if self.n[2] > 0:           # no retrigger if relax
                 self.c -= 1
-            elif self.i >= l > 0:
+            elif x >= l > 0:
                 self.c = d
             else:
                 self.c -= 1             # count down duty duration
@@ -114,7 +119,7 @@ class Pulse:
             for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
             return s + ']'
         o = self
-        body = "(%g,%s%g,%s)" % (self.i,self.s,self.c,string(self.n))
+        body = "(%g,%s%g,%s)" % (self.x,self.s,self.c,string(self.n))
         name = self.name if self.name is not None else ""
         return name + " %g -> " % self.inp() + body +  " -> %g" % self.out()
 
