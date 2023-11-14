@@ -56,34 +56,35 @@ class Pulse:
         self.y = 0                      # output
 
     def trans(self,state):              # state transition
+        l,d,r = self.n                  # get parameters
         if state == 'L':                # transition to lag state
             self.i = self.c = self.u    # init integration counter
         elif state == 'D':              # transition to duty state
-            self.c = self.n[1]          # init duration counter
+            self.c = d                  # set duration counter
         elif state == 'R':              # transition to relax state
-            self.c = self.n[2]          # init duration counter
+            self.c = r                  # set relax counter
         self.s = state                  # actual state change
 
     def call(self,u):
         self.u = u;
-        l,d,r = self.par
+        l,d,r = self.n                  # get parameters
         i = self.i + 2*u - 1            # integrate
-        self.i = max(0,min(i,self.n[0]))
+        self.i = max(0,min(i,l))
         if self.s == 'L':               # L: lag state (debouncing)
-            self.y = int(i > self.n[0] and self.n[1] > 0)
+            self.y = int(i > l and d > 0)
             self.c = self.i
             if self.y > 0: self.trans('D')
         elif self.s == 'D':             # D: duty state
             if self.n[2] > 0:           # no retrigger if relax
                 self.c -= 1
-            elif self.i >= self.n[0] and self.n[0] > 0:
-                self.c = self.n[1]
+            elif self.i >= l and l > 0:
+                self.c = d
             else:
                 self.c -= 1             # count down duty duration
             self.y = int(self.c > 0)
-            if self.y == 0 and self.n[2] > 0:
+            if self.y == 0 and r > 0:
                 self.trans('R')         # transition to relax state
-            elif self.y == 0 and self.n[2] == 0:
+            elif self.y == 0 and r == 0:
                 self.trans('L')         # transition to lag state
         elif self.s == 'R':             # R: relax state
             self.c -= 1                 # count down relax period
@@ -432,6 +433,157 @@ def toy(mode):
         p.eta = 0.5                         # synaptic threshold
 
         return (e,d,p),token
+
+class Neurotron:
+    """
+    class Neurotron: full functionality
+    >>> par,sizes = toy('sarah') # epar,dpar,ppar = par
+    >>> cell0 = Neurotron(k:=0,par,sizes,'cell0')
+    >>> print(cell0)
+    Neurotron('cell0',0)
+    """
+    def __init__(self,k,par,sizes,name=None):
+        self.k = k
+        self.sizes = sizes
+        self.name = name
+
+        epar,dpar,ppar = par
+
+        self.excite  = Terminal(epar.w[k],epar.theta,'excite')
+        self.excite.synapses = Synapses(epar.k[k],epar.p[k],epar.eta)
+
+        self.depress = Terminal(dpar.w[k],dpar.theta,'depress')
+        self.depress.synapses = Synapses(dpar.g[k],dpar.p[k],dpar.eta)
+
+        self.predict = Terminal(ppar.W[k],ppar.theta,'predict')
+        self.predict.synapses = Synapses(ppar.K[k],ppar.P[k],ppar.eta)
+
+        self.u = Pulse(0,4,3)
+        self.q = Pulse(2,1,0)
+        self.x = Pulse(1,7,0)
+        self.y = Pulse(1,2,0)
+        self.d = Pulse(0,2,0)
+        self.b = Pulse(0,2,2)
+        self.l = Pulse(1,1,5)
+
+    def __call__(self,y,log=None):
+        def _or(x,y): return min(x+y,1)
+        def _not(x): return (1-x)
+        def _log(topic,k):
+            if log is not None: return "%s%g:" % (topic,k)
+            return None
+
+        k = self.k
+        c,f = self.split(y,log)
+
+        _d = self.depress(c,_log('=> depress-',k))
+        _u = self.excite(f,_log('=> excite-',k))
+        _s = self.predict(c,_log('=> predict-',k))
+
+        d = self.d(_d,_log(' - d',k))   # optional
+        u = self.u(_u,_log(' - u',k))
+        q = self.q( u,_log(' - q',k))
+
+        _b = _not(_d) * q
+        b = self.b(_b,_log(' - b',k))
+
+        x = self.x(_s,_log(' - x',k))
+
+        _y = _or(u*x,b)
+        _l = x * _y
+        l = self.l(_l,_log(' - l',k))
+
+        y[k] = self.y(_y,_log(' - y',k))
+        return y
+
+    def split(self,y,log=None):        # split y-vector into context and feedforward
+        nc,nf = self.sizes;
+        c = y[:nc];  f = y[nc:nc+nf]
+        if log is not None:
+           print("\nf:",f,", c:",c)
+        return (c,f)
+
+    def __repr__(self):
+        #state = "), <updy> = <%g%g%g%g>" % (self.u,self.p,self.d,self.y)
+        name = self.name if self.name is not None else ''
+        return "Neurotron('%s',%g)"% (name,self.k) + ""
+
+#===========================================================================
+# class Record
+#===========================================================================
+
+class Record:
+    def __init__(self,cells):
+        self.n = len(cells.cells)
+        self.clear()
+
+    def clear(self):                        # clear recorder
+        n = self.n
+        self.u = [[] for k in range(n)];
+        self.q = [[] for k in range(n)];
+        self.x = [[] for k in range(n)];
+        self.l = [[] for k in range(n)];
+        self.b = [[] for k in range(n)];
+        self.d = [[] for k in range(n)];
+        self.y = [[] for k in range(n)];
+
+    def __call__(self,cells):               # record state of cells
+        for k in cells.range():
+            self.u[k].append(cells[k].u.out())
+            self.q[k].append(cells[k].q.out())
+            self.x[k].append(cells[k].x.out())
+            self.l[k].append(cells[k].l.out())
+            self.b[k].append(cells[k].b.out())
+            self.d[k].append(cells[k].d.out())
+            self.y[k].append(cells[k].y.out())
+
+    def log(self,y,tag=None):
+        print('\nsummary',tag)
+        print("   u:",self.u)
+        print("   q:",self.q)
+        print("   x:",self.x)
+        print("   l:",self.l)
+        print("   b:",self.b)
+        print("   d:",self.d)
+        print("   y:",self.y)
+        nc,nf = self[0].sizes
+        print("y = [c,f]:",[y[:nc],y[nc:nc+nf]])
+
+    def pattern(self):
+        m = len(self.u);  n = len(self.u[0])
+        str = '';
+        for i in range(m):
+            line = '';  sep = ''
+            for j in range(n):
+                chunk = ''
+                if self.u[i][j]: chunk += 'U'
+                if self.q[i][j]: chunk += 'Q'
+                if self.x[i][j]: chunk += 'X'
+                if self.l[i][j]: chunk += 'L'
+                if self.d[i][j]: chunk += 'D'
+                if self.b[i][j]: chunk += 'B'
+                if self.y[i][j]: chunk += 'Y'
+                if chunk == '':
+                    line += '-'
+                else:
+                    line += sep + chunk;  sep = ','
+            str += '|' + line;
+        return str + '|'
+
+#=========================================================================
+# helper: concatenate two Neurotron output lists
+#=========================================================================
+
+def cat(c,f):
+    """
+    cat(): concatenate two Neurotron output lists, return also sizes
+    >>> c = [0,0,0];  f = [0,1,0,1,0,1,0,1,0,1]
+    >>> y,sizes = cat(c,f)
+    >>> (y,sizes)
+    ([0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], (3, 10))
+    """
+    sizes = (len(c),len(f))
+    return (c+f,sizes)
 
 #===============================================================================
 # unit test cases:
