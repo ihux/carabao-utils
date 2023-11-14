@@ -288,8 +288,8 @@ class Screen:
         d = d if d is not None else 0      # depression state
         l = l if l is not None else 0      # learning state
 
-        ucol = self.lila   if u > 0 else self.gray
-        ucol = self.blue   if q > 0 else ucol
+        ucol = self.blue   if u > 0 else self.gray
+        ucol = self.lila   if q > 0 else ucol
         pcol = self.green  if x > 0 else self.gray
         ycol = self.red    if y > 0 else self.gray
         bcol = self.dark   if d > 0 else self.gray
