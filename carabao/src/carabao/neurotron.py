@@ -76,16 +76,16 @@ class Pulse:
     def call(self,u):
         l,d,r = self.n                  # get parameters
         x,i = self.integrate(u)         # integrate
+        y_ = int(i > l and d >0)        # proposed new output
+        c_ = d if x >= l > 0 and r == 0 else self.c - 1  # proposed new count
 
         if self.s == 'L':               # L: lag state (debouncing)
-            y_ = int(i > l and d >0)    # output after transition
             if y_ > 0:
                 self.c = d;  self.y = y_
                 self.s = 'D'
             else:
                 self.c = x;  self.y = y_
         elif self.s == 'D':             # D: duty state
-            c_ = d if x >= l > 0 and r == 0 else self.c - 1
             if self.c <= 1 and r > 0:
                 self.y = 0;  self.c = r
                 self.trans('R')         # transition to relax state
