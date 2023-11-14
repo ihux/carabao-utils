@@ -65,7 +65,8 @@ class Pulse:
         self.s = state                  # actual state change
 
     def call(self,u):
-        self.u = u
+        self.u = u;
+        l,d,r = self.par
         i = self.i + 2*u - 1            # integrate
         self.i = max(0,min(i,self.n[0]))
         if self.s == 'L':               # L: lag state (debouncing)
