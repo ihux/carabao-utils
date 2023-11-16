@@ -133,143 +133,6 @@ class Pulse:
         name = self.name if self.name is not None else ""
         return name + " %g -> " % self.inp() + body +  " -> %g" % self.out()
 
-#===============================================================================
-# class: Pulse
-#===============================================================================
-
-class Pulse1:
-    """
-    pulse: pulse unit without debouncer (implemented with shift register)
-    >>> u=Pulse1(2,3)
-    >>> for i in range(6): o = u(int(i<1),'u%g:'%i)
-    u0:  1 -> ([1,0,0], 0/3/0) -> 0
-    u1:  0 -> ([0,1,0], 0/3/0) -> 0
-    u2:  0 -> ([0,0,1], 3/3/0) -> 1
-    u3:  0 -> ([0,0,0], 2/3/0) -> 1
-    u4:  0 -> ([0,0,0], 1/3/0) -> 1
-    u5:  0 -> ([0,0,0], 0/3/0) -> 0
-    >>> i = u.inp()                     # retrieve recent input
-    >>> o = u.out()                     # get pulse output
-    >>> u.set(1)                        # set output 1 (over full duty)
-    """
-    def __init__(self,lag,duty,relax=0,name=None):
-        self.name = name                # name header
-        self.n = duty                   # duty = pulse length
-        self.s = self.zeros(lag+1)      # shift register
-        self.c = 0                      # counter
-        self.r = relax
-
-    def zeros(self,n):
-        return [0 for k in range(n)]
-
-    def call(self,u):
-        if self.c < 0:                  # relax mode?
-            self.s = self.zeros(len(self.s))
-            self.s[0] = u;  self.c += 1
-        else:
-            self.s = [u] + self.s[:-1]
-            if self.r > 0 and self.c == 1:
-                self.c = -self.r
-            elif self.r > 0 and self.c > 1:
-                self.c -= 1
-            else:
-                self.c = self.n if self.s[-1] > 0 else max(0,self.c-1)
-        if self.name is not None: print(self)
-        return self.out()
-
-    def inp(self): return self.s[0]
-    def out(self): return (self.c > 0) + 0
-    def set(self,val,log=None):
-        self.c = self.n if val > 0 else 0
-        if log is not None:
-            print(log,self)
-
-    def __call__(self,u,log=None):
-        y = self.call(u)
-        if log is not None:
-            print(log,self)
-        return y
-
-    def __repr__(self):
-        def string(l):
-            s = '['; sep = ''
-            for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
-            return s + ']'
-        o = self;  sgn = ' ' if o.c >= 0 else ''
-        body = "(%s,%s%g/%g/%g)" % (string(o.s),sgn,o.c,o.n,o.r)
-        name = o.name if o.name is not None else ""
-        return name + " %g -> " % o.inp() + body +  " -> %g" % o.out()
-
-#===============================================================================
-# class: Pulse
-#===============================================================================
-
-class Pulse2:
-    """
-    pulse: pulse unit with debouncer (implemented with shift register)
-    >>> u=Pulse2(2,3)
-    >>> for i in range(6): o = u(int(i<2),'u%g:'%i)
-    u0:  1 -> ([1,0,0], 0/3/0) -> 0
-    u1:  1 -> ([1,1,0], 0/3/0) -> 0
-    u2:  0 -> ([0,1,1], 3/3/0) -> 1
-    u3:  0 -> ([0,0,1], 2/3/0) -> 1
-    u4:  0 -> ([0,0,0], 1/3/0) -> 1
-    u5:  0 -> ([0,0,0], 0/3/0) -> 0
-    >>> i = u.inp()                     # retrieve recent input
-    >>> o = u.out()                     # get pulse output
-    >>> u.set(1)                        # set output 1 (over full duty)
-    """
-    def __init__(self,lag,duty,relax=0,name=None):
-        self.name = name                # name header
-        self.n = duty                   # duty = pulse length
-        self.s = self.zeros(lag+1)      # shift register
-        self.c = 0                      # counter
-        self.r = relax
-
-    def zeros(self,n):
-        return [0 for k in range(n)]
-
-    def call(self,u):
-        o = self
-        if o.c < 0:                  # relax mode?
-            o.s = o.zeros(len(o.s))
-            o.s[0] = u;  o.c += 1
-        else:
-            o.s = [u] + o.s[:-1]
-            if o.r > 0 and o.c == 1:
-                o.c = -o.r
-            elif o.r > 0 and o.c > 1:
-                o.c -= 1
-            elif len(o.s) > 1:
-                o.c = o.n if sum(o.s[1:]) >= len(o.s)-1 else max(0,o.c-1)
-            else:
-                o.c = o.n if o.s[0] > 0 else max(0,o.c-1)
-        if o.name is not None: print(o)
-        return o.out()
-
-    def inp(self): return self.s[0]
-    def out(self): return (self.c > 0) + 0
-    def set(self,val,log=None):
-        self.c = self.n if val > 0 else 0
-        if log is not None:
-            print(log,self)
-
-    def __call__(self,u,log=None):
-        y = self.call(u)
-        if log is not None:
-            print(log,self)
-        return y
-
-    def __repr__(self):
-        def string(l):
-            s = '['; sep = ''
-            for i in range(0,len(l)): s += sep + "%g"%l[i]; sep = ','
-            return s + ']'
-        o = self;  sgn = ' ' if o.c >= 0 else ''
-        body = "(%s,%s%g/%g/%g)" % (string(o.s),sgn,o.c,o.n,o.r)
-        name = o.name if o.name is not None else ""
-        return name + " %g -> " % o.inp() + body +  " -> %g" % o.out()
-
 #===================================================================================
 # class: Synapses
 #===================================================================================
@@ -392,7 +255,8 @@ class Monitor:
         b = cell.b.out()
         d = cell.d.out()
         l = cell.l.out()
-        self.screen.neurotron((i,j),u,q,x,y,b,d,l)
+        s = cell.s.out()
+        self.screen.neurotron((i,j),u,q,x,y,b,d,l,s)
     def xlabel(self,x,txt,size=None):
         self.screen.text(x,-0.75,txt,size=size)
     def title(self,txt,size=10):
@@ -435,6 +299,7 @@ class Neurotron:
         self.d = Pulse(*dyn['d'])
         self.b = Pulse(*dyn['b'])
         self.l = Pulse(*dyn['l'])
+        self.s = Pulse(*dyn['s'])
 
     def __call__(self,y,log=None):
         def _or(x,y): return min(x+y,1)
@@ -453,6 +318,7 @@ class Neurotron:
         d = self.d(_d,_log(' - d',k))   # optional
         u = self.u(_u,_log(' - u',k))
         q = self.q( u,_log(' - q',k))
+        s = self.s(_s,_log(' - s',k))
 
         _b = _not(_d) * q
         b = self.b(_b,_log(' - b',k))
@@ -496,6 +362,7 @@ class Record:
         self.b = [[] for k in range(n)];
         self.d = [[] for k in range(n)];
         self.y = [[] for k in range(n)];
+        self.s = [[] for k in range(n)];
 
     def __call__(self,cells):               # record state of cells
         for k in cells.range():
@@ -506,6 +373,7 @@ class Record:
             self.b[k].append(cells[k].b.out())
             self.d[k].append(cells[k].d.out())
             self.y[k].append(cells[k].y.out())
+            self.s[k].append(cells[k].s.out())
 
     def log(self,cells,y,tag=None):
         print('\nSummary:',tag)
@@ -516,6 +384,7 @@ class Record:
         print("   b:",self.b)
         print("   d:",self.d)
         print("   y:",self.y)
+        print("   s:",self.s)
         nc,nf = cells[0].sizes
         print("y = [c,f]:",[y[:nc],y[nc:nc+nf]])
 
@@ -533,6 +402,7 @@ class Record:
                 if self.d[i][j]: chunk += 'D'
                 if self.b[i][j]: chunk += 'B'
                 if self.y[i][j]: chunk += 'Y'
+                if self.s[i][j]: chunk += 'S'
                 if chunk == '':
                     line += '-'
                 else:
@@ -588,7 +458,7 @@ def toy(mode):
         p.eta = 0.5                         # synaptic threshold
 
         dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
-               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
+               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5), 's':(0,1,6)}
         #dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
         #       'd':(0,2,0), 'b':(0,1,0), 'l':(1,1,5)}
 
@@ -601,7 +471,7 @@ def toy(mode):
                  'cars':[1,1,1,0,0,1,0,1,1,1]}
         e,d,p,dyn = par
         dyn = {'u':(2,4,4), 'q':(2,1,0), 'x':(1,9,0), 'y':(1,2,0),
-               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
+               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5), 's':(0,1,6)}
         return (e,d,p,dyn),token
 
 
