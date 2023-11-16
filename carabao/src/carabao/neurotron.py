@@ -89,6 +89,8 @@ class Pulse:
             if self.c <= 1 and r > 0:
                 self.y = 0;  self.c = r
                 self.trans('R')         # transition to relax state
+            #elif l == 0 and u > 0:
+            #    self.y = y_
             elif c_ <= 0 and r == 0:
                 self.y = 0;  self.c = u
                 self.trans('L')         # transition to lag state
@@ -585,10 +587,10 @@ def toy(mode):
         p.theta = 1                         # prediction threshold
         p.eta = 0.5                         # synaptic threshold
 
-        #dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
-        #       'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
         dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
-               'd':(0,2,0), 'b':(0,0,0), 'l':(1,1,5)}
+               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
+        #dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
+        #       'd':(0,2,0), 'b':(0,1,0), 'l':(1,1,5)}
 
         return (e,d,p,dyn),token
 
@@ -622,13 +624,25 @@ def cat(c,f):
 # unit test cases:
 #===============================================================================
 
-def _case1():
+def _case1a():
     """
     >>> P = Pulse(0,0)
     >>> for k in range(3): y = P(k<1,'')
       1 -> (0,L0,[0,0,0]) -> 0
       0 -> (0,L0,[0,0,0]) -> 0
       0 -> (0,L0,[0,0,0]) -> 0
+    """
+
+def _case1b():                  # Identity
+    """
+    >>> P = Pulse(0,1)
+    >>> for k in range(6): y = P(k<1 or 3 <=k <= 4,'')
+      1 -> (0,D1,[0,1,0]) -> 1
+      0 -> (0,L0,[0,1,0]) -> 0
+      0 -> (0,L0,[0,1,0]) -> 0
+      1 -> (0,D1,[0,1,0]) -> 1
+      1 -> (1,L1,[0,1,0]) -> 0
+      0 -> (0,L0,[0,1,0]) -> 0
     """
 
 def _case2():
