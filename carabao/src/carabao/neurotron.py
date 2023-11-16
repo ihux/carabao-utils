@@ -392,65 +392,20 @@ class Monitor:
         l = cell.l.out()
         self.screen.neurotron((i,j),u,q,x,y,b,d,l)
     def xlabel(self,x,txt,size=None):
-        self.screen.text(x,-0.75,txt)
+        self.screen.text(x,-0.75,txt,size=size)
     def title(self,txt,size=10):
         scr = self.screen
         x = (scr.n-1)/2;  y = scr.m + 0.3
         self.screen.text(x,y,txt,size=size)
 
 #===============================================================================
-# helper: set up toy stuff
+# class Neurotron
 #===============================================================================
-
-def toy(mode):
-    """
-    toy(): setup toy stuff
-    >>> par,token = toy('sarah') # get params for 'sarah' app
-    >>> excite,depress,predict = par
-    """
-    def bundle(obj,n):                      # create a bunch of object as a list
-        return [obj for k in range(0,n)]
-    idx = [k for k in range(0,13)]
-    prm = [.3,.4,.1, .5,.2,.3, .1,.7,.3,]
-
-    if mode == 'sarah':
-        token = {'Sarah':[1,1,0,1,1,1,0,1,0,1],
-                 'loves':[0,1,1,1,0,1,1,0,1,1],
-                 'music':[1,1,1,0,0,1,0,1,1,1]}
-
-        f1 = token['Sarah']
-        f2 = token['loves']
-        f3 = token['music']
-
-        e = struct();                       # excitation terminal parameters
-        e.w = [f1,f2,f3]                    # excitation weights
-        e.k = bundle(idx[:10],3)            # selects feedforward part of x
-        e.p = [f1,f2,f3];
-        e.theta = 6                         # spiking threshold
-        e.eta = 0.5                         # synaptic threshold
-
-        d = struct()                        # depression terminal parameters
-        d.w = bundle([1,1,0],3)             # depression weights
-        d.g = bundle([10,11,12],3);         # group indices
-        d.p = bundle([1,1,1],3);            # all depression permanences are 1
-        d.theta = 1                         # depression threshold
-        d.eta = 0.5                         # synaptic threshold
-
-        p = struct()                        # prediction terminal parameters
-        p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
-        p.K = bundle([idx[10:],idx[10:]],3)
-        p.P = [[prm[0:3],prm[0:3]],
-               [prm[3:6],prm[0:3]],
-               [prm[6:9],prm[0:3]]]
-        p.theta = 1                         # prediction threshold
-        p.eta = 0.5                         # synaptic threshold
-
-        return (e,d,p),token
 
 class Neurotron:
     """
     class Neurotron: full functionality
-    >>> par,sizes = toy('sarah') # epar,dpar,ppar = par
+    >>> par,sizes = toy('sarah') # epar,dpar,ppar,dyn = par
     >>> cell0 = Neurotron(k:=0,par,sizes,'cell0')
     >>> print(cell0)
     Neurotron('cell0',0)
@@ -460,7 +415,7 @@ class Neurotron:
         self.sizes = sizes
         self.name = name
 
-        epar,dpar,ppar = par
+        epar,dpar,ppar,dyn = par
 
         self.excite  = Terminal(epar.w[k],epar.theta,'excite')
         self.excite.synapses = Synapses(epar.k[k],epar.p[k],epar.eta)
@@ -471,13 +426,13 @@ class Neurotron:
         self.predict = Terminal(ppar.W[k],ppar.theta,'predict')
         self.predict.synapses = Synapses(ppar.K[k],ppar.P[k],ppar.eta)
 
-        self.u = Pulse(0,4,3)
-        self.q = Pulse(2,1,0)
-        self.x = Pulse(1,7,0)
-        self.y = Pulse(1,2,0)
-        self.d = Pulse(0,2,0)
-        self.b = Pulse(0,2,2)
-        self.l = Pulse(1,1,5)
+        self.u = Pulse(*dyn['u'])
+        self.q = Pulse(*dyn['q'])
+        self.x = Pulse(*dyn['x'])
+        self.y = Pulse(*dyn['y'])
+        self.d = Pulse(*dyn['d'])
+        self.b = Pulse(*dyn['b'])
+        self.l = Pulse(*dyn['l'])
 
     def __call__(self,y,log=None):
         def _or(x,y): return min(x+y,1)
@@ -550,8 +505,8 @@ class Record:
             self.d[k].append(cells[k].d.out())
             self.y[k].append(cells[k].y.out())
 
-    def log(self,y,tag=None):
-        print('\nsummary',tag)
+    def log(self,cells,y,tag=None):
+        print('\nSummary:',tag)
         print("   u:",self.u)
         print("   q:",self.q)
         print("   x:",self.x)
@@ -559,7 +514,7 @@ class Record:
         print("   b:",self.b)
         print("   d:",self.d)
         print("   y:",self.y)
-        nc,nf = self[0].sizes
+        nc,nf = cells[0].sizes
         print("y = [c,f]:",[y[:nc],y[nc:nc+nf]])
 
     def pattern(self):
@@ -582,6 +537,69 @@ class Record:
                     line += sep + chunk;  sep = ','
             str += '|' + line;
         return str + '|'
+
+#===============================================================================
+# helper: set up toy stuff
+#===============================================================================
+
+def toy(mode):
+    """
+    toy(): setup toy stuff
+    >>> par,token = toy('sarah') # get params for 'sarah' app
+    >>> excite,depress,predict,dyn = par
+    """
+    def bundle(obj,n):                      # create a bunch of object as a list
+        return [obj for k in range(0,n)]
+    idx = [k for k in range(0,13)]
+    prm = [.3,.4,.1, .5,.2,.3, .1,.7,.3,]
+
+    if mode == 'sarah':
+        token = {'Sarah':[1,1,0,1,1,1,0,1,0,1],
+                 'loves':[0,1,1,1,0,1,1,0,1,1],
+                 'music':[1,1,1,0,0,1,0,1,1,1]}
+
+        f1 = token['Sarah']
+        f2 = token['loves']
+        f3 = token['music']
+
+        e = struct();                       # excitation terminal parameters
+        e.w = [f1,f2,f3]                    # excitation weights
+        e.k = bundle(idx[:10],3)            # selects feedforward part of x
+        e.p = [f1,f2,f3];
+        e.theta = 6                         # spiking threshold
+        e.eta = 0.5                         # synaptic threshold
+
+        d = struct()                        # depression terminal parameters
+        d.w = bundle([1,1,0],3)             # depression weights
+        d.g = bundle([10,11,12],3);         # group indices
+        d.p = bundle([1,1,1],3);            # all depression permanences are 1
+        d.theta = 1                         # depression threshold
+        d.eta = 0.5                         # synaptic threshold
+
+        p = struct()                        # prediction terminal parameters
+        p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
+        p.K = bundle([idx[10:],idx[10:]],3)
+        p.P = [[prm[0:3],prm[0:3]],
+               [prm[3:6],prm[0:3]],
+               [prm[6:9],prm[0:3]]]
+        p.theta = 1                         # prediction threshold
+        p.eta = 0.5                         # synaptic threshold
+
+        dyn = {'u':(0,4,3), 'q':(2,1,0), 'x':(1,7,0), 'y':(1,2,0),
+               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
+
+        return (e,d,p,dyn),token
+
+    elif mode == 'tony':
+        par,token = toy('sarah')
+        token = {'Tony':[1,1,0,1,1,1,0,1,0,1],
+                 'loves':[0,1,1,1,0,1,1,0,1,1],
+                 'cars':[1,1,1,0,0,1,0,1,1,1]}
+        e,d,p,dyn = par
+        dyn = {'u':(2,4,4), 'q':(2,1,0), 'x':(1,9,0), 'y':(1,2,0),
+               'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5)}
+        return (e,d,p,dyn),token
+
 
 #=========================================================================
 # helper: concatenate two Neurotron output lists
