@@ -5,16 +5,6 @@
 Module carabao.pulse supports the following classes:
     class Pulse
 """
-
-#===============================================================================
-# imports
-#===============================================================================
-
-#from numpy import array, transpose
-#from ypstruct import struct
-#from carabao.util import repr
-#from carabao.screen import Screen
-
 #===============================================================================
 # class: Pulse
 #===============================================================================
@@ -85,7 +75,10 @@ class Pulse:
                 self.s = 'L'            # transition to lag state
             else:
                 #self.c = c_;
-                self.c = min(c_ + u,d)
+                if r > 0:
+                    self.c = c_
+                else:
+                    self.c = min(c_ + u,d)
                 #self.y = int(c_ > 0)
                 self.y = int(self.c > 0)
         elif self.s == 'R':             # R: relax state
@@ -309,6 +302,20 @@ def _case9():
       0 -> (0,L0,[1,1,3]) -> 0
       0 -> (0,L0,[1,1,3]) -> 0
       0 -> (0,L0,[1,1,3]) -> 0
+    """
+
+def _case10a():
+    """
+    >>> P = Pulse(0,2,3)
+    >>> for k in range(8): y = P(k<2,'')
+      1 -> (0,D2,[0,2,3]) -> 1
+      1 -> (0,D1,[0,2,3]) -> 1
+      0 -> (0,R3,[0,2,3]) -> 0
+      0 -> (0,R2,[0,2,3]) -> 0
+      0 -> (0,R1,[0,2,3]) -> 0
+      0 -> (0,L0,[0,2,3]) -> 0
+      0 -> (0,L0,[0,2,3]) -> 0
+      0 -> (0,L0,[0,2,3]) -> 0
     """
 
 #===============================================================================
