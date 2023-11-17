@@ -34,6 +34,7 @@ install:
 	pip install --upgrade torch
 	pip install jupyterlab
 	pip install xeus-python
+	pip install gitpython
 
 carabao: dist/carabao-0.0.1-py3-none-any.whl
 
