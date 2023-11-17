@@ -179,7 +179,15 @@ class Synapses:
     def mind(self,V,S):                # mind a potential learning delta
         pdelta,ndelta = self.delta
         self.L = S*(2*pdelta * V - ndelta)
-        print('***** L:',self.L)
+        #print('***** L:',self.L)
+
+    def learn(self):
+        self.P += self.L
+        for i in range(self.P.shape[0]):    # limit 0 <= P <= 1
+            for j in range(self.P.shape[1]):
+                self.P[i,j] = max(0.0,min(self.P[i,j],1.0))
+        print('=> learning: L:',repr(self.L))
+        print('             P:',repr(self.P))
 
     def __repr__(self):
         head = "%s " % self.log if self.log is not None else ""
@@ -248,11 +256,13 @@ class Terminal:
         #print('***** S:\n',S)
         return S
 
-    def mind(self,s):                  # mind learning delta matrix
+    def learn(self,s,l):              # learning
         if s:
             S = self.S(self._s)
-            print('***** mind self._s:',self._s,'S:\n',S)
+            #print('***** mind self._s:',self._s,'S:\n',S)
             self.synapses.mind(self._V,S)
+        if l:
+            self.synapses.learn()
 
     def __call__(self,x,log=None):  # feed x vector to terminal
         if self.synapses is None:
@@ -370,7 +380,7 @@ class Neurotron:
         _l = x * _y
         l = self.l(_l,_log(' - l',k))
 
-        self.predict.mind(s)           # mind learning matrix
+        self.predict.learn(s,l)        # learning
 
         y[k] = self.y(_y,_log(' - y',k))
         return y
