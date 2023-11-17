@@ -98,7 +98,10 @@ class Pulse:
                 self.c = c_;
                 self.y = int(c_ > 0)
         elif self.s == 'R':             # R: relax state
-            if self.c <= 1:
+            if self.c <= 1 and l == 0 and u > 0:
+                self.c = d;  self.y = y_
+                self.s = 'D'
+            elif self.c <= 1:
                 self.c = u              # count down relax period
                 self.trans('L')
             else:
@@ -604,12 +607,12 @@ def _case7():
 def _case8():
     """
     >>> P = Pulse(0,1,3)
-    >>> for k in range(8): y = P(k<5,'')
+    >>> for k in range(8): y = P(k<4,'')
       1 -> (0,D1,[0,1,3]) -> 1
       1 -> (0,R3,[0,1,3]) -> 0
       1 -> (0,R2,[0,1,3]) -> 0
       1 -> (0,R1,[0,1,3]) -> 0
-      1 -> (1,L1,[0,1,3]) -> 0
+      0 -> (0,L0,[0,1,3]) -> 0
       0 -> (0,L0,[0,1,3]) -> 0
       0 -> (0,L0,[0,1,3]) -> 0
       0 -> (0,L0,[0,1,3]) -> 0
