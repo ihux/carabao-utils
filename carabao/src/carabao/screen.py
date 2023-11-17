@@ -166,6 +166,7 @@ class Screen:
         self.blue = (0,0.5,1);      self.green=(0,.8,0)
         self.magenta = (1,0.2,1);   self.orange = (1,.5,0)
         self.lila = (.7,0.3,1);     self.cyan = (0,.7,1)
+        self.white = (1,1,1)
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
@@ -279,7 +280,7 @@ class Screen:
 
         self.basal(x,y,v)
 
-    def neurotron(self,ij,u=None,q=None,x=None,y=None,b=None,d=None,l=None):
+    def neurotron(self,ij,u=None,q=None,x=None,y=None,b=None,d=None,l=None,s=None):
         u = u if u is not None else 0      # excitation input
         q = q if q is not None else 0      # burst enable
         x = x if x is not None else 0      # prediction state
@@ -287,14 +288,16 @@ class Screen:
         b = b if b is not None else 0      # burst state
         d = d if d is not None else 0      # depression state
         l = l if l is not None else 0      # learning state
+        s = s if s is not None else 0      # spiking state
 
-        ucol = self.lila   if u > 0 else self.gray
-        ucol = self.blue   if q > 0 else ucol
+        ucol = self.blue   if u > 0 else self.gray
+        ucol = self.lila   if q > 0 else ucol
         pcol = self.green  if x > 0 else self.gray
         ycol = self.red    if y > 0 else self.gray
         bcol = self.dark   if d > 0 else self.gray
         bcol = self.orange if b > 0 else bcol
-        lcol = self.gold   if l > 0 else self.gray
+        lcol = self.white  if s > 0 else self.gray
+        lcol = self.gold   if l > 0 else lcol
 
         i,j = ij;  x = j; y = self.m-i-1;
         w = self.r2*0.26  # 0.35;
