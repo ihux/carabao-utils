@@ -22,7 +22,7 @@ Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 # imports
 #===============================================================================
 
-from numpy import array
+from numpy import array, transpose
 from ypstruct import struct
 from carabao.util import repr
 from carabao.screen import Screen
@@ -157,23 +157,29 @@ class Synapses:
 
         self.K = matrix(K)             # index matrix for selector
         self.P = matrix(P)             # permanence matrix
+        self.L = self.P*0              # learning delta
         self.eta = eta                 # synaptic threshold
         self.log = log                 # log header (no logging if log=None)
-        #if log is not None: print(self)
+        self.delta = (0.1,0.1)         # learning delta
 
     def weight(self):
         W = (self.P >= self.eta)*1;
         return W
 
-    def __call__(self,x,log=None):     # feed network state to synapses
+    def __call__(self,y,log=None):     # feed network state to synapses
         eta = self.eta;  K = self.K;  V = 0*K;
         W = self.weight()
         for i in range(0,K.shape[0]):
             for j in range(0,K.shape[1]):
-                V[i,j] = x[K[i,j]] if W[i,j] > 0 else 0
+                V[i,j] = y[K[i,j]] if W[i,j] > 0 else 0
         if self.log is not None:
-            print(self.log,repr(x),"->",repr(W),"->",repr(V))
+            print(self.log,repr(y),"->",repr(W),"->",repr(V))
         return V
+
+    def mind(self,V,S):                # mind a potential learning delta
+        pdelta,ndelta = self.delta
+        self.L = S*(2*pdelta * V - ndelta)
+        print('***** L:',self.L)
 
     def __repr__(self):
         head = "%s " % self.log if self.log is not None else ""
@@ -201,36 +207,68 @@ class Terminal:
         self.synapses = None        # synapses object
         self.W = matrix(W)
         self.theta = theta          # spiking threshold
-        self.name = name              # name string
+        self.name = name            # name string
+        self._s = None              # to save s
+        self._V = None              # to save V
         #if name is not None:
         #    print(self)
 
-    def empower(self,V,log=None):   # determine empowerment
+    def empower(self,V,log=None):      # determine empowerment
         if self.synapses is not None:
             self.W = self.synapses.weight()
         E = self.W * V
+        #print("   ***** W:\n",self.W)
+        #print("   ***** V:\n",V)
+        #print("   ***** E:\n",E)
         if log is not None:
             print(log,repr(V),"->",repr(E))
         return E
 
-    def spike(self,E,log=None):     # spike function
+    def spike(self,E,log=None):        # spike function
         S = array([sum(E[k]) for k in range(0,E.shape[0])])
         s = (S >= self.theta)*1
         if log is not None:
             print(log,repr(E),"->",repr(s))
         return s
 
-    def __call__(self,x,log=None):      # feed x vector to terminal
+    def V(self,x):                     # presynaptic signals
+        K = self.synapses.K
+        V = 0*K;  m,n = K.shape
+        #print('***** m:',m,'n:',n,'K:\n',K)
+        for i in range(m):
+            for j in range(n):
+                V[i][j] = x[K[i][j]]
+        return V
+
+    def S(self,s):                    # spike matrix (learning mask)
+        one = array([[1 for j in range(self.W.shape[1])]])
+        s = transpose(array([s]))
+        #print('***** ','s:',s,'one:',one)
+        S = s @ one
+        #print('***** S:\n',S)
+        return S
+
+    def mind(self,s):                  # mind learning delta matrix
+        if s:
+            S = self.S(self._s)
+            print('***** mind self._s:',self._s,'S:\n',S)
+            self.synapses.mind(self._V,S)
+
+    def __call__(self,x,log=None):  # feed x vector to terminal
         if self.synapses is None:
             return ([],[])
-        E = self.empower(x)
+        V = self.V(x)
+        E = self.empower(V)
         s = self.spike(E)
+        self._s = s;  self._V = V
+        #print('***** s:',s,'V:\n',V)
+
         if log is not None:
             if self.synapses is None:
-                print(log,repr(x),"->",repr(E),"->",repr(s))
+                print(log,repr(V),"->",repr(E),"->",repr(s))
             else:
                 W = self.synapses.weight()
-                print(log,repr(x),"->",repr(W),"->",repr(E),"->",repr(s))
+                print(log,repr(V),"->",repr(W),"->",repr(E),"->",repr(s))
         if len(s) == 1:
            return s.item()  # (s,E)
         return s.any()*1
@@ -331,6 +369,8 @@ class Neurotron:
         _y = _or(u*x,b)
         _l = x * _y
         l = self.l(_l,_log(' - l',k))
+
+        self.predict.mind(s)           # mind learning matrix
 
         y[k] = self.y(_y,_log(' - y',k))
         return y
@@ -446,14 +486,14 @@ def toy(mode):
 
         d = struct()                        # depression terminal parameters
         d.w = bundle([1,1,0],3)             # depression weights
-        d.g = bundle([10,11,12],3);         # group indices
+        d.g = bundle([0,1,2],3);               # group indices
         d.p = bundle([1,1,1],3);            # all depression permanences are 1
         d.theta = 1                         # depression threshold
         d.eta = 0.5                         # synaptic threshold
 
         p = struct()                        # prediction terminal parameters
         p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
-        p.K = bundle([idx[10:],idx[10:]],3)
+        p.K = bundle([[0,1,2],[0,1,2]],3)
         p.P = [[prm[0:3],prm[0:3]],
                [prm[3:6],prm[0:3]],
                [prm[6:9],prm[0:3]]]
