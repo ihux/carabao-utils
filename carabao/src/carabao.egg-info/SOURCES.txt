@@ -9,6 +9,7 @@ src/carabao/lis.py
 src/carabao/mod.py
 src/carabao/neuron.py
 src/carabao/neurotron.py
+src/carabao/pulse.py
 src/carabao/rcell.py
 src/carabao/screen.py
 src/carabao/toy.py
