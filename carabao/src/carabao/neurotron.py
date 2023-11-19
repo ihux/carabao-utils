@@ -156,7 +156,7 @@ class Synapses:
     >>> V = syn(x:=[0,0,0,0,0,0,0,0,0,0,1,1,0])
     Synapses: [0 0 0 0 0 0 0 0 0 0 1 1 0] -> #[1 0 0; 1 0 0] -> #[1 0 0; 1 0 0]
     """
-    def __init__(self,K,P,eta=0.5,log=None):
+    def __init__(self,K,P,eta=0.5,delta=(0.1,0.1),log=None):
         def matrix(X):
             X = array(X)
             return X if len(X.shape) > 1 else array([X])
@@ -166,7 +166,7 @@ class Synapses:
         self.L = self.P*0              # learning delta
         self.eta = eta                 # synaptic threshold
         self.log = log                 # log header (no logging if log=None)
-        self.delta = (0.1,0.1)         # learning delta
+        self.delta = delta             # learning delta
 
     def weight(self):
         W = (self.P >= self.eta)*1;
@@ -313,6 +313,11 @@ class Monitor:
         d = cell.d.out()
         l = cell.l.out()
         s = cell.s.out()
+
+        pdelta,ndelta = cell.predict.synapses.delta
+        if pdelta == 0 and ndelta == 0:
+            l = 0    # don't show learnung spike if learning disabled
+
         self.screen.neurotron((i,j),u,q,x,y,b,d,l,s)
     def xlabel(self,x,txt,size=None):
         self.screen.text(x,-0.75,txt,size=size)
@@ -338,16 +343,16 @@ class Neurotron:
         self.sizes = sizes
         self.name = name
 
-        epar,dpar,ppar,dyn = par
+        epar,cpar,ppar,dyn = par
 
         self.excite  = Terminal(epar.w[k],epar.theta,'excite')
-        self.excite.synapses = Synapses(epar.k[k],epar.p[k],epar.eta)
+        self.excite.synapses = Synapses(epar.k[k],epar.p[k],epar.eta,epar.delta)
 
-        self.depress = Terminal(dpar.w[k],dpar.theta,'depress')
-        self.depress.synapses = Synapses(dpar.g[k],dpar.p[k],dpar.eta)
+        self.collab = Terminal(cpar.w[k],cpar.theta,'collab')
+        self.collab.synapses = Synapses(cpar.g[k],cpar.p[k],cpar.eta,cpar.delta)
 
         self.predict = Terminal(ppar.W[k],ppar.theta,'predict')
-        self.predict.synapses = Synapses(ppar.K[k],ppar.P[k],ppar.eta)
+        self.predict.synapses = Synapses(ppar.K[k],ppar.P[k],ppar.eta,ppar.delta)
 
         self.u = Pulse(*dyn['u'])
         self.q = Pulse(*dyn['q'])
@@ -368,7 +373,7 @@ class Neurotron:
         k = self.k
         c,f = self.split(y,log)
 
-        _d = self.depress(c,_log('=> depress-',k))
+        _d = self.collab(c,_log('=> collab-',k))
         _u = self.excite(f,_log('=> excite-',k))
         _s = self.predict(c,_log('=> predict-',k))
 
@@ -377,7 +382,7 @@ class Neurotron:
         q = self.q( u,_log(' - q',k))
         s = self.s(_s,_log(' - s',k))
 
-        _b = _not(_d) * q
+        _b = _not(d) * q
         b = self.b(_b,_log(' - b',k))
 
         x = self.x(_s,_log(' - x',k))
@@ -425,14 +430,19 @@ class Record:
 
     def __call__(self,cells):               # record state of cells
         for k in cells.range():
-            self.u[k].append(cells[k].u.out())
-            self.q[k].append(cells[k].q.out())
-            self.x[k].append(cells[k].x.out())
-            self.l[k].append(cells[k].l.out())
-            self.b[k].append(cells[k].b.out())
-            self.d[k].append(cells[k].d.out())
-            self.y[k].append(cells[k].y.out())
-            self.s[k].append(cells[k].s.out())
+            cell = cells[k]
+            self.u[k].append(cell.u.out())
+            self.q[k].append(cell.q.out())
+            self.x[k].append(cell.x.out())
+            self.l[k].append(cell.l.out())
+            self.b[k].append(cell.b.out())
+            self.d[k].append(cell.d.out())
+            self.y[k].append(cell.y.out())
+            self.s[k].append(cell.s.out())
+
+            pdelta,ndelta = cell.predict.synapses.delta
+            if pdelta == 0 and ndelta == 0:
+                self.l[k][-1] = 0
 
     def log(self,cells,y,tag=None):
         print('\nSummary:',tag)
@@ -499,13 +509,15 @@ def toy(mode):
         e.p = [f1,f2,f3];
         e.theta = 6                         # spiking threshold
         e.eta = 0.5                         # synaptic threshold
+        e.delta = (0,0)                     # learning deltas
 
-        d = struct()                        # depression terminal parameters
-        d.w = bundle([1,1,0],3)             # depression weights
-        d.g = bundle([0,1,2],3);               # group indices
-        d.p = bundle([1,1,1],3);            # all depression permanences are 1
-        d.theta = 1                         # depression threshold
-        d.eta = 0.5                         # synaptic threshold
+        c = struct()                        # collab terminal parameters
+        c.w = bundle([1,1,0],3)             # depression weights
+        c.g = bundle([0,1,2],3);               # group indices
+        c.p = bundle([1,1,1],3);            # all depression permanences are 1
+        c.theta = 1                         # depression threshold
+        c.eta = 0.5                         # synaptic threshold
+        c.delta = (0,0)                     # learning deltas
 
         p = struct()                        # prediction terminal parameters
         p.W = bundle([[1,0,0],[0,1,1]],3)   # prediction weights
@@ -515,22 +527,23 @@ def toy(mode):
                [prm[6:9],prm[0:3]]]
         p.theta = 1                         # prediction threshold
         p.eta = 0.5                         # synaptic threshold
+        p.delta = (0.1,0.1)                 # learning deltas
 
         dyn = {'d':(0,2,0), 'u':(0,4,4), 'x':(0,8,0),
                'q':(2,1,0), 'b':(0,2,3), 'y':(1,2,0),
                's':(0,1,6), 'l':(1,1,5) }
 
-        return (e,d,p,dyn),token
+        return (e,c,p,dyn),token
 
     elif mode == 'tony':
         par,token = toy('sarah')
         token = {'Tony':[1,1,0,1,1,1,0,1,0,1],
                  'loves':[0,1,1,1,0,1,1,0,1,1],
                  'cars':[1,1,1,0,0,1,0,1,1,1]}
-        e,d,p,dyn = par
+        e,c,p,dyn = par
         dyn = {'u':(2,4,4), 'q':(2,1,0), 'x':(1,9,0), 'y':(1,2,0),
                'd':(0,2,0), 'b':(0,2,2), 'l':(1,1,5), 's':(0,1,6)}
-        return (e,d,p,dyn),token
+        return (e,c,p,dyn),token
 
 
 #=========================================================================
