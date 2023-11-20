@@ -316,7 +316,7 @@ class Monitor:
 
         pdelta,ndelta = cell.predict.synapses.delta
         if pdelta == 0 and ndelta == 0:
-            l = 0    # don't show learnung spike if learning disabled
+            l = s = 0   # no prediction & learnung spike if learning is disabled
 
         self.screen.neurotron((i,j),u,q,x,y,b,d,l,s)
     def xlabel(self,x,txt,size=None):
