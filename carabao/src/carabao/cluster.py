@@ -91,87 +91,92 @@ class Map:
                 s += self.symbol(x[k])
             return s
 
-    def bar(self,n,label=''):          # bar string of length n
-            if n >= 3: label = '-' + label
-            if n >= 5: label = '-' + label
+    def bar(self,n,label='',k=-1):          # bar string of length n
+            if n >= 5:
+                if k >= 0:
+                    str = '%03g' % k
+                    if len(label) > 0:
+                        str += '/' + label
+                else:
+                    str = '---'
+                while len(str) < n:
+                    str += '-'
+                    if len(str) < n: str = '-' + str
+                return str
+            if n >= 3:
+                label = '-' + label
+            elif n >= 5:
+                label = '-' + label
             str = label
             for k in range(n-len(label)): str += '-'
             return str
 
-    def head(self,n,c):                # draw a box head with label
-        str = ''
-        for k in range(n):
-            if k == 1:
-                str += '('
-            elif k == 2:
-                str += c
-            elif k == 3:
-                str += ')'
-            else:
-                str += '-'
-        return str
-
-    def headline(self,i,n,s):
+    def head(self,i,n,s,width=0):
         line = '+'
+        s = max(s,width)
         for j in range(n):
             if i < 0:
                 sym = ''
+                line += self.bar(s,'') + '+'
             else:
                 k = self.kappa(i,j)
                 sym = self.symbol(k)
-            line += self.bar(s,sym) + '+'
+                line += self.bar(s,sym,k) + '+'
         return line
 
-    def Pmap(self):
+    def table(self,kind,I,m,n,width=0,label=''):    # print table
+        """
+        self.table('i',...) # for indices
+        self.table('p',...) # for permanences
+        """
         def title(n,x):
             return '-%03g-' % x
 
-        def weights(cells,i,j,d):
-            m,n,dd,s = cells.shape
-            W = cells.P[i][j][d]
+        def row(kind,I,i,j,d,s,width):
             str = ''
-            for k in range(s):
-               str += self.permanence(W[k])
+            for nu in range(s):
+               if kind == 'i':   # index
+                   str += self.symbol(I[nu])
+               elif kind == 'p': # permanence
+                   str += self.permanence(I[nu])
+               else:
+                   str += '?'
+            while len(str) < width:
+                str = str + ' '
+                if len(str) < width: str = ' ' + str
             return str
 
         cells = self.cluster
-        m,n,d,s = cells.shape
+        d = len(I[0][0])
+        s = len(I[0][0][0])
+
+        tab = ''
+        for k in range(len(label)):
+            tab += ' '
+
         str = ''
         for i in range(m):
-            head = self.headline(i,n,s)
-            print(head)
+            head = self.head(i,n,s,width)
+            trailer = label if i == 0 else tab
+            print(trailer+head)
             for mu in range(d):
-                line = '|'
+                line = tab + '|'
                 for j in range(n):
-                    line += weights(cells,i,j,mu) + '|'
+                    line += row(kind,I[i][j][mu],i,j,mu,s,width) + '|'
                 print(line)
-        print(self.headline(-1,n,s))
+        print(tab+self.head(-1,n,s,width))
+
+    def Pmap(self):
+        m,n,d,s = cells.shape
+        self.table('p',self.cluster.P,m,n,width=max(s,7),label='P: ')
 
     def Kmap(self):
-
-        def title(n,x):
-            return '-%03g-' % x
-
-        def indices(cells,i,j,d):
-            m,n,dd,s = cells.shape
-            K = cells.K[i][j][d]
-            str = ''
-            for k in range(s):
-               str += self.symbol(K[k])
-            return str
-
-        cells = self.cluster
         m,n,d,s = cells.shape
-        str = ''
-        for i in range(m):
-            head = self.headline(i,n,s)
-            print(head)
-            for mu in range(d):
-                line = '|'
-                for j in range(n):
-                    line += indices(cells,i,j,mu) + '|'
-                print(line)
-        print(self.headline(-1,n,s))
+        self.table('i',self.cluster.K,m,n,width=max(s,7),label='K: ')
+
+    def Gmap(self):
+        m,n,d,s = cells.shape
+        self.table('i',self.cluster.G,m,n,width=max(s,7),label='G: ')
 
 #===============================================================================
 # doctest
