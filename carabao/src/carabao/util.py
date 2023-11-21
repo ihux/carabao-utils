@@ -25,6 +25,15 @@ from numpy import transpose, array, zeros
 #===============================================================================
 
 class Random:
+  """
+  class Random: portable pseudo random generator for random integers modulo N
+  >>> rg = Random(seed=88)             # create random generator
+  >>> rg.rand()                        # get integer random number
+  871
+  >>> rg.matrix(m=2,n=3,N=6)           # get random int matrix modulo N
+  array([[4., 0., 2.],
+         [5., 1., 3.]])
+  """
   def __init__(self,seed):
     self.p = 1 + 2*3*5*7*11*13         # small prime number
     self.P = -1 + 2*3*5*7*11*13*17*19  # large prime number
@@ -40,9 +49,9 @@ class Random:
       m = M0.size(0);
       n = M0.size(1)
     else:
-      M0 = zeros(m,n)-1    # no forbidden elements
+      M0 = zeros((m,n))-1    # no forbidden elements
 
-    M = zeros(m,n)-1       # -1 means the element is not yet defined
+    M = zeros((m,n))-1       # -1 means the element is not yet defined
     for i in range(0,m):
       for j in range(0,n):
         while 1:
@@ -54,7 +63,7 @@ class Random:
 
           M[i,j] = r
           break
-    return M.int()
+    return M
 
   def cells(self,m,n,s=None,d=None,N=None):
     if d == None:                # called as C = rg.cells(C0,M0,N)
@@ -206,8 +215,20 @@ def repr(obj,wide=False):   # string representation of list or matrix
 def isscalar(x):
     """
     isscalar(): check if arg is either int or float
-    >>> ok = isscalar(5)                => True
-    >>> ok = isscalar(3.14)             => True
-    >>> ok = isscalar(numpy.array(1.2)) => False
+    >>> isscalar(5)
+    True
+    >>> isscalar(3.14)
+    True
+    >>> import numpy
+    >>> isscalar(numpy.array([1.2]))
+    False
     """
     return isinstance(x,int) or isinstance(x,float)
+
+#===============================================================================
+# doctest
+#===============================================================================
+
+if __name__ == '__main__':
+    import doctest            # to run doctest: $ python mod.py
+    doctest.testmod()         #             or: $ python mod.py -v
