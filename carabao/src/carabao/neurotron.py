@@ -314,9 +314,10 @@ class Monitor:
         l = cell.l.out()
         s = cell.s.out()
 
-        pdelta,ndelta = cell.predict.synapses.delta
-        if pdelta == 0 and ndelta == 0:
-            l = s = 0   # no prediction & learnung spike if learning is disabled
+        if cell.predict is not None:
+            pdelta,ndelta = cell.predict.synapses.delta
+            if pdelta == 0 and ndelta == 0:
+                l = s = 0   # no prediction & learnung spike if learning is disabled
 
         self.screen.neurotron((i,j),u,q,x,y,b,d,l,s)
     def xlabel(self,x,txt,size=None):

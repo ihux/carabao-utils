@@ -2,6 +2,7 @@ LICENSE
 pyproject.toml
 src/carabao/__init__.py
 src/carabao/cell.py
+src/carabao/cluster.py
 src/carabao/cyron.py
 src/carabao/graphics.py
 src/carabao/htm.py
