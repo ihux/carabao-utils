@@ -51,16 +51,18 @@ class Map:
         """
         self.symbol(x): convert index to symbol or vice versa
         >>> o = Map()
-        >>> o.symbol(1)
+        >>> o.symbol(11)
         'B'
-        >>> o.symbol([0,1,25,26,27,51,52])
-        'ABZabz52'
+        >>> o.symbol([0,1,10,11,35,36,37,61,62])
+        '01ABZabz62'
         """
         def symb(x):
-            if x < 26:
-                return chr(65+x)
-            elif x < 52:
-                return chr(71+x)
+            if x < 10:
+                return chr(48+x)
+            if x < 36:
+                return chr(55+x)
+            elif x < 62:
+                return chr(61+x)
             else:
                 return str(x)
 
@@ -71,6 +73,83 @@ class Map:
             for k in range(len(x)):
                 s += self.symbol(x[k])
             return s
+
+    def bar(self,n):                   # bar string of length n
+            str = ''
+            for k in range(n): str += '-'
+            return str
+
+    def head(self,n,c):                # draw a box head with label
+        str = ''
+        for k in range(n):
+            if k == 1:
+                str += '('
+            elif k == 2:
+                str += c
+            elif k == 3:
+                str += ')'
+            else:
+                str += '-'
+        return str
+
+    def headline(self,n,s):
+        line = '+'
+        for j in range(n):
+            #line += title(s,23) + '+'
+            line += self.bar(s) + '+'
+        return line
+
+    def Pmap(self):
+
+        def title(n,x):
+            return '-%03g-' % x
+
+        def weights(cells,i,j,d):
+            m,n,dd,s = cells.shape
+            W = cells.P[i][j][d]
+            str = ''
+            for k in range(s):
+               str += self.permanence(W[k])
+            return str
+
+        cells = self.cluster
+        m,n,d,s = cells.shape
+        head = self.headline(n,s)
+        str = ''
+        for i in range(m):
+            print(head)
+            for mu in range(d):
+                line = '|'
+                for j in range(n):
+                    line += weights(cells,i,j,mu) + '|'
+                print(line)
+        print(head)
+
+    def Kmap(self):
+
+        def title(n,x):
+            return '-%03g-' % x
+
+        def indices(cells,i,j,d):
+            m,n,dd,s = cells.shape
+            K = cells.K[i][j][d]
+            str = ''
+            for k in range(s):
+               str += self.symbol(K[k])
+            return str
+
+        cells = self.cluster
+        m,n,d,s = cells.shape
+        head = self.headline(n,s)
+        str = ''
+        for i in range(m):
+            print(head)
+            for mu in range(d):
+                line = '|'
+                for j in range(n):
+                    line += indices(cells,i,j,mu) + '|'
+                print(line)
+        print(head)
 
 #===============================================================================
 # doctest
