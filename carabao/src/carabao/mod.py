@@ -23,6 +23,10 @@ def reverse_words(astring):
     words.reverse()
     return ' '.join(words)
 
+#===============================================================================
+# doctest
+#===============================================================================
+
 if __name__ == '__main__':
     import doctest            # to run doctest: $ python mod.py
     doctest.testmod()         #             or: $ python mod.py -v
