@@ -418,13 +418,34 @@ def size(arg):
 
 def max(arg1,arg2=None):
     """
+    >>> max(2,3)
+    3
+    >>> max(2,3.6)
+    3.6
     >>> A = Matrix([[1,3,-2],[0,2,-1]])
     >>> B = Matrix([[8,2,-3],[1,0,-2]])
     >>> max(A,B)
     [8 3 -2; 1 2 -1]
     >>> max(A)
     [1 3 -1]
+    >>> max(2,A)
+    [2 3 2; 2 2 2]
+    >>> max(B,1)
+    [8 2 1; 1 1 1]
     """
+    scalar1 = isinstance(arg1,int) or isinstance(arg1,float)
+    scalar2 = isinstance(arg2,int) or isinstance(arg2,float)
+
+    if scalar1:
+        if arg2 is None:
+            return arg1
+        elif scalar2:
+            return _max(arg1,arg2)
+        else:
+            arg1 = arg1 + 0*arg2
+    elif scalar2:
+        arg2 = arg2 + 0*arg1
+
     m,n = arg1.shape
     if arg2 is None:
         M = Matrix(1,n)
@@ -444,13 +465,34 @@ def max(arg1,arg2=None):
 
 def min(arg1,arg2=None):
     """
+    >>> min(2,3)
+    2
+    >>> min(2.1,3)
+    2.1
     >>> A = Matrix([[1,3,-2],[0,2,-1]])
     >>> B = Matrix([[8,2,-3],[1,0,-2]])
     >>> min(A,B)
     [1 2 -3; 0 0 -2]
     >>> min(A)
     [0 2 -2]
+    >>> min(2,B)
+    [2 2 -3; 1 0 -2]
+    >>> min(A,1)
+    [1 1 -2; 0 1 -1]
     """
+    scalar1 = isinstance(arg1,int) or isinstance(arg1,float)
+    scalar2 = isinstance(arg2,int) or isinstance(arg2,float)
+
+    if scalar1:
+        if arg2 is None:
+            return arg1
+        elif scalar2:
+            return _min(arg1,arg2)
+        else:
+            arg1 = arg1 + 0*arg2
+    elif scalar2:
+        arg2 = arg2 + 0*arg1
+
     m,n = arg1.shape
     if arg2 is None:
         M = Matrix(1,n)
@@ -521,6 +563,12 @@ def _case4():
     +-------+
     """
 
+def _case4():
+    """
+    >>> A = Matrix([[1,3,-2],[0,2,-1]])
+    >>> max(0,min(A,1))
+    [1 1 0; 0 1 0]
+    """
 #===============================================================================
 # udoc test
 #===============================================================================
