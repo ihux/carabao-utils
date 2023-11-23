@@ -1,5 +1,9 @@
 import numpy as np
 
+#===============================================================================
+# class Matrix
+#===============================================================================
+
 class Matrix(np.ndarray):
     """
     class Matrix: matrix wrapper for NumPy arrays
@@ -74,6 +78,37 @@ class Matrix(np.ndarray):
 
     T = property(fget=_transpose)
 
+#===============================================================================
+# class Tensor
+#===============================================================================
+
+class Tensor:
+    """
+    class Tensor: implements a matrix of matrices (4-tensor)
+    >>> T = Tensor(3,4,2,5)
+    Tensor(3,4,5,2)
+    >>> K = Matrix(2,5)
+    >>> T = Tensor([[K,K,K,K],[K,K,K,K],[K,K,K,K]])
+    +-----+-----+-----+-----+
+    |00000|00000|00000|00000|
+    +-----+-----+-----+-----+
+    |00000|00000|00000|00000|
+    +-----+-----+-----+-----+
+    |00000|00000|00000|00000|
+    +-----+-----+-----+-----+
+    """
+
+    def __init__(self,arg,n=None,d=None,s=None):
+        if isinstance(arg,tuple):
+            assert len(arg.shape) == 2
+            self.data = np.array(arg)
+        else:
+            m = arg
+            if n is None: n = 1
+            if d is None: d = 1
+            if s is None: s = 1
+            list = [[Matrix(d,s) for j in range(n)] for i in range(m)]
+            self.data = array(list)
 
 #===============================================================================
 # unit tests
@@ -114,6 +149,14 @@ def _case3():
     [1 4; 2 5; 3 6]
     >>> A.T
     [1 4; 2 5; 3 6]
+    """
+
+def _case4():
+    """
+    >>> T = Tensor(1)
+    +-+
+    |0|
+    +-+
     """
 
 #===============================================================================
