@@ -48,6 +48,21 @@ class Matrix(np.ndarray):
             return
         self.custom = getattr(obj, 'custom', None)
 
+    def kappa(self,i,j=None):
+        """
+        Matrix.kappa():  convert matrix indices to linear index or vice versa
+        >>> Matrix(4,10).kappa(i:=1,j:=3)   # k = i + j*m
+        13
+        >>> Matrix(4,10).kappa(k:=13)       # i = k%m, j = k//m
+        (1, 3)
+        """
+        m,n = self.shape
+        if j is None:
+            k = i
+            return (k%m,k//m)
+        else:
+            return i + j*m
+
     def ______str__(self,wide=False):   # string representation of list or matrix
         return "matrix"
 
@@ -509,6 +524,32 @@ def min(arg1,arg2=None):
             for j in range(n):
                 M[i,j] = _min(arg1[i,j],arg2[i,j])
         return M.item() if m == 1 and n == 1 else M
+
+def magic(n):
+    """
+    >>> magic(0)
+    []
+    >>> magic(1)
+    1
+    >>> magic(2)
+    [1 3; 4 2]
+    >>> magic(3)
+    [8 1 6; 3 5 7; 4 9 2]
+    >>> magic(4)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12; 4 14 15 1]
+    """
+    if n == 0:
+        return []
+    elif n == 1:
+        return 1
+    elif n == 2:
+        return Matrix([[1,3],[4,2]])
+    elif n == 3:
+        return Matrix([[8,1,6],[3,5,7],[4,9,2]])
+    elif n == 4:
+        return Matrix([[16,2,3,13],[5,11,10,8],[9,7,6,12],[4,14,15,1]])
+    else:
+        raise Exception('n > 4 not supported')
 
 
 #===============================================================================
