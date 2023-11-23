@@ -98,7 +98,30 @@ class Matrix(np.ndarray):
         m,n = self.shape
         return 0
 
+    def __getitem__(self,idx):
+        if isinstance(idx,int):
+            #print('idx:',idx)
+            i,j = self.kappa(idx)
+            return super().__getitem__((i,j))
+        #elif isinstance(idx,tuple):
+            #if isinstance(idx[1],slice):
+            #   print('tuple(1):',idx)
+        elif isinstance(idx,Matrix):
+            #print('Matrix:',idx)
+            m,n = idx.shape
+            result = Matrix(m,n)
+            for i in range(m):
+                for j in range(n):
+                    k = idx[i,j]
+                    mu,nu = self.kappa(k)
+                    result[i,j] = super().__getitem__((mu,nu))
+                    #print('result[%g,%g]'%(i,j), 'k:',k,'(mu,nu)',(mu,nu))
+            return result
+        return super().__getitem__(idx)
+
+
     T = property(fget=_transpose)
+
 
 #===============================================================================
 # class Tensor
@@ -610,6 +633,7 @@ def _case4():
     >>> max(0,min(A,1))
     [1 1 0; 0 1 0]
     """
+
 #===============================================================================
 # udoc test
 #===============================================================================
