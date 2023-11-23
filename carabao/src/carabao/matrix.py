@@ -386,6 +386,28 @@ def seed(s):
     """
     np.random.seed(s)
 
+def size(arg):
+    """
+    size(): matrix sizes
+    >>> size(3.14)
+    (1, 1)
+    >>> size(Matrix(3,5))
+    (3, 5)
+    >>> size([])
+    (0, 0)
+    """
+    if isinstance(arg,list) and len(arg) == 0:
+        return (0,0)
+    elif isinstance(arg,int) or isinstance(arg,float):
+        return (1,1)
+    elif isinstance(arg,Matrix):
+        m,n = arg.shape
+        return (m,n)
+    else:
+        raise Exception('bad type')
+
+
+
 #===============================================================================
 # unit tests
 #===============================================================================
