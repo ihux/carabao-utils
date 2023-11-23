@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 from matplotlib.transforms import Affine2D
-from carabao.util import repr
+#import util
 
 #=============================================================================
 # hash function
@@ -161,7 +161,7 @@ class Screen:
         self.r3 = 0.16;  self.rs = (self.r2-self.r3)*0.4
 
         self.ds = 0.11; self.rs = self.ds/3;
-        self.gray = (0.8,0.8,0.8);  self.red = (1,0,0)
+        self.gray = (0.9,0.9,0.9);  self.red = (1,0,0)
         self.gold = (1,0.9,0);      self.dark = (.5,.5,.5)
         self.blue = (0,0.5,1);      self.green=(0,.8,0)
         self.magenta = (1,0.2,1);   self.orange = (1,.5,0)

@@ -24,8 +24,13 @@ Terminal('excite',#[1 1 0 1 1 1 0 1 0 1],6)
 
 from numpy import array, transpose
 from ypstruct import struct
-from carabao.util import repr
-from carabao.screen import Screen
+
+if __name__ == '__main__':
+    from util import repr
+    from screen import Screen
+else:
+    from carabao.util import repr
+    from carabao.screen import Screen
 
 #===============================================================================
 # class: Pulse
@@ -284,7 +289,8 @@ class Terminal:
                 print(log,repr(V),"->",repr(E),"->",repr(s))
             else:
                 W = self.synapses.weight()
-                print(log,repr(V),"->",repr(W),"->",repr(E),"->",repr(s))
+                print(log,repr(V),"->",repr(W),"->",
+                      repr(E),"->",repr(s))
         if len(s) == 1:
            return s.item()  # (s,E)
         return s.any()*1
