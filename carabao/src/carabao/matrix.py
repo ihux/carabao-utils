@@ -343,8 +343,8 @@ def ones(m,n=None):
     """
     >>> ones(3)
     [1 1 1; 1 1 1; 1 1 1]
-    >>> ones(2,4)
-    [1 1 1 1; 1 1 1 1]
+    >>> ones(2,3)
+    [1 1 1; 1 1 1]
     >>> ones(0,0)
     []
     """
@@ -352,6 +352,39 @@ def ones(m,n=None):
     if m == 0 or n == 0:
         return Matrix(m,n)
     return Matrix(m,n) + 1
+
+def rand(m,n=None,modulus=None):
+    """
+    >>> seed(0)
+    >>> rand(2)
+    [0.548814 0.715189; 0.602763 0.544883]
+    >>> rand(2,3)
+    [0.423655 0.645894 0.437587; 0.891773 0.963663 0.383442]
+    >>> rand(0,0)
+    []
+    """
+    n = m if n is None else n
+    if m == 0 or n == 0:
+        return Matrix(m,n)
+    R = Matrix(m,n)
+
+    if modulus is None:
+        for i in range(m):
+            for j in range(n):
+                R[i,j] = np.random.rand()
+    else:
+        modulus = int(modulus)
+        for i in range(m):
+            for j in range(n):
+                R[i,j] = np.random.randint(modulus)
+    return R
+
+def seed(s):
+    """
+    seed(): set random seed
+    >>> seed(0)
+    """
+    np.random.seed(s)
 
 #===============================================================================
 # unit tests
