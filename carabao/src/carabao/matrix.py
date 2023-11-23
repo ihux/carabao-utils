@@ -15,8 +15,11 @@ class Matrix(np.ndarray):
     [1 2 3]
     >>> Matrix([[1,2,3],[4,5,6]])
     [1 2 3; 4 5 6]
+
+    See also: Matrix, eye, zeros, ones
     """
-    def __new__(cls, arg1, arg2=None, data=None):
+    def __new__(cls, arg1=None, arg2=None, data=None):
+        arg1 = [] if arg1 is None else arg1
         if isinstance(arg1,int) and arg2 is None:
             arg1 = [[arg1]]
         elif isinstance(arg1,float) and arg2 is None:
@@ -75,6 +78,10 @@ class Matrix(np.ndarray):
 
     def _transpose(self):
         return np.transpose(self)
+
+    def __max__(self):
+        m,n = self.shape
+        return 0
 
     T = property(fget=_transpose)
 
@@ -307,6 +314,46 @@ class Tensor:
         self._table('w',self.cluster.P,m,n,width=max(s,7),label='')
 
 #===============================================================================
+# matrix functions
+#===============================================================================
+
+def eye(n):
+    """
+    >>> eye(3)
+    [1 0 0; 0 1 0; 0 0 1]
+    """
+    I = Matrix(n,n)
+    for k in range(n):
+        I[k,k] = 1
+    return I
+
+def zeros(m,n=None):
+    """
+    >>> zeros(3)
+    [0 0 0; 0 0 0; 0 0 0]
+    >>> zeros(2,4)
+    [0 0 0 0; 0 0 0 0]
+    """
+    n = m if n is None else n
+    if m == 0 or n == 0:
+        return Matrix(m,n)
+    return Matrix(m,n)
+
+def ones(m,n=None):
+    """
+    >>> ones(3)
+    [1 1 1; 1 1 1; 1 1 1]
+    >>> ones(2,4)
+    [1 1 1 1; 1 1 1 1]
+    >>> ones(0,0)
+    []
+    """
+    n = m if n is None else n
+    if m == 0 or n == 0:
+        return Matrix(m,n)
+    return Matrix(m,n) + 1
+
+#===============================================================================
 # unit tests
 #===============================================================================
 
@@ -324,6 +371,8 @@ def _case1():
 
 def _case2():
     """
+    >>> Matrix()
+    []
     >>> Matrix([])
     []
     >>> Matrix(0,0)
