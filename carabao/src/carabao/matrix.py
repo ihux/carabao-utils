@@ -69,8 +69,11 @@ class Matrix(np.ndarray):
     def __repr__(self):
         return self.__str__()
 
-    def t(self):                       # transpose
+    def _transpose(self):
         return np.transpose(self)
+
+    T = property(fget=_transpose)
+
 
 #===============================================================================
 # unit tests
@@ -107,7 +110,9 @@ def _case3():
     >>> A = Matrix([[1,2,3],[4,5,6]])
     >>> A
     [1 2 3; 4 5 6]
-    >>> A.t()
+    >>> A._transpose()
+    [1 4; 2 5; 3 6]
+    >>> A.T
     [1 4; 2 5; 3 6]
     """
 
