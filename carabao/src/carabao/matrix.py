@@ -238,7 +238,7 @@ class Tensor:
 
     def head(self,i,n,s,width=0):
         line = '+'
-        s = max(s,width)
+        s = _max(s,width)
         for j in range(n):
             if i < 0:
                 sym = ''
@@ -299,19 +299,29 @@ class Tensor:
 
     def Pmap(self):
         m,n,d,s = self.shape
-        self._table('p',self.cluster.P,m,n,width=max(s,7),label='P: ')
+        self._table('p',self.cluster.P,m,n,width=_max(s,7),label='P: ')
 
     def Kmap(self):
         m,n,d,s = self.shape
-        self._table('i',self.data,m,n,width=max(s,7),label='')
+        self._table('i',self.data,m,n,width=_max(s,7),label='')
 
     def Gmap(self):
         m,n,d,s = self.shape
-        self._table('i',self.cluster.G,m,n,width=max(s,7),label='')
+        self._table('i',self.cluster.G,m,n,width=_max(s,7),label='')
 
     def Wmap(self):
         m,n,d,s = self.shape
-        self._table('w',self.cluster.P,m,n,width=max(s,7),label='')
+        self._table('w',self.cluster.P,m,n,width=_max(s,7),label='')
+
+#===============================================================================
+# helper functions
+#===============================================================================
+
+def _max(x,y):
+    return x if x > y else y
+
+def _min(x,y):
+    return x if x < y else y
 
 #===============================================================================
 # matrix functions
@@ -406,6 +416,57 @@ def size(arg):
     else:
         raise Exception('bad type')
 
+def max(arg1,arg2=None):
+    """
+    >>> A = Matrix([[1,3,-2],[0,2,-1]])
+    >>> B = Matrix([[8,2,-3],[1,0,-2]])
+    >>> max(A,B)
+    [8 3 -2; 1 2 -1]
+    >>> max(A)
+    [1 3 -1]
+    """
+    m,n = arg1.shape
+    if arg2 is None:
+        M = Matrix(1,n)
+        for j in range(n):
+            maxi = arg1[0,j]
+            for i in range(1,m):
+                maxi = _max(arg1[i,j],maxi)
+            M[0,j] = maxi
+        return M
+    else:
+        assert arg1.shape == arg2.shape
+        M = Matrix(m,n)
+        for i in range(m):
+            for j in range(n):
+                M[i,j] = _max(arg1[i,j],arg2[i,j])
+        return M.item() if m == 1 and n == 1 else M
+
+def min(arg1,arg2=None):
+    """
+    >>> A = Matrix([[1,3,-2],[0,2,-1]])
+    >>> B = Matrix([[8,2,-3],[1,0,-2]])
+    >>> min(A,B)
+    [1 2 -3; 0 0 -2]
+    >>> min(A)
+    [0 2 -2]
+    """
+    m,n = arg1.shape
+    if arg2 is None:
+        M = Matrix(1,n)
+        for j in range(n):
+            maxi = arg1[0,j]
+            for i in range(1,m):
+                maxi = _min(arg1[i,j],maxi)
+            M[0,j] = maxi
+        return M
+    else:
+        assert arg1.shape == arg2.shape
+        M = Matrix(m,n)
+        for i in range(m):
+            for j in range(n):
+                M[i,j] = _min(arg1[i,j],arg2[i,j])
+        return M.item() if m == 1 and n == 1 else M
 
 
 #===============================================================================
