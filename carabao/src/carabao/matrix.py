@@ -605,6 +605,8 @@ def rand(arg=None,modulus=None):
     6
     >>> rand()
     0.8121687287754932
+    >>> rand((2,3),40)
+    [24 17 37; 25 13 8]
     """
     isa = isinstance
     if arg is None:
