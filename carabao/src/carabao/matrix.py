@@ -677,6 +677,12 @@ def max(arg1,arg2=None):
     [2 3 2; 2 2 2]
     >>> max(B,1)
     [8 2 1; 1 1 1]
+    >>> x = magic(2)();  print(x)
+    [1; 4; 3; 2]
+    >>> max(x)
+    4
+    >>> max(x.T)
+    4
     """
     scalar1 = isinstance(arg1,int) or isinstance(arg1,float)
     scalar2 = isinstance(arg2,int) or isinstance(arg2,float)
@@ -693,20 +699,32 @@ def max(arg1,arg2=None):
 
     m,n = arg1.shape
     if arg2 is None:
+        if m == 1:
+            s = arg1[0,0]
+            for j in range(1,n): s = _max(s,arg1[0,j])
+            return int(s) if s == int(s) else s
+        elif n == 1:
+            s = arg1[0,0]
+            for i in range(m): s = _max(s,arg1[i,0])
+            return int(s) if s == int(s) else s
         M = Matrix(1,n)
         for j in range(n):
             maxi = arg1[0,j]
             for i in range(1,m):
                 maxi = _max(arg1[i,j],maxi)
             M[0,j] = maxi
-        return M
     else:
         assert arg1.shape == arg2.shape
         M = Matrix(m,n)
         for i in range(m):
             for j in range(n):
                 M[i,j] = _max(arg1[i,j],arg2[i,j])
-        return M.item() if m == 1 and n == 1 else M
+    m,n = M.shape
+    if m != 1 or n != 1:
+        return M
+    result = M.item()
+    iresult = int(result)
+    return iresult if iresult == result else result
 
 def min(arg1,arg2=None):
     """
@@ -724,6 +742,12 @@ def min(arg1,arg2=None):
     [2 2 -3; 1 0 -2]
     >>> min(A,1)
     [1 1 -2; 0 1 -1]
+    >>> x = magic(2)();  print(x)
+    [1; 4; 3; 2]
+    >>> min(x)
+    1
+    >>> min(x.T)
+    1
     """
     scalar1 = isinstance(arg1,int) or isinstance(arg1,float)
     scalar2 = isinstance(arg2,int) or isinstance(arg2,float)
@@ -740,20 +764,32 @@ def min(arg1,arg2=None):
 
     m,n = arg1.shape
     if arg2 is None:
+        if m == 1:
+            s = arg1[0,0]
+            for j in range(1,n): s = _min(s,arg1[0,j])
+            return int(s) if s == int(s) else s
+        elif n == 1:
+            s = arg1[0,0]
+            for i in range(m): s = _min(s,arg1[i,0])
+            return int(s) if s == int(s) else s
         M = Matrix(1,n)
         for j in range(n):
             maxi = arg1[0,j]
             for i in range(1,m):
                 maxi = _min(arg1[i,j],maxi)
             M[0,j] = maxi
-        return M
     else:
         assert arg1.shape == arg2.shape
         M = Matrix(m,n)
         for i in range(m):
             for j in range(n):
                 M[i,j] = _min(arg1[i,j],arg2[i,j])
-        return M.item() if m == 1 and n == 1 else M
+    m,n = M.shape
+    if m != 1 or n != 1:
+        return M
+    result = M.item()
+    iresult = int(result)
+    return iresult if iresult == result else result
 
 def magic(n):
     """
