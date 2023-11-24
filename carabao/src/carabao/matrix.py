@@ -16,7 +16,9 @@ Matrix methods:
 - slicing               # indexing by slices
 - column                # convert matrix to column
 - reshape               # reshape matrix
-- string representation
+- string representation # represent matrix as a string
+- mul                   # element wise matrix multiplication
+- matmul                # algebraic matrix multiplication
 
 Field methods:
 - construct             # Field construction
@@ -116,6 +118,8 @@ class Matrix(np.ndarray):
     [1 2 3]
     >>> Matrix([[1,2,3],[4,5,6]])
     [1 2 3; 4 5 6]
+    >>> Matrix(range(5))
+    [0 1 2 3 4]
 
     See also: Matrix, eye, zeros, ones
     """
@@ -136,6 +140,10 @@ class Matrix(np.ndarray):
                 arg1 = np.zeros((0,0))  #[[]]
             elif not isa(arg1[0],list):
                 arg1 = [arg1]
+        elif isa(arg1,range):
+            arg1 = np.array([arg1])
+            #print('### arg1:',arg1)
+            return Matrix(arg1)
         else:
             raise Exception('bad arg')
 
@@ -244,6 +252,23 @@ class Matrix(np.ndarray):
                 k = self.kappa(i,j)
                 out[k,0] = super().__getitem__((i,j))
         return out
+
+    def __mul__(self,other):
+        """
+        >>> A = magic(2); B = A.T; print(A)
+        [1 3; 4 2]
+        >>> A*B
+        [1 12; 12 4]
+        >>> A*5
+        [5 15; 20 10]
+        >>> 3*A
+        [3 9; 12 6]
+        """
+        isa = isinstance
+        if isa(other,Matrix):
+            if self.shape != other.shape:
+                raise Exception('Matrix.__mul__: incompatible sizes')
+        return super().__mul__(other)
 
     def reshape(self,m,n): # convert to column vector
         """
@@ -727,6 +752,59 @@ def magic(n):
         return Matrix([[16,2,3,13],[5,11,10,8],[9,7,6,12],[4,14,15,1]])
     else:
         raise Exception('n > 4 not supported')
+
+def sum(arg):
+    """
+    >>> sum(2)
+    2
+    >>> sum(3.14)
+    3.14
+    >>> sum([1,2,3])
+    6
+    >>> A = magic(4)[:3,:];  print(A)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12]
+    >>> sum(A)
+    [30 20 19 33]
+    >>> sum(A[:,1])
+    20
+    >>> sum(A[2,:])
+    34
+    >>> sum(True)
+    1
+    >>> C=ones(1,4)
+    >>> sum(C>0)
+    4
+    """
+    isa = isinstance
+    if isa(arg,int) or isa(arg,np.int64) or isa(arg,float):
+        return arg
+    elif isa(arg,list):
+        M = Matrix(arg)
+        return sum(M)
+    elif isa(arg,Matrix):
+        #print('##### Matrix:',arg)
+        m,n = arg.shape
+        if m == 0 or n == 0:
+            return []
+        elif m == 1:
+            s = 0
+            #print('##### row:',arg,'s:',s)
+            for j in range(n): s += arg[0,j]
+            return s
+        elif n == 1:
+            s = 0
+            for i in range(m): s += arg[i,0]
+            return s
+        else:
+            out = Matrix(1,n)
+            for j in range(n):
+                s = 0
+                for i in range(m):
+                    s += arg[i,j]
+                out[0,j] = s
+            return out
+    else:
+        return arg.sum()
 
 
 #===============================================================================
