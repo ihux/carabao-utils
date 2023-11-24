@@ -204,6 +204,18 @@ class Matrix(np.ndarray):
 #        return 0
 
     def __getitem__(self,idx):
+        """
+        >>> A = magic(4)[:3,:]; print(A.T)
+        [16 5 9; 2 11 7; 3 10 6; 13 8 12]
+        >>> K = Matrix([[2,1,0],[5,4,3]]); print(K)
+        [2 1 0; 5 4 3]
+        >>> A[K]
+        [9 5 16; 7 11 2]
+        >>> A[1,:]
+        [5 11 10 8]
+        >>> A[:,2]
+        [3; 10; 6]
+        """
         isa = isinstance  # shorthand
         if isa(idx,int):
             i,j = self.kappa(idx)
