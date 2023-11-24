@@ -3,6 +3,47 @@ module matrix:
 - class Attribute      # easy get/set of object attributes
 - class Matrix         # MATLAB style matrix class (NumPy based)
 - class Field          # matrix of matrices
+
+Attribute methods:
+- get
+- set
+
+Matrix methods:
+- construct             # Matrix construction
+- kappa                 # conversion between linear <-> quadratic index
+- transpose             # matrix transposition
+- indexing              # by scalar index or index pair
+- slicing               # indexing by slices
+- column                # convert matrix to column
+- reshape               # reshape matrix
+- string representation
+
+Field methods:
+- construct             # Field construction
+- kappa                 # conversion between linear <-> quadratic index
+- permanence            # cnvert permanence to symbolic string
+- symbol                # convert symbol to index or vice versa
+- bar                   # create a labeled bar
+- head                  # create a cell head
+- imap                  # create index map
+- vmap                  # create value map
+
+Utility functions:
+- eye                   # unit matrix
+- zeros                 # zero matrix
+- one                   # one matrix
+- rand                  # random matrix
+- seed                  # set random seed
+- max                   # row of column maxima
+- min                   # row of column minima
+- size                  # matrix sizes
+- magic                 # magic matrix
+- sum                   # row of column sum
+- any                   # row of column any's
+- all                   # row of column all's
+- length                # maximum size
+- isempty               # check if matrix is empty
+
 """
 
 import numpy as np
@@ -122,9 +163,6 @@ class Matrix(np.ndarray):
         else:
             return i + j*m
 
-    def ______str__(self,wide=False):   # string representation of list or matrix
-        return "matrix"
-
     def _isa(self,obj,typ=None):
         if typ is None:
             print(type(obj),type(obj).__name__)
@@ -153,9 +191,9 @@ class Matrix(np.ndarray):
     def _transpose(self):
         return np.transpose(self)
 
-    def __max__(self):
-        m,n = self.shape
-        return 0
+#    def __max__(self):
+#       m,n = self.shape
+#        return 0
 
     def __getitem__(self,idx):
         isa = isinstance  # shorthand
@@ -247,7 +285,7 @@ class Field:
     """
     class Field: implements a matrix of matrices (4-tensor)
     >>> T = Field(3,4,2,5)
-    >>> T.Kmap()
+    >>> T.imap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
     | 00000 | 00000 | 00000 | 00000 |
@@ -260,7 +298,7 @@ class Field:
     +-------+-------+-------+-------+
     >>> K = Matrix(2,5)
     >>> T = Field([[K,K,K,K],[K,K,K,K],[K,K,K,K]])
-    >>> T.Kmap()
+    >>> T.imap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
     | 00000 | 00000 | 00000 | 00000 |
@@ -451,19 +489,19 @@ class Field:
                 print(line)
         print(tab+self.head(-1,n,s,width))
 
-    def Pmap(self):
+    def vmap(self):
         m,n,d,s = self.shape
-        self._table('p',self.cluster.P,m,n,width=_max(s,7),label='P: ')
+        self._table('p',self.data,m,n,width=_max(s,7),label='P: ')
 
-    def Kmap(self):
+    def imap(self):
         m,n,d,s = self.shape
         self._table('i',self.data,m,n,width=_max(s,7),label='')
 
-    def Gmap(self):
+    def _Gmap(self):
         m,n,d,s = self.shape
         self._table('i',self.cluster.G,m,n,width=_max(s,7),label='')
 
-    def Wmap(self):
+    def _Wmap(self):
         m,n,d,s = self.shape
         self._table('w',self.cluster.P,m,n,width=_max(s,7),label='')
 
@@ -737,7 +775,7 @@ def _case3():
 def _case4():
     """
     >>> T = Field(1)
-    >>> T.Kmap()
+    >>> T.imap()
     +-000/0-+
     |   0   |
     +-------+
