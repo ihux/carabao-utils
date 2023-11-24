@@ -387,6 +387,8 @@ class Field:
 
     def set(self,i,j,M):
         assert isinstance(M,Matrix)
+        if self.data[i,j].shape != M.shape:
+            raise Exception('Field.set(): size mismatch')
         self.data[i,j] = M
 
     def permanence(self,p):    # encode permanence
@@ -945,7 +947,7 @@ def _case4a():
     >>> M = T[1,1]; print(M)
     [0 0 0 0 0; 0 0 0 0 0]
     >>> M[1,2] = 8
-    >>> T.set(1,1,8); T.imap()
+    >>> T.set(1,1,M); T.imap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
     | 00000 | 00000 | 00000 | 00000 |
