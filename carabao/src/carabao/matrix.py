@@ -99,14 +99,22 @@ class Matrix(np.ndarray):
         return 0
 
     def __getitem__(self,idx):
-        if isinstance(idx,int):
-            #print('idx:',idx)
+        isa = isinstance  # shorthand
+        if isa(idx,int):
             i,j = self.kappa(idx)
             return super().__getitem__((i,j))
-        #elif isinstance(idx,tuple):
-            #if isinstance(idx[1],slice):
-            #   print('tuple(1):',idx)
-        elif isinstance(idx,Matrix):
+        elif isa(idx,tuple):
+            i,j = idx;
+            m,n = self.shape
+            if isa(i,int) and isa(j,slice):
+                if i < 0 or i >= m:
+                    raise Exception('row index out of range')
+                idx = (slice(i,i+1,None),j)
+            elif isa(i,slice) and isa(j,int):
+                if j < 0 or j >= n:
+                    raise Exception('column index out of range')
+                idx = (i,slice(j,j+1,None))
+        elif isa(idx,Matrix):
             #print('Matrix:',idx)
             m,n = idx.shape
             result = Matrix(m,n)
@@ -117,7 +125,11 @@ class Matrix(np.ndarray):
                     result[i,j] = super().__getitem__((mu,nu))
                     #print('result[%g,%g]'%(i,j), 'k:',k,'(mu,nu)',(mu,nu))
             return result
-        return super().__getitem__(idx)
+        result = super().__getitem__(idx)
+        if isa(result,np.int64):
+            iresult = int(result)
+            if result == iresult: return iresult
+        return result
 
 
     T = property(fget=_transpose)
@@ -632,6 +644,68 @@ def _case4():
     >>> A = Matrix([[1,3,-2],[0,2,-1]])
     >>> max(0,min(A,1))
     [1 1 0; 0 1 0]
+    """
+
+def _case5a():  # indexing with slices
+    """
+    >>> A = magic(4); print(A)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12; 4 14 15 1]
+    >>> A[0,0]
+    16
+    >>> B = A[:3,:]; print(B)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12]
+    >>> B[0,:]
+    [16 2 3 13]
+    >>> B[1,:]
+    [5 11 10 8]
+    >>> B[2,:]
+    [9 7 6 12]
+    >>> B[:,0]
+    [16; 5; 9]
+    >>> B[:,1]
+    [2; 11; 7]
+    >>> B[:,2]
+    [3; 10; 6]
+    >>> B[:,3]
+    [13; 8; 12]
+    """
+
+def _case5b():  # indexing with slices, column ranges
+    """
+    >>> A = magic(4); print(A)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12; 4 14 15 1]
+    >>> B = A[:3,:]; print(B)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12]
+    >>> B[:,:]
+    [16 2 3 13; 5 11 10 8; 9 7 6 12]
+    >>> B[:,:2]
+    [16 2; 5 11; 9 7]
+    >>> B[:,1:4:2]
+    [2 13; 11 8; 7 12]
+    """
+def _case5c():  # indexing with slices, row ranges
+    """
+    >>> A = magic(4); print(A)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12; 4 14 15 1]
+    >>> C = A[:3,:].T; print(C)
+    [16 5 9; 2 11 7; 3 10 6; 13 8 12]
+    >>> C[:,:]
+    [16 5 9; 2 11 7; 3 10 6; 13 8 12]
+    >>> C[:2,:]
+    [16 5 9; 2 11 7]
+    >>> C[1:4:2,:]
+    [2 11 7; 13 8 12]
+    """
+def _case5d():  # indexing with slices, row & column ranges
+    """
+    >>> A = magic(4); print(A)
+    [16 2 3 13; 5 11 10 8; 9 7 6 12; 4 14 15 1]
+    >>> A[:2,:2]
+    [16 2; 5 11]
+    >>> A[1:4:2,1:3]
+    [11 10; 14 15]
+    >>> A[1:3,1:4:2]
+    [11 8; 7 12]
     """
 
 #===============================================================================
