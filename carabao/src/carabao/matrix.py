@@ -1,3 +1,10 @@
+"""
+module matrix:
+- class Attribute      # easy get/set of object attributes
+- class Matrix         # MATLAB style matrix class (NumPy based)
+- class Field          # matrix of matrices
+"""
+
 import numpy as np
 
 #===============================================================================
@@ -233,13 +240,13 @@ class Matrix(np.ndarray):
 
 
 #===============================================================================
-# class Tensor
+# class Field
 #===============================================================================
 
-class Tensor:
+class Field:
     """
-    class Tensor: implements a matrix of matrices (4-tensor)
-    >>> T = Tensor(3,4,2,5)
+    class Field: implements a matrix of matrices (4-tensor)
+    >>> T = Field(3,4,2,5)
     >>> T.Kmap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
@@ -252,7 +259,7 @@ class Tensor:
     | 00000 | 00000 | 00000 | 00000 |
     +-------+-------+-------+-------+
     >>> K = Matrix(2,5)
-    >>> T = Tensor([[K,K,K,K],[K,K,K,K],[K,K,K,K]])
+    >>> T = Field([[K,K,K,K],[K,K,K,K],[K,K,K,K]])
     >>> T.Kmap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
@@ -286,9 +293,9 @@ class Tensor:
     def kappa(self,i,j=None):
         """
         self.kappa():  convert matrix indices to linear index or vice versa
-        >>> Tensor(4,10).kappa(i:=1,j:=3)   # k = i + j*m
+        >>> Field(4,10).kappa(i:=1,j:=3)   # k = i + j*m
         13
-        >>> Tensor(4,10).kappa(k:=13)       # i = k%m, j = k//m
+        >>> Field(4,10).kappa(k:=13)       # i = k%m, j = k//m
         (1, 3)
         """
 
@@ -302,7 +309,7 @@ class Tensor:
     def permanence(self,p):    # encode permanence
         """
         self.permanence(p): convert permanence to symbolic string
-        >>> o = Tensor(1,1)
+        >>> o = Field(1,1)
         >>> o.permanence(0.52)
         'B'
         >>> o.permanence([-1,0,0.01,0.49,0.5,0.99,1,2])
@@ -337,7 +344,7 @@ class Tensor:
     def symbol(self,x):
         """
         self.symbol(x): convert index to symbol or vice versa
-        >>> o = Tensor(1,1)
+        >>> o = Field(1,1)
         >>> o.symbol(11)
         'B'
         >>> o.symbol([0,1,10,11,35,36,37,61,62])
@@ -729,7 +736,7 @@ def _case3():
 
 def _case4():
     """
-    >>> T = Tensor(1)
+    >>> T = Field(1)
     >>> T.Kmap()
     +-000/0-+
     |   0   |
