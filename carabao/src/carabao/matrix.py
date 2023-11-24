@@ -538,7 +538,7 @@ class Field:
 
     def vmap(self):
         m,n,d,s = self.shape
-        self._table('p',self.data,m,n,width=_max(s,7),label='P: ')
+        self._table('p',self.data,m,n,width=_max(s,7),label='')
 
     def imap(self):
         m,n,d,s = self.shape
@@ -958,6 +958,18 @@ def _case4a():
     | 00000 | 00000 | 00000 | 00000 |
     | 00000 | 00000 | 00000 | 00000 |
     +-------+-------+-------+-------+
+    >>> P = Field(2,2,1,3);
+    >>> m,n,d,s = P.shape; seed(0)
+    >>> P.set(0,0,rand((1,3)))
+    >>> P.set(0,1,rand((1,3)))
+    >>> P.set(1,0,rand((1,3)))
+    >>> P.set(1,1,rand((1,3)))
+    >>> P.vmap()
+    +-000/0-+-002/2-+
+    |  CKF  |  CdH  |
+    +-001/1-+-003/3-+
+    |  dTX  |  fOB  |
+    +-------+-------+
     """
 
 def _case4b():
