@@ -1,6 +1,59 @@
 import numpy as np
 
 #===============================================================================
+# class Attribute
+#===============================================================================
+
+class Attribute:
+    def get(self,tags):
+        """
+        >>> o = Attribute()
+        >>> o.set('A,B,C',(1,2,3))
+        >>> o.get('A')
+        1
+        >>> o.get('A,B,C')
+        (1, 2, 3)
+        """
+        out = ()
+        while True:
+            idx = tags.find(',')
+            if idx < 0:
+                tag = tags;  tags = ''
+            else:
+                tag = tags[:idx]
+                tags = tags[idx+1:]
+            arg = getattr(self,tag,None)
+            out = out + (arg,)
+            if tags == '':
+                return out if len(out) > 1 else out[0]
+
+    def set(self,tags,args):
+        """
+        >>> o = Attribute()
+        >>> o.set('A,B,C',(7,8,9))
+        >>> o.get('A,B,C')
+        (7, 8, 9)
+        >>> o.set('X',((5,2),))
+        >>> o.get('X')
+        (5, 2)
+        """
+        if not isinstance(args,tuple):
+            args = (args,)
+        for k in range(len(args)):
+            idx = tags.find(',')
+            if idx < 0:
+                tag = tags;  tags = ''
+            else:
+                tag = tags[:idx]
+                tags = tags[idx+1:]
+            setattr(self,tag,args[k])
+            if tags == '':
+                if len(args) > k+1:
+                    raise Exception('too many values provided by arg2 tuple')
+                return
+
+
+#===============================================================================
 # class Matrix
 #===============================================================================
 
@@ -19,26 +72,25 @@ class Matrix(np.ndarray):
     See also: Matrix, eye, zeros, ones
     """
     def __new__(cls, arg1=None, arg2=None, data=None):
+        isa = isinstance
         arg1 = [] if arg1 is None else arg1
-        if isinstance(arg1,int) and arg2 is None:
+        if isa(arg1,int) and arg2 is None:
             arg1 = [[arg1]]
-        elif isinstance(arg1,float) and arg2 is None:
+        elif isa(arg1,float) and arg2 is None:
             arg1 = [[arg1]]
-        elif isinstance(arg1,np.ndarray):
-            #print('---- arg1',arg1,'shape/len',arg1.shape,len(arg1.shape))
+        elif isa(arg1,np.ndarray):
             if len(arg1.shape) == 1:
                 arg1 = [arg1]
-        elif isinstance(arg1,int) and isinstance(arg2,int):
+        elif isa(arg1,int) and isa(arg2,int):
             arg1 = np.zeros((arg1,arg2))
-        elif isinstance(arg1,list):
+        elif isa(arg1,list):
             if arg1 == []:
                 arg1 = np.zeros((0,0))  #[[]]
-            elif not isinstance(arg1[0],list):
+            elif not isa(arg1[0],list):
                 arg1 = [arg1]
         else:
             raise Exception('bad arg')
 
-        #print('@@@@@ arg1/cls',arg1,cls)
         obj = np.asarray(arg1).view(cls)
         obj.custom = data
         return obj
@@ -102,7 +154,10 @@ class Matrix(np.ndarray):
         isa = isinstance  # shorthand
         if isa(idx,int):
             i,j = self.kappa(idx)
-            return super().__getitem__((i,j))
+            result = super().__getitem__((i,j))
+            iresult = int(result)
+            if result == iresult: return iresult
+            return result
         elif isa(idx,tuple):
             i,j = idx;
             m,n = self.shape
@@ -131,6 +186,48 @@ class Matrix(np.ndarray):
             if result == iresult: return iresult
         return result
 
+    def __call__(self): # convert to column vector
+        """
+        A = magic(2)
+        A()
+        [1; 3; 4; 2]
+        """
+        m,n = self.shape
+        out = Matrix(m*n,1)
+        for i in range(m):
+            for j in range(n):
+                k = self.kappa(i,j)
+                out[k,0] = super().__getitem__((i,j))
+        return out
+
+    def reshape(self,m,n): # convert to column vector
+        """
+        >>> A = magic(4)[:3,:]; print(A)
+        [16 2 3 13; 5 11 10 8; 9 7 6 12]
+        >>> B = A(); print(B)
+        [16; 5; 9; 2; 11; 7; 3; 10; 6; 13; 8; 12]
+        >>> B[2]
+        9
+        >>> B.reshape(3,4)
+        [16 2 3 13; 5 11 10 8; 9 7 6 12]
+        >>> B.reshape(6,2)
+        [16 3; 5 10; 9 6; 2 13; 11 8; 7 12]
+        >>> B.reshape(2,6)
+        [16 9 11 3 6 8; 5 2 7 10 13 12]
+        >>> B.reshape(1,12)
+        [16 5 9 2 11 7 3 10 6 13 8 12]
+        """
+        v = self()  # convert to column
+        #print('### shape:',v.shape,'v:',v)
+        mn = v.shape[0]
+        if mn != m*n:
+            raise Exception('incompatible dimensions for reshape')
+        out = Matrix(m,n)
+        for k in range(mn):
+            i,j = out.kappa(k)
+            #print('### i,j:',i,j)
+            out[i,j] = v[k,0]
+        return out
 
     T = property(fget=_transpose)
 
