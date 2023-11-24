@@ -592,20 +592,34 @@ def ones(m,n=None):
         return Matrix(m,n)
     return Matrix(m,n) + 1
 
-def rand(m,n=None,modulus=None):
+def rand(arg=None,modulus=None):
     """
     >>> seed(0)
-    >>> rand(2)
+    >>> rand((2,2))
     [0.548814 0.715189; 0.602763 0.544883]
-    >>> rand(2,3)
+    >>> rand((2,3))
     [0.423655 0.645894 0.437587; 0.891773 0.963663 0.383442]
-    >>> rand(0,0)
+    >>> rand((0,0))
     []
+    >>> rand(8)
+    6
+    >>> rand()
+    0.8121687287754932
     """
-    n = m if n is None else n
-    if m == 0 or n == 0:
-        return Matrix(m,n)
+    isa = isinstance
+    if arg is None:
+        return np.random.rand()
+    elif isa(arg,int):
+        modulus = int(arg)
+        return np.random.randint(modulus)
+    elif isa(arg,tuple):
+        if len(arg) != 2:
+            raise Exception('2-tuple expected as arg1')
+        m,n = arg
+
     R = Matrix(m,n)
+    if m == 0 or n == 0:
+        return R
 
     if modulus is None:
         for i in range(m):
