@@ -258,8 +258,21 @@ class Matrix(np.ndarray):
         [0 0 0; 5 0 0]
         >>> M[3] = -2; print(M)
         [0 0 0; 5 -2 0]
+        >>> idx = Matrix(range(4))
+        >>> M[idx] = idx; print(M)
+        [0 2 0; 1 3 0]
         """
-        if isinstance(idx,int):
+        if isinstance(idx,Matrix):
+            if not isinstance(value,Matrix):
+                raise Exception('Matrix expected for assigned value')
+            #print('idx:',idx)
+            mx,nx = idx.shape;  mv,nv = value.shape
+            if mv*nv != mx*nx:
+                raise Exception('mismatching number of elements')
+            for k in range(mv*nv):
+                self[idx[k]] = value[k]
+            return
+        elif isinstance(idx,int):
             idx = self.kappa(idx)
         super().__setitem__(idx,value)
 
@@ -974,6 +987,73 @@ def sum(arg):
     else:
         return arg.sum()
 
+def row(*args):
+    """
+    >>> M = magic(4)
+    >>> M1 = M[0:2,:];  print(M1)
+    [16 2 3 13; 5 11 10 8]
+    >>> M2 = M[2:4,:];  print(M2)
+    [9 7 6 12; 4 14 15 1]
+    >>> row(M1,M2)
+    [16 2 3 13 9 7 6 12; 5 11 10 8 4 14 15 1]
+    >>> row(Matrix([1,2]),Matrix([3,4]))
+    [1 2 3 4]
+    """
+    if len(args) == 0:
+        return Matrix([])
+    else:
+        m,n = args[0].shape
+        n = 0
+        for k in range(len(args)):
+            mk,nk = args[k].shape
+            n += nk
+            if mk != m:
+                raise Exception('equal number of rows expected')
+        M = Matrix(m,n)
+        off = 0
+        for k in range(len(args)):
+            Mk = args[k];  mk,nk = Mk.shape
+            #print('##### Mk:',Mk)
+            assert mk == m
+            for i in range(mk):
+                for j in range(nk):
+                    M[i,off+j] = Mk[i,j]
+            off += nk
+        return M
+
+def column(*args):
+    """
+    >>> M = magic(4)
+    >>> M1 = M[:,0:2];  print(M1)
+    [16 2; 5 11; 9 7; 4 14]
+    >>> M2 = M[:,2:4];  print(M2)
+    [3 13; 10 8; 6 12; 15 1]
+    >>> column(M1,M2)
+    [16 2; 5 11; 9 7; 4 14; 3 13; 10 8; 6 12; 15 1]
+    >>> column(Matrix([1,2]).T,Matrix([3,4]).T)
+    [1; 2; 3; 4]
+    """
+    if len(args) == 0:
+        return Matrix([])
+    else:
+        m,n = args[0].shape
+        m = 0
+        for k in range(len(args)):
+            mk,nk = args[k].shape
+            m += mk
+            if nk != n:
+                raise Exception('equal number of columns expected')
+        M = Matrix(m,n)
+        off = 0
+        for k in range(len(args)):
+            Mk = args[k];  mk,nk = Mk.shape
+            #print('##### Mk:',Mk)
+            assert nk == n
+            for i in range(mk):
+                for j in range(nk):
+                    M[off+i,j] = Mk[i,j]
+            off += mk
+        return M
 
 #===============================================================================
 # unit tests
