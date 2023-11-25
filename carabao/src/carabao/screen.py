@@ -161,12 +161,12 @@ class Screen:
         self.r3 = 0.16;  self.rs = (self.r2-self.r3)*0.4
 
         self.ds = 0.11; self.rs = self.ds/3;
-        self.gray = (0.9,0.9,0.9);  self.red = (1,0,0)
+        self.gray = (0.7,0.7,0.7);  self.red = (1,0,0)
         self.gold = (1,0.9,0);      self.dark = (.5,.5,.5)
         self.blue = (0,0.5,1);      self.green=(0,.8,0)
         self.magenta = (1,0.2,1);   self.orange = (1,.5,0)
         self.lila = (.7,0.3,1);     self.cyan = (0,.7,1)
-        self.white = (1,1,1)
+        self.white = (1,1,1);       self.black = (0,0,0)
     def basal(self,x,y,q):
         l = len(q)                     # number of basal synapses
         r2 = self.r2;  r3 = self.r3
