@@ -418,8 +418,30 @@ class Field:
         assert isa(i,int) and isa(j,int)
         assert isa(M,Matrix)
         if self.data[i,j].shape != M.shape:
-            raise Exception('Field.set(): size mismatch')
+            raise Exception('Field.__setitem__(): size mismatch')
         self.data[i,j] = M.copy()
+
+    def set(self,M):  # set field with flat matrix
+        """
+        >>> F = Field(m:=1,n:=2,d:=3,s:=4)
+        >>> M = rand((m*d,n*s),10); print(M)
+        [4 7 6 8 8 1 6 7; 7 8 1 5 9 8 9 4; 3 0 3 5 0 2 3 8]
+        >>> F.set(M); F.imap()
+        +-000/0-+-001/1-+
+        | 4768  | 8167  |
+        | 7815  | 9894  |
+        | 3035  | 0238  |
+        +-------+-------+
+        """
+        assert isinstance(M,Matrix)
+        m,n,d,s = self.shape
+        if (m*d,n*s) != M.shape:
+            raise Exception('incompatible sizes')
+        for i in range(m):
+            for j in range(n):
+                Mij = M[i*d:i*d+d,j*s:j*s+s]
+                self[i,j] = Mij
+
 
     def kappa(self,i,j=None):
         """
