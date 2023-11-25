@@ -535,8 +535,22 @@ class Field:
                 line += self.bar(s,sym,k) + '+'
         return line
 
-    def state(self,S):        # state string from state matrix
-        return 'UXLBY'
+    def state(self,s):        # state string from state matrix
+        B = s[0];  D = s[1];  L = s[2];  Q = s[3];
+        S = s[4];  U = s[5];  X = s[6];  Y = s[7];
+
+        UQ = 'Q' if Q else 'U'
+        SL = 'L' if L else 'S'
+        DB = 'B' if B else 'D'
+
+        str = ''
+        str += UQ if U or Q else '-'
+        str += 'X' if X else '-' 
+        str += SL if S or L else '-'
+        str += DB if D or B else '-'
+        str += 'Y' if Y else '-'
+
+        return str
 
     def _table(self,kind,I,m,n,width=0,label=''):    # print table
         """
