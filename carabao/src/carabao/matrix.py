@@ -523,7 +523,8 @@ class Field:
 
     def head(self,i,n,s,width=0):
         line = '+'
-        s = _max(s,width)
+        #s = _max(s,width)
+        s = s if width == 0 else width
         for j in range(n):
             if i < 0:
                 sym = ''
@@ -534,29 +535,36 @@ class Field:
                 line += self.bar(s,sym,k) + '+'
         return line
 
+    def state(self,S):        # state string from state matrix
+        return 'UXLBY'
+
     def _table(self,kind,I,m,n,width=0,label=''):    # print table
         """
         self.table('i',...) # for indices
         self.table('p',...) # for permanences
         self.table('w',...) # for synaptic weights
+        self.table('s',...) # for state matrices
         """
         def title(n,x):
             return '-%03g-' % x
 
         def row(kind,I,i,j,d,s,width):
             #return '12345'
-            str = ''
-            for nu in range(s):
-               if kind == 'i':   # index
-                   str += self.symbol(I[nu])
-               elif kind == 'p': # permanence
-                   str += self.permanence(I[nu])
-               elif kind == 'w': # permanence
-                   str += '1' if I[nu] > 0.5 else '0'
-               else:
-                   str += '?'
             if kind == 's':
-                str = I
+                #print('##### I:',I)
+                str = self.state(I)
+            else:
+                str = ''
+                for nu in range(s):
+                   if kind == 'i':   # index
+                       str += self.symbol(I[nu])
+                   elif kind == 'p': # permanence
+                       str += self.permanence(I[nu])
+                   elif kind == 'w': # permanence
+                       str += '1' if I[nu] > 0.5 else '0'
+                   else:
+                       str += '?'
+
             while len(str) < width:
                 str = str + ' '
                 if len(str) < width: str = ' ' + str
@@ -589,6 +597,10 @@ class Field:
     def imap(self):
         m,n,d,s = self.shape
         self._table('i',self.data,m,n,width=_max(s,7),label='')
+
+    def smap(self):  # state map
+        m,n,d,s = self.shape
+        self._table('s',self.data,m,n,width=7,label='')
 
     def _Gmap(self):
         m,n,d,s = self.shape
