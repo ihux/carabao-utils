@@ -3,9 +3,9 @@
 #===============================================================================
 
 class Map:
-    def __init__(self,cluster=None):
-        self.cluster = cluster
-        self.shape = cluster.shape if cluster is not None else (4,10,2,5)
+    def __init__(self,cells=None):
+        self.cells = cells
+        self.shape = cells.shape if cells is not None else (4,10,2,5)
 
     def zeros(self,d,s):
         return [[0 for j in range(s)] for i in range(d)]
@@ -148,7 +148,7 @@ class Map:
                 if len(str) < width: str = ' ' + str
             return str
 
-        cells = self.cluster
+        cells = self.cells
         d = len(I[0][0])
         s = len(I[0][0][0])
 
@@ -169,29 +169,29 @@ class Map:
         print(tab+self.head(-1,n,s,width))
 
     def Pmap(self):
-        m,n,d,s = cells.shape
-        self.table('p',self.cluster.P,m,n,width=max(s,7),label='P: ')
+        m,n,d,s = self.cells.shape
+        self.table('p',self.cells.P,m,n,width=max(s,7),label='P: ')
 
     def Kmap(self):
-        m,n,d,s = cells.shape
-        self.table('i',self.cluster.K,m,n,width=max(s,7),label='K: ')
+        m,n,d,s = self.cells.shape
+        self.table('i',self.cells.K,m,n,width=max(s,7),label='K: ')
 
     def Gmap(self):
-        m,n,d,s = cells.shape
-        self.table('i',self.cluster.G,m,n,width=max(s,7),label='G: ')
+        m,n,d,s = self.cells.shape
+        self.table('i',self.cells.G,m,n,width=max(s,7),label='G: ')
 
     def Wmap(self):
-        m,n,d,s = cells.shape
-        self.table('w',self.cluster.P,m,n,width=max(s,7),label='W: ')
+        m,n,d,s = self.cells.shape
+        self.table('w',self.cells.P,m,n,width=max(s,7),label='W: ')
 
     def Fmap(self):
-        m,n,d,s = cells.shape
-        self.table('w',self.cluster.F,m,n,width=max(s,7),label='F: ')
+        m,n,d,s = self.cells.shape
+        self.table('w',self.cells.F,m,n,width=max(s,7),label='F: ')
 
     def Smap(self):             # state map
         m,n,d,s = self.shape
         S = self.zeros(m,n)
-        cells = self.cluster
+        cells = self.cells
         for i in range(m):
             for j in range(n):
                 states = ['-','-','-','-','-']
