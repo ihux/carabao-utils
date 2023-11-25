@@ -604,17 +604,17 @@ class Field:
                 print(line)
         print(tab+self.head(-1,n,s,width))
 
-    def vmap(self):
+    def vmap(self,label=''):
         m,n,d,s = self.shape
-        self._table('p',self.data,m,n,width=_max(s,7),label='')
+        self._table('p',self.data,m,n,width=_max(s,7),label=label)
 
-    def imap(self):
+    def imap(self,label=''):
         m,n,d,s = self.shape
-        self._table('i',self.data,m,n,width=_max(s,7),label='')
+        self._table('i',self.data,m,n,width=_max(s,7),label=label)
 
-    def smap(self):  # state map
+    def smap(self,label=''):  # state map
         m,n,d,s = self.shape
-        self._table('s',self.data,m,n,width=7,label='')
+        self._table('s',self.data,m,n,width=7,label=label)
 
     def _Gmap(self):
         m,n,d,s = self.shape
