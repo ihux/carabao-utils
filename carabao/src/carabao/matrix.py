@@ -246,7 +246,7 @@ class Matrix(np.ndarray):
                     #print('result[%g,%g]'%(i,j), 'k:',k,'(mu,nu)',(mu,nu))
             return result
         result = super().__getitem__(idx)
-        if isa(result,np.int64):
+        if isa(result,np.int64) or isa(result,np.float64):
             iresult = int(result)
             if result == iresult: return iresult
         return result
