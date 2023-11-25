@@ -996,23 +996,29 @@ def row(*args):
     [9 7 6 12; 4 14 15 1]
     >>> row(M1,M2)
     [16 2 3 13 9 7 6 12; 5 11 10 8 4 14 15 1]
-    >>> row(Matrix([1,2]),Matrix([3,4]))
+    >>> row([1,2],[3,4])
     [1 2 3 4]
     """
     if len(args) == 0:
         return Matrix([])
     else:
-        m,n = args[0].shape
+        M0 = args[0]
+        if not isinstance(M0,Matrix): M0 = Matrix(M0)
+        m,n = M0.shape
         n = 0
         for k in range(len(args)):
-            mk,nk = args[k].shape
+            Mk = args[k]
+            if not isinstance(Mk,Matrix): Mk = Matrix(Mk)
+            mk,nk = Mk.shape
             n += nk
             if mk != m:
                 raise Exception('equal number of rows expected')
         M = Matrix(m,n)
         off = 0
         for k in range(len(args)):
-            Mk = args[k];  mk,nk = Mk.shape
+            Mk = args[k];
+            if not isinstance(Mk,Matrix): Mk = Matrix(Mk)
+            mk,nk = Mk.shape
             #print('##### Mk:',Mk)
             assert mk == m
             for i in range(mk):
@@ -1036,18 +1042,23 @@ def column(*args):
     if len(args) == 0:
         return Matrix([])
     else:
-        m,n = args[0].shape
+        M0 = args[0]
+        if not isinstance(M0,Matrix): M0 = Matrix(M0)
+        m,n = M0.shape
         m = 0
         for k in range(len(args)):
-            mk,nk = args[k].shape
+            Mk = args[k]
+            if not isinstance(Mk,Matrix): Mk = Matrix(Mk)
+            mk,nk = Mk.shape
             m += mk
             if nk != n:
                 raise Exception('equal number of columns expected')
         M = Matrix(m,n)
         off = 0
         for k in range(len(args)):
-            Mk = args[k];  mk,nk = Mk.shape
-            #print('##### Mk:',Mk)
+            Mk = args[k]
+            if not isinstance(Mk,Matrix): Mk = Matrix(Mk)
+            mk,nk = Mk.shape
             assert nk == n
             for i in range(mk):
                 for j in range(nk):
