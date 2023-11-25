@@ -366,8 +366,48 @@ class Field:
         self.shape = (m,n,d,s)
 
     def __getitem__(self,idx):
-        i,j = idx
+        """
+        >>> T = Field(2,3,1,3); seed(0)
+        >>> T[1,1] = rand((1,3))
+        >>> T.vmap()
+        +-000/0-+-002/2-+-004/4-+
+        |  000  |  000  |  000  |
+        +-001/1-+-003/3-+-005/5-+
+        |  000  |  CKF  |  000  |
+        +-------+-------+-------+
+        >>> T[1,1]
+        [0.548814 0.715189 0.602763]
+        >>> T[3]
+        [0.548814 0.715189 0.602763]
+        """
+        if isinstance(idx,int):
+            i,j = self.kappa(idx)
+        else:
+            i,j = idx
         return Matrix(self.data[i,j])
+
+    def __setitem__(self,idx,M):
+        """
+        >>> T = Field(2,3,1,3); seed(0)
+        >>> T[1,1] = rand((1,3))
+        >>> T[4] = rand((1,3))
+        >>> T.vmap()
+        +-000/0-+-002/2-+-004/4-+
+        |  000  |  000  |  CdH  |
+        +-001/1-+-003/3-+-005/5-+
+        |  000  |  CKF  |  000  |
+        +-------+-------+-------+
+        """
+        isa = isinstance
+        if isa(idx,int):
+            i,j = self.kappa(idx)
+        else:
+            i,j = idx
+        assert isa(i,int) and isa(j,int)
+        assert isa(M,Matrix)
+        if self.data[i,j].shape != M.shape:
+            raise Exception('Field.set(): size mismatch')
+        self.data[i,j] = M
 
     def kappa(self,i,j=None):
         """
@@ -384,12 +424,6 @@ class Field:
             return (k%m,k//m)
         else:
             return i + j*m
-
-    def set(self,i,j,M):
-        assert isinstance(M,Matrix)
-        if self.data[i,j].shape != M.shape:
-            raise Exception('Field.set(): size mismatch')
-        self.data[i,j] = M
 
     def permanence(self,p):    # encode permanence
         """
@@ -947,7 +981,7 @@ def _case4a():
     >>> M = T[1,1]; print(M)
     [0 0 0 0 0; 0 0 0 0 0]
     >>> M[1,2] = 8
-    >>> T.set(1,1,M); T.imap()
+    >>> T[1,1] = M; T.imap()
     +-000/0-+-003/3-+-006/6-+-009/9-+
     | 00000 | 00000 | 00000 | 00000 |
     | 00000 | 00000 | 00000 | 00000 |
@@ -960,10 +994,10 @@ def _case4a():
     +-------+-------+-------+-------+
     >>> P = Field(2,2,1,3);
     >>> m,n,d,s = P.shape; seed(0)
-    >>> P.set(0,0,rand((1,3)))
-    >>> P.set(0,1,rand((1,3)))
-    >>> P.set(1,0,rand((1,3)))
-    >>> P.set(1,1,rand((1,3)))
+    >>> P[0,0] = rand((1,3))
+    >>> P[0,1] = rand((1,3))
+    >>> P[1,0] = rand((1,3))
+    >>> P[1,1] = rand((1,3))
     >>> P.vmap()
     +-000/0-+-002/2-+
     |  CKF  |  CdH  |
