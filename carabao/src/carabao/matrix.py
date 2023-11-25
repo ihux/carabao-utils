@@ -251,6 +251,18 @@ class Matrix(np.ndarray):
             if result == iresult: return iresult
         return result
 
+    def __setitem__(self,idx,value):
+        """
+        >>> M = Matrix(2,3)
+        >>> M[1,0] = 5; print(M)
+        [0 0 0; 5 0 0]
+        >>> M[3] = -2; print(M)
+        [0 0 0; 5 -2 0]
+        """
+        if isinstance(idx,int):
+            idx = self.kappa(idx)
+        super().__setitem__(idx,value)
+
     def __call__(self): # convert to column vector
         """
         A = magic(2)
