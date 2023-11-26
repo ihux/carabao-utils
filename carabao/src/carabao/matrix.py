@@ -49,6 +49,7 @@ Utility functions:
 """
 
 import numpy as np
+isa = isinstance        # shorthand
 
 #===============================================================================
 # class Attribute
@@ -124,7 +125,7 @@ class Matrix(np.ndarray):
     See also: Matrix, eye, zeros, ones
     """
     def __new__(cls, arg1=None, arg2=None, data=None):
-        isa = isinstance
+        #isa = isinstance
         arg1 = [] if arg1 is None else arg1
         if isa(arg1,int) and arg2 is None:
             arg1 = [[arg1]]
@@ -216,7 +217,7 @@ class Matrix(np.ndarray):
         >>> A[:,2]
         [3; 10; 6]
         """
-        isa = isinstance  # shorthand
+        #isa = isinstance  # shorthand
         if isa(idx,int):
             i,j = self.kappa(idx)
             result = super().__getitem__((i,j))
@@ -301,7 +302,7 @@ class Matrix(np.ndarray):
         >>> 3*A
         [3 9; 12 6]
         """
-        isa = isinstance
+        #isa = isinstance
         if isa(other,Matrix):
             if self.shape != other.shape:
                 raise Exception('Matrix.__mul__: incompatible sizes')
@@ -423,7 +424,7 @@ class Field:
         |  000  |  CKF  |  000  |
         +-------+-------+-------+
         """
-        isa = isinstance
+        #isa = isinstance
         if isa(idx,int):
             i,j = self.kappa(idx)
         else:
@@ -725,7 +726,7 @@ def rand(arg=None,modulus=None):
     >>> rand((2,3),40)
     [24 17 37; 25 13 8]
     """
-    isa = isinstance
+    #isa = isinstance
     if arg is None:
         return np.random.rand()
     elif isa(arg,int):
@@ -956,7 +957,7 @@ def sum(arg):
     >>> sum(C>0)
     4
     """
-    isa = isinstance
+    #isa = isinstance
     if isa(arg,int) or isa(arg,np.int64) or isa(arg,float):
         return arg
     elif isa(arg,list):
@@ -1227,7 +1228,7 @@ def _case5d():  # indexing with slices, row & column ranges
     """
 
 #===============================================================================
-# udoc test
+# doc test
 #===============================================================================
 
 if __name__ == '__main__':
